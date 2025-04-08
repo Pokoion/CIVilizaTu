@@ -7,5 +7,6 @@ Praktikaren partaideak hauek dira:
 
 FRONTEND
 - React
+
 BACKEND
 - Flask
