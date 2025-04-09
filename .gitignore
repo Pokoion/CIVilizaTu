@@ -1,0 +1,64 @@
+# Dependencias y entorno Node.js (Frontend)
+/frontend/node_modules
+/frontend/.pnp
+/frontend/.pnp.js
+/frontend/coverage
+/frontend/build
+/frontend/dist
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+
+# Python (Backend y LLM Service)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+/backend/venv/
+/llm_service/venv/
+/backend/env/
+/llm_service/env/
+/backend/.pytest_cache/
+/llm_service/.pytest_cache/
+/backend/.coverage
+/llm_service/.coverage
+/backend/htmlcov/
+/llm_service/htmlcov/
+.tox/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Archivos de log
+*.log
+llm_service.log
+
+# MongoDB
+/data/db/
+
+# Archivos sensibles (descomentar si no quieres versionar .env)
+.env
+
+# Archivos temporales
+.tmp/
+.temp/
+
+# Entornos de desarrollo
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+.ipynb_checkpoints/
+
+# Docker
+.dockerignore
+
+# Archivos generados por IA
+/frontend/public/assets/ai-generated/*
+!/frontend/public/assets/ai-generated/.gitkeep
