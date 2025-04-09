@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - llm_service
+    environment:
+      - FLASK_DEBUG=1
+      - FLASK_APP=app.py
+      - LLM_SERVICE_URL=http://llm_service:5001
+
+  llm_service:
+    build: ./llm_service
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./llm_service:/app
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_DEFAULT_MODEL=${GROQ_DEFAULT_MODEL}
+      - GROQ_TEMPERATURE=${GROQ_TEMPERATURE}
+      - GROQ_MAX_TOKENS=${GROQ_MAX_TOKENS}
