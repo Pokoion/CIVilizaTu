@@ -3,12 +3,32 @@ from flask_cors import CORS
 import requests
 import os
 from dotenv import load_dotenv
+from flask_mongoengine import MongoEngine
+from flask_jwt_extended import JWTManager
+from flask_dance.contrib.google import make_google_blueprint
+from routes.auth import auth_bp, google_bp
 
 # Cargar variables de entorno
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+# MongoDB configuration
+app.config['MONGODB_SETTINGS'] = {
+    'db': 'civilizatu',
+    'host': 'localhost',
+    'port': 27017
+}
+db = MongoEngine(app)
+
+# JWT configuration
+app.config['JWT_SECRET_KEY'] = 'your_jwt_secret'
+jwt = JWTManager(app)
+
+# OAuth2 configuration
+app.config['GOOGLE_OAUTH_CLIENT_ID'] = 'your_google_client_id'
+app.config['GOOGLE_OAUTH_CLIENT_SECRET'] = 'your_google_client_secret'
 
 # URL del servicio LLM
 LLM_SERVICE_URL = os.environ.get('LLM_SERVICE_URL', 'http://localhost:5001')
@@ -49,5 +69,9 @@ def get_llm_status():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Register blueprints
+app.register_blueprint(auth_bp)
+app.register_blueprint(google_bp, url_prefix="/login")
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(port=5000)

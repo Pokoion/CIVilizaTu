@@ -13,9 +13,9 @@ BACKEND
 
 ## Flask Setup
 
-1. Install Flask:
+1. Install dependencies:
 ```
-pip install flask
+pip install flask flask-mongoengine flask-jwt-extended werkzeug
 ```
 
 2. Run the application:
