@@ -62,3 +62,5 @@ llm_service.log
 # Archivos generados por IA
 /frontend/public/assets/ai-generated/*
 !/frontend/public/assets/ai-generated/.gitkeep
+
+.env

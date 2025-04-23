@@ -1,0 +1,153 @@
+/* General styles */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    color: #fff;
+    background-color: #1a1a1a;
+}
+
+.hero {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: url('../assets/others/images/background.jpg') no-repeat center center/cover;
+    position: relative;
+    overflow: hidden; /* Asegurar que no haya contenido fuera del contenedor */
+}
+
+.overlay {
+    position: absolute; /* Cambiar a posición absoluta */
+    top: 0;
+    left: 0;
+    width: 100%; /* Asegurar que ocupe todo el ancho */
+    height: 100%; /* Asegurar que ocupe toda la altura */
+    background: rgba(0, 0, 0, 0.7); /* Fondo oscuro */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 2rem;
+    border-radius: 0; /* Eliminar bordes redondeados para ocupar toda la pantalla */
+    box-shadow: none; /* Eliminar sombras si no son necesarias */
+}
+
+header h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #ffd700;
+    font-family: 'Cinzel', serif;
+}
+
+header p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    color: #f4e4c1;
+}
+
+button {
+    background-color: #8b4513;
+    color: #fff;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin: 0.5rem 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+button:hover {
+    background-color: #a0522d;
+    transform: scale(1.05);
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.login-form input {
+    width: 80%;
+    max-width: 300px;
+    margin: 0.5rem 0;
+    padding: 0.8rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.login-form button {
+    width: 80%;
+    max-width: 300px;
+}
+
+.google-login, .github-login {
+    width: 80%;
+    max-width: 300px;
+    display: flex; /* Para alinear texto e imagen */
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem; /* Espacio entre la imagen y el texto */
+    padding: 0.8rem;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+    margin: 0.5rem 0;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.google-login {
+    background-color: #DB4437; /* Rojo característico de Google */
+    color: #fff;
+    border: none;
+}
+
+.google-login:hover {
+    background-color: #c33d2e;
+    transform: scale(1.05);
+}
+
+.github-login {
+    background-color: #333;
+    color: #fff;
+    border: none;
+}
+
+.github-login:hover {
+    background-color: #444;
+    transform: scale(1.05);
+}
+
+.github-login img, .google-login img {
+    width: 20px; /* Tamaño de la imagen */
+    height: 20px;
+}
+
+.not-registered {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #f4e4c1;
+}
+
+.not-registered a {
+    color: #ffd700;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.not-registered a:hover {
+    text-decoration: underline;
+}
+
+footer {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: #f4e4c1;
+}
