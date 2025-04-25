@@ -52,44 +52,6 @@
     background-color: #a0522d;
 }
 
-.google-login {
-    width: 80%;
-    max-width: 300px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.8rem;
-    font-size: 1rem;
-    cursor: pointer;
-    border-radius: 5px;
-    margin: 0.5rem 0;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    background-color: #fff; /* Fondo blanco */
-    color: #EA4335; /* Texto rojo */
-    border: 2px solid #EA4335; /* Borde rojo */
-}
-
-.google-login:hover {
-    background-color: #fbe9e7; /* Fondo ligeramente rosado al pasar el cursor */
-    transform: scale(1.05);
-}
-
-.google-login img {
-    width: 20px;
-    height: 20px;
-}
-
-.github-login {
-    background-color: #333;
-    color: #fff;
-    border: none;
-}
-
-.github-login:hover {
-    background-color: #444;
-}
-
 .not-registered {
     margin-top: 1rem;
     font-size: 0.9rem;
@@ -122,4 +84,30 @@ button {
 button:hover {
     background-color: #a0522d;
     transform: scale(1.05);
+}
+
+.error-message {
+    color: red;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    background-color: rgba(255, 200, 200, 0.8); /* Fondo rojo claro */
+    padding: 0.5rem 1rem; /* Espaciado interno */
+    border: 1px solid red; /* Borde rojo */
+    border-radius: 5px; /* Bordes redondeados */
+    text-align: center; /* Centrar el texto */
+    max-width: 300px; /* Ancho máximo */
+    margin: 10px auto; /* Centrar horizontalmente */
+}
+
+.success-message {
+    color: green;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    background-color: rgba(200, 255, 200, 0.8); /* Fondo verde claro */
+    padding: 0.5rem 1rem; /* Espaciado interno */
+    border: 1px solid green; /* Borde verde */
+    border-radius: 5px; /* Bordes redondeados */
+    text-align: center; /* Centrar el texto */
+    max-width: 300px; /* Ancho máximo */
+    margin: 10px auto; /* Centrar horizontalmente */
 }

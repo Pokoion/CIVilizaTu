@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background-color: #f0f0f0;
+  background: url('../assets/others/images/backgroundLogin.jpeg') no-repeat center center/cover;
   font-family: 'Cinzel', serif;
 }
 
@@ -37,4 +37,76 @@ button {
 
 button:hover {
   background-color: #a0522d;
+}
+
+.difficulty-buttons, .civilization-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  color: #8b4513;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button.selected {
+  background-color: #9c644a; /* Updated to match the brown tones of the page */
+  color: white;
+  border-color: #8b4513;
+}
+
+button img {
+  display: block;
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 5px;
+}
+
+.civilization-buttons button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 10px;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.civilization-buttons button:hover {
+  background-color: #e0e0e0;
+  transform: scale(1.05);
+}
+
+.civilization-buttons button.selected {
+  border-color: #007bff;
+  background-color: #d0e7ff;
+}
+
+.civilization-buttons img {
+  width: 100px; /* Aumenta el tamaño de la imagen */
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+
+.civilization-buttons strong {
+  font-size: 1.2rem; /* Reduce el tamaño del texto del nombre */
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.civilization-buttons p {
+  font-size: 0.9rem; /* Reduce el tamaño del texto de los atributos */
+  margin: 2px 0;
+  color: #555;
+  text-align: center;
 }

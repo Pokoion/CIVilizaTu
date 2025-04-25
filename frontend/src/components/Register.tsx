@@ -7,21 +7,21 @@ const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      alert('Pasahitzak ez datoz bat.');
-      return;
-    }
-
-    const result = await registerUser(email, password);
-    if (result.success) {
-      alert(result.message);
-      navigate('/login'); // Redirigir a la página de login
-    } else {
-      alert(result.message);
+    setErrorMessage('');
+    try {
+      const result = await registerUser(email, password);
+      if (result.success) {
+        navigate('/login', { state: { successMessage: result.message } });
+      } else {
+        setErrorMessage(result.message); // Mostrar mensaje de error
+      }
+    } catch (error: any) {
+      setErrorMessage('Errore ezezaguna gertatu da.');
     }
   };
 
@@ -52,6 +52,7 @@ const Register: React.FC = () => {
         />
         <button type="submit">Erregistratu</button>
       </form>
+      {errorMessage && <p className="error-message">{errorMessage}</p>}
       <p className="not-registered">
         Jadanik kontua baduzu? <a href="/login">Saioa hasi</a>
       </p>

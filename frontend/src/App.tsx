@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import LoginOptions from './components/LoginOptions';
+import LoginOptions from './components/Login';
 import Register from './components/Register';
 import MainMenu from './components/MainMenu';
 import GameSetup from './components/GameSetup';

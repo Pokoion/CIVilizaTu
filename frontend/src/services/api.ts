@@ -9,40 +9,16 @@ const api = axios.create({
   }
 });
 
-export interface LLMResponse {
-  response: string;
-  model: string;
-  model_switched?: boolean;
-  previous_model?: string;
-  error_type?: string;
-  switch_count?: number;
-}
-
-export interface LLMStatus {
-  current_model: string;
-  available_models: string[];
-  model_switch_count: number;
-  last_error_time: number;
-}
-
-export const sendQueryToLLM = async (query: string, forceError: boolean = false): Promise<LLMResponse> => {
-  try {
-    const response = await api.post('/api/llm/query', { query, force_error: forceError });
-    return response.data;
-  } catch (error) {
-    console.error('Error sending query to LLM:', error);
-    throw error;
-  }
-};
-
-export const getLLMStatus = async (): Promise<LLMStatus> => {
-  try {
-    const response = await api.get('/api/llm/status');
-    return response.data;
-  } catch (error) {
-    console.error('Error getting LLM status:', error);
-    throw error;
-  }
+export const fetchCivilizations = async (): Promise<{ name: string; attack: number; defense: number }[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        { name: 'rome', attack: 1, defense: 2 },
+        { name: 'greece', attack: 2, defense: 3 },
+        { name: 'egypt', attack: 3, defense: 1 }
+      ]); // Civilizaciones simuladas con atributos
+    }, 1000); // Simula un retraso de 1 segundo
+  });
 };
 
 export default api;
