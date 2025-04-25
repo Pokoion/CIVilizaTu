@@ -6,6 +6,9 @@
   height: 100vh;
   background: url('../assets/others/images/backgroundLogin.jpeg') no-repeat center center/cover;
   font-family: 'Cinzel', serif;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
 
 .setup-section {
@@ -14,6 +17,7 @@
 
 .setup-section h2 {
   margin-bottom: 10px;
+  font-family: 'MedievalSharp', cursive;
 }
 
 select {
@@ -21,6 +25,7 @@ select {
   font-size: 1rem;
   border-radius: 5px;
   border: 1px solid #ccc;
+  font-family: 'Cinzel', serif;
 }
 
 button {
@@ -33,6 +38,8 @@ button {
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  font-family: 'Cinzel', serif;
+  max-width: 300px;
 }
 
 button:hover {
@@ -55,7 +62,7 @@ button {
 }
 
 button.selected {
-  background-color: #9c644a; /* Updated to match the brown tones of the page */
+  background-color: #9c644a;
   color: white;
   border-color: #8b4513;
 }
@@ -79,6 +86,7 @@ button img {
   background-color: #f9f9f9;
   cursor: pointer;
   transition: transform 0.2s, background-color 0.2s;
+  font-family: 'Cinzel', serif; /* Consistencia con el tema global */
 }
 
 .civilization-buttons button:hover {
@@ -92,21 +100,23 @@ button img {
 }
 
 .civilization-buttons img {
-  width: 100px; /* Aumenta el tamaño de la imagen */
+  width: 100px;
   height: 100px;
   object-fit: contain;
   margin-bottom: 10px;
 }
 
 .civilization-buttons strong {
-  font-size: 1.2rem; /* Reduce el tamaño del texto del nombre */
+  font-size: 1.2rem;
   margin-bottom: 5px;
   color: #333;
+  font-family: 'Cinzel', serif;
 }
 
 .civilization-buttons p {
-  font-size: 0.9rem; /* Reduce el tamaño del texto de los atributos */
+  font-size: 0.9rem;
   margin: 2px 0;
   color: #555;
   text-align: center;
+  font-family: 'Cinzel', serif;
 }

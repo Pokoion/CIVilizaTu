@@ -5,7 +5,7 @@ import Register from './components/Register';
 import MainMenu from './components/MainMenu';
 import GameSetup from './components/GameSetup';
 import GameIntro from './components/GameIntro';
-import './styles/App.css'; // Actualizar la referencia a App.css
+import './styles/index.css';
 
 const Home: React.FC = () => (
   <div className="hero">
