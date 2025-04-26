@@ -1,10 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import LoginOptions from './components/Login';
+import Login from './components/Login';
 import Register from './components/Register';
 import MainMenu from './components/MainMenu';
 import GameSetup from './components/GameSetup';
 import GameIntro from './components/GameIntro';
+import ProtectedRoute from './components/ProtectedRoute';
+import Map from './components/game/Map';
 import './styles/index.css';
 
 const Home: React.FC = () => (
@@ -30,11 +32,12 @@ const App: React.FC = () => {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<LoginOptions />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/main-menu" element={<MainMenu />} />
-        <Route path="/game-setup" element={<GameSetup />} />
-        <Route path="/game-intro" element={<GameIntro />} />
+        <Route path="/main-menu" element={<ProtectedRoute><MainMenu /></ProtectedRoute> } />
+        <Route path="/game-setup" element={<ProtectedRoute><GameSetup /></ProtectedRoute>} />
+        <Route path="/game-intro" element={<ProtectedRoute><GameIntro /></ProtectedRoute>} />
+        <Route path="/game" element={<ProtectedRoute><Map /></ProtectedRoute>} />
       </Routes>
     </Router>
   );

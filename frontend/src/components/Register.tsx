@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/authService'; // Importamos el servicio
-import '../styles/LoginOptions.css'; // Reutilizamos los estilos de LoginOptions
+import '../styles/Auth.css'; // Reutilizamos los estilos de LoginOptions
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');

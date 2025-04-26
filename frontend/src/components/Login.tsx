@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { loginUser } from '../services/authService';
-import '../styles/LoginOptions.css';
+import '../styles/Auth.css';
 
-const LoginOptions: React.FC = () => {
+const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -56,4 +56,4 @@ const LoginOptions: React.FC = () => {
   );
 };
 
-export default LoginOptions;
+export default Login;
