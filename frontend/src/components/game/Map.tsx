@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import '../../styles/Map.css';
 import { findShortestPath } from '../../utils/Pathfinding';
+import Tile from './Tile';
 
 const mapSize = 50;
-const terrainTypes = [0, 1, 2];
+const terrainTypes = ['water', 'grass', 'mountain', 'forest', 'desert'] as const;
 
 const generateMap = () => {
   return Array.from({ length: mapSize }, () =>
@@ -14,19 +15,6 @@ const generateMap = () => {
 };
 
 const initialMap = generateMap();
-
-const getTileColor = (tile: number) => {
-  switch (tile) {
-    case 0:
-      return 'rgb(89, 201, 238)';
-    case 1:
-      return 'lightgreen';
-    case 2:
-      return 'gray';
-    default:
-      return 'rgb(89, 201, 238)';
-  }
-};
 
 const Map = () => {
   const [personPosition, setPersonPosition] = useState({ row: Math.floor(mapSize / 2), col: Math.floor(mapSize / 2) }); // Posición inicial
@@ -68,6 +56,10 @@ const Map = () => {
     setPath(shortestPath); // Guardar el camino calculado
   };
 
+  document.addEventListener('contextmenu', (event) => {
+    event.preventDefault(); // Esto bloquea el menú contextual
+  });
+
   useEffect(() => {
     if (path.length > 0) {
       const [nextStep, ...remainingPath] = path;
@@ -75,7 +67,7 @@ const Map = () => {
       const timeout = setTimeout(() => {
         setPersonPosition(nextStep);
         setPath(remainingPath);
-      }, 300); // Tiempo entre pasos (300ms)
+      }, 100); // Tiempo entre pasos (300ms)
 
       return () => clearTimeout(timeout);
     }
@@ -85,20 +77,19 @@ const Map = () => {
     <div className="map-wrapper">
       <div className="map-grid">
         {initialMap.map((row, rowIndex) =>
-          row.map((tile, colIndex) => (
-            <div
+          row.map((tileType, colIndex) => (
+            <Tile
               key={`${rowIndex}-${colIndex}`}
-              className={`map-tile ${discoveredTiles[rowIndex][colIndex] ? '' : 'fog'}`} // Añadir clase 'fog' si no está descubierto
-              style={{
-                backgroundColor: getTileColor(tile),
-                position: 'relative',
-              }}
-              onClick={() => handleTileClick(rowIndex, colIndex)} // Detectar clic en el tile
+              row={rowIndex}
+              col={colIndex}
+              tileType={tileType}
+              isDiscovered={discoveredTiles[rowIndex][colIndex]}
+              onClick={() => handleTileClick(rowIndex, colIndex)}
             >
               {personPosition.row === rowIndex && personPosition.col === colIndex && (
                 <div className="person" />
               )}
-            </div>
+            </Tile>
           ))
         )}
       </div>

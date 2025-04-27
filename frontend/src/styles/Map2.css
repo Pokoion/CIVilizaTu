@@ -1,0 +1,55 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Elimina el scroll */
+  width: 100%;
+  height: 100%;
+}
+
+.map-wrapper {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+  
+.map-grid {
+  display: grid;
+  grid-template-columns: repeat(50, 140px);
+  grid-template-rows: repeat(50, 140px);
+  transform: rotateX(60deg) rotateZ(45deg);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotateX(60deg) rotateZ(45deg); /* Centra el mapa */
+  overflow: hidden;
+}
+
+.map-tile {
+  width: 140px;
+  height: 140px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  position: relative; /* Asegura que los elementos hijos se posicionen correctamente */
+}
+
+.unit {
+  position: absolute;
+  left: 50%;
+  bottom: 50px; /* Ajusta este valor hasta que el círculo esté visualmente en el suelo del tile */
+  width: 30px;
+  height: 30px;
+  transform: translateX(-50%);
+  background-color: red;
+  border-radius: 50%;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.unit.selected {
+  box-shadow: 0 0 0 4px yellow;
+  outline: 2px solid orange;
+}

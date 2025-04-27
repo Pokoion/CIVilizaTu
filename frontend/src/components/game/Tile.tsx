@@ -9,6 +9,10 @@ const tileTypes = {
   desert: { color: 'goldenrod', movementCost: 2 },
 };
 
+export const getMovementCost = (tileType: keyof typeof tileTypes): number => {
+    return tileTypes[tileType]?.movementCost ?? Infinity; // Devuelve Infinity si el tipo de tile no es válido
+  };
+
 interface TileProps {
   row: number;
   col: number;
