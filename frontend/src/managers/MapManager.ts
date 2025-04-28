@@ -1,21 +1,4 @@
-import { TerrainType } from '../utils/Constants';
-
-export interface MapState {
-  map: {
-    size: { width: number; height: number };
-    tiles: TerrainType[][];
-    fog_of_war: boolean[][];
-  };
-}
-
-export interface Unit {
-  id: string;
-  type: string;
-  position: { x: number; y: number };
-  visible: boolean;
-  movement_points: number;
-  movement_points_left: number;
-}
+import { MapState, Unit } from '../types';
 
 class MapManager {
   private map: MapState;
@@ -82,6 +65,7 @@ class MapManager {
     this.discoverTiles(newPosition.y, newPosition.x);
     return true;
   }
+
 }
 
 export default MapManager;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { TileProps } from '../../types'; // Importar los tipos de props
 
 // Definir los tipos de tile y sus propiedades
 const tileTypes = {
@@ -12,15 +13,6 @@ const tileTypes = {
 export const getMovementCost = (tileType: keyof typeof tileTypes): number => {
     return tileTypes[tileType]?.movementCost ?? Infinity; // Devuelve Infinity si el tipo de tile no es válido
   };
-
-interface TileProps {
-  row: number;
-  col: number;
-  tileType: keyof typeof tileTypes;
-  isDiscovered: boolean;
-  onClick: () => void;
-  children?: React.ReactNode;
-}
 
 const Tile: React.FC<TileProps> = ({ row, col, tileType, isDiscovered, onClick, children }) => {
   const tile = tileTypes[tileType]; // Obtener las propiedades del tipo de tile

@@ -1,13 +1,12 @@
 import { useEffect } from 'react';
 import { TILE_SIZE } from '../../../utils/Constants';
 import GameManager from '../../../managers/GameManager';
-import { MapState } from '../../../managers/MapManager';
-import { Unit as UnitState } from '../../../managers/MapManager';
+import { MapState, Unit } from '../../../types';
 
 export function useGameInit(
   gameManager: GameManager,
   setMapState: (map: MapState) => void,
-  setUnits: (units: UnitState[]) => void,
+  setUnits: (units: Unit[]) => void,
   setCameraOffset: (offset: { x: number; y: number }) => void
 ) {
   useEffect(() => {

@@ -1,14 +1,6 @@
 import React from 'react';
+import { TileProps } from '../../types';
 import { TILE_TYPES } from '../../utils/Constants';
-
-interface TileProps {
-  row: number;
-  col: number;
-  tileType: keyof typeof TILE_TYPES;
-  isDiscovered: boolean;
-  onClick: () => void;
-  children?: React.ReactNode;
-}
 
 const Tile: React.FC<TileProps> = ({ row, col, tileType, isDiscovered, onClick, children }) => {
   const tile = TILE_TYPES[tileType];

@@ -1,4 +1,5 @@
-import { TILE_TYPES, TerrainType } from "../utils/Constants";
+import { TILE_TYPES } from "../utils/Constants";
+import { TerrainType } from "../types";
 
 interface Position {
   row: number;

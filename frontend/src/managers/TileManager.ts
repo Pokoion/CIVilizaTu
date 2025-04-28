@@ -1,5 +1,4 @@
-import { TERRAIN_TYPES } from "../utils/Constants";
-type TerrainType = keyof typeof TERRAIN_TYPES;
+import { TerrainType } from '../types';
 
 class TileManager {
   private terrainType: TerrainType;

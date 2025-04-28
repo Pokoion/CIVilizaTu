@@ -1,13 +1,5 @@
 import React from 'react';
-
-interface UnitProps {
-  id: string;
-  type: string;
-  position: { x: number; y: number };
-  visible: boolean;
-  selected?: boolean;
-  onClick?: () => void;
-}
+import { UnitProps } from '../../types'; // Importar los tipos de props
 
 const Unit: React.FC<UnitProps> = ({ id, type, visible, selected, onClick }) => {
   if (!visible) return null;

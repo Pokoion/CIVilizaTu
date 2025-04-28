@@ -1,13 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import GameManager from '../../managers/GameManager';
 import Tile2 from './Tile2';
 import Unit from './Unit';
 import '../../styles/Map2.css';
-import { MapState } from '../../managers/MapManager';
-import { Unit as UnitState } from '../../managers/MapManager';
-import { TerrainType, TILE_SIZE } from '../../utils/Constants';
+import { MapState, TerrainType, UnitProps } from '../../types';
 import { useUnitMovement } from './hooks/useUnitMovement';
 import { useGameInit } from './hooks/useGameInit';
+import { useCameraDrag } from './hooks/useCameraDrag';
 
 const gameManager = new GameManager();
 
@@ -20,47 +19,14 @@ const Map2 = () => {
     },
   });
 
-  const [units, setUnits] = useState<UnitState[]>([]);
+  const [units, setUnits] = useState<UnitProps[]>([]);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
 
   // Camera offset state
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
-  const dragging = useRef(false);
-  const lastPos = useRef({ x: 0, y: 0 });
 
   // Camera drag handlers
-  React.useEffect(() => {
-    const onMouseDown = (e: MouseEvent) => {
-      if (e.button === 2) {
-        dragging.current = true;
-        lastPos.current = { x: e.clientX, y: e.clientY };
-      }
-    };
-    const onMouseMove = (e: MouseEvent) => {
-      if (dragging.current) {
-        const dx = e.clientX - lastPos.current.x;
-        const dy = e.clientY - lastPos.current.y;
-        setCameraOffset(prev => ({
-          x: prev.x + dx,
-          y: prev.y + dy,
-        }));
-        lastPos.current = { x: e.clientX, y: e.clientY };
-      }
-    };
-    const onMouseUp = () => {
-      dragging.current = false;
-    };
-    window.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    window.addEventListener('contextmenu', e => e.preventDefault());
-    return () => {
-      window.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      window.removeEventListener('contextmenu', e => e.preventDefault());
-    };
-  }, []);
+  useCameraDrag(setCameraOffset);
 
   // Inicialización del juego
   useGameInit(gameManager, setMapState, setUnits, setCameraOffset);
@@ -109,6 +75,8 @@ const Map2 = () => {
                     type={unit.type}
                     position={unit.position}
                     visible={unit.visible}
+                    movement_points={unit.movement_points}
+                    movement_points_left={unit.movement_points_left}
                     selected={selectedUnitId === unit.id}
                     onClick={() => handleUnitClick(unit.id)}
                   />

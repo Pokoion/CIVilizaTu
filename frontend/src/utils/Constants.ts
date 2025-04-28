@@ -1,3 +1,5 @@
+import { TerrainType } from '../types';
+
 export const TILE_SIZE = 140;
 
 export const MAP_DEFAULT_SIZE = 50;
@@ -9,7 +11,5 @@ export const TILE_TYPES = {
   forest: { color: 'darkgreen', movementCost: 2 },
   desert: { color: 'goldenrod', movementCost: 2 },
 };
-
-export type TerrainType = keyof typeof TILE_TYPES;
 
 export const TERRAIN_TYPES: TerrainType[] = Object.keys(TILE_TYPES) as TerrainType[];

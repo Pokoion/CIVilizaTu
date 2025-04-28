@@ -1,15 +1,14 @@
 import { useCallback } from 'react';
 import { TILE_TYPES } from '../../../utils/Constants';
 import Pathfinding2 from '../../../utils/Pathfinding2';
-import { Unit as UnitState } from '../../../managers/MapManager';
 import GameManager from '../../../managers/GameManager';
-import { MapState } from '../../../managers/MapManager';
+import { MapState, Unit } from '../../../types';
 
 export function useUnitMovement(
   gameManager: GameManager,
   mapState: MapState,
-  units: UnitState[],
-  setUnits: (units: UnitState[]) => void,
+  units: Unit[],
+  setUnits: (units: Unit[]) => void,
   setMapState: (map: MapState) => void,
   setSelectedUnitId: (id: string | null) => void
 ) {

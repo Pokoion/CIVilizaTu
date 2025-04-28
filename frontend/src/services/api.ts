@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { TERRAIN_TYPES, MAP_DEFAULT_SIZE, TerrainType } from '../utils/Constants';
+import { TERRAIN_TYPES, MAP_DEFAULT_SIZE } from '../utils/Constants';
+import { TerrainType } from '../types';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
