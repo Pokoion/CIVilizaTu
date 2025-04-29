@@ -4,13 +4,33 @@ import Pathfinding2 from '../../../utils/Pathfinding2';
 import GameManager from '../../../managers/GameManager';
 import { MapState, Unit } from '../../../types';
 
+export function getVisibleTiles(units: Unit[], mapRows: number, mapCols: number, visionRange = 1) {
+  const visible: boolean[][] = Array.from({ length: mapRows }, () => Array(mapCols).fill(false));
+  units.forEach(unit => {
+    for (let dr = -visionRange; dr <= visionRange; dr++) {
+      for (let dc = -visionRange; dc <= visionRange; dc++) {
+        const nr = unit.position.y + dr;
+        const nc = unit.position.x + dc;
+        if (
+          nr >= 0 && nr < mapRows &&
+          nc >= 0 && nc < mapCols
+        ) {
+          visible[nr][nc] = true;
+        }
+      }
+    }
+  });
+  return visible;
+}
+
 export function useUnitMovement(
   gameManager: GameManager,
   mapState: MapState,
   units: Unit[],
   setUnits: (units: Unit[]) => void,
   setMapState: (map: MapState) => void,
-  setSelectedUnitId: (id: string | null) => void
+  setSelectedUnitId: (id: string | null) => void,
+  setVisibleTiles?: (tiles: boolean[][]) => void // Añade este parámetro si usas visibleTiles en el estado
 ) {
   return useCallback(
     async (row: number, col: number, selectedUnitId: string | null) => {
@@ -71,6 +91,14 @@ export function useUnitMovement(
             setUnits([...gameManager.getMapManager().getUnits()]);
             setMapState({ ...gameManager.getMapManager().getMap() });
 
+            // Calcula los tiles visibles tras cada movimiento
+            if (setVisibleTiles) {
+              const mapRows = mapState.map.tiles.length;
+              const mapCols = mapState.map.tiles[0].length;
+              const visibles = getVisibleTiles(gameManager.getMapManager().getUnits(), mapRows, mapCols, 1); // Ajusta el rango si lo necesitas
+              setVisibleTiles(visibles);
+            }
+
             // eslint-disable-next-line no-await-in-loop
             await new Promise(res => setTimeout(res, 120));
           }
@@ -78,6 +106,6 @@ export function useUnitMovement(
         }
       }
     },
-    [gameManager, mapState, units, setUnits, setMapState, setSelectedUnitId]
+    [gameManager, mapState, units, setUnits, setMapState, setSelectedUnitId, setVisibleTiles]
   );
 }

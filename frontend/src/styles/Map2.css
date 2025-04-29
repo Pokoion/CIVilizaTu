@@ -34,6 +34,16 @@ html, body {
   position: relative; /* Asegura que los elementos hijos se posicionen correctamente */
 }
 
+.fog-fog::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(80, 80, 80, 0.45); /* gris oscuro, 45% opacidad */
+  pointer-events: none;
+  z-index: 2;
+  border-radius: 6px;
+}
+
 .unit {
   position: absolute;
   left: 50%;

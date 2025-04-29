@@ -4,7 +4,7 @@ import Tile2 from './Tile2';
 import Unit from './Unit';
 import '../../styles/Map2.css';
 import { MapState, TerrainType, UnitProps } from '../../types';
-import { useUnitMovement } from './hooks/useUnitMovement';
+import { useUnitMovement, getVisibleTiles } from './hooks/useUnitMovement';
 import { useGameInit } from './hooks/useGameInit';
 import { useCameraDrag } from './hooks/useCameraDrag';
 
@@ -30,6 +30,14 @@ const Map2 = () => {
 
   // Inicialización del juego
   useGameInit(gameManager, setMapState, setUnits, setCameraOffset);
+
+  // Calcular tiles visibles por las unidades del jugador
+  const visibleTiles = getVisibleTiles(
+    units,
+    mapState.map.tiles.length,
+    mapState.map.tiles[0]?.length || 0,
+    1 // Puedes ajustar el rango de visión aquí si lo necesitas
+  );
 
   // Movimiento de unidades
   const handleTileClick = useUnitMovement(
@@ -60,6 +68,17 @@ const Map2 = () => {
             const unit = units.find(
               (u) => u.position.x === colIndex && u.position.y === rowIndex
             );
+
+            // Determinar el estado de niebla para este tile
+            let fogStatus: 'undiscovered' | 'fog' | 'visible';
+            if (!mapState.map.fog_of_war[rowIndex]?.[colIndex]) {
+              fogStatus = 'undiscovered';
+            } else if (!visibleTiles[rowIndex]?.[colIndex]) {
+              fogStatus = 'fog';
+            } else {
+              fogStatus = 'visible';
+            }
+
             return (
               <Tile2
                 key={`${rowIndex}-${colIndex}`}
@@ -67,6 +86,7 @@ const Map2 = () => {
                 col={colIndex}
                 tileType={tileType}
                 isDiscovered={mapState.map.fog_of_war[rowIndex]?.[colIndex] || false}
+                fogStatus={fogStatus}
                 onClick={() => handleTileClick(rowIndex, colIndex, selectedUnitId)}
               >
                 {unit && (

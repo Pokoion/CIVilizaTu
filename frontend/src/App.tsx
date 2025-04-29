@@ -6,7 +6,6 @@ import MainMenu from './components/MainMenu';
 import GameSetup from './components/GameSetup';
 import GameIntro from './components/GameIntro';
 import ProtectedRoute from './components/ProtectedRoute';
-import Map from './components/game/Map';
 import Map2 from './components/game/Map2';
 import './styles/index.css';
 
@@ -38,7 +37,6 @@ const App: React.FC = () => {
         <Route path="/main-menu" element={<ProtectedRoute><MainMenu /></ProtectedRoute> } />
         <Route path="/game-setup" element={<ProtectedRoute><GameSetup /></ProtectedRoute>} />
         <Route path="/game-intro" element={<ProtectedRoute><GameIntro /></ProtectedRoute>} />
-        <Route path="/game" element={<ProtectedRoute><Map /></ProtectedRoute>} />
         <Route path="/game2" element={<ProtectedRoute><Map2 /></ProtectedRoute>} />
       </Routes>
     </Router>

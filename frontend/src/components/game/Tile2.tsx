@@ -2,22 +2,46 @@ import React from 'react';
 import { TileProps } from '../../types';
 import { TILE_TYPES } from '../../utils/Constants';
 
-const Tile: React.FC<TileProps> = ({ row, col, tileType, isDiscovered, onClick, children }) => {
+const Tile2: React.FC<TileProps> = ({
+  row,
+  col,
+  tileType,
+  isDiscovered,
+  fogStatus,
+  onClick,
+  children,
+}) => {
   const tile = TILE_TYPES[tileType];
+
+  let backgroundColor = tile.color;
+  let className = 'map-tile';
+  let showCost = false;
+
+  if (fogStatus === 'undiscovered') {
+    backgroundColor = '#222';
+    className += ' fog-undiscovered';
+  } else if (fogStatus === 'fog') {
+    backgroundColor = tile.color;
+    className += ' fog-fog';
+    showCost = false;
+  } else if (fogStatus === 'visible') {
+    className += ' fog-visible';
+    showCost = true;
+  }
 
   return (
     <div
-      className={`map-tile ${isDiscovered ? '' : 'fog'}`}
+      className={className}
       style={{
-        backgroundColor: isDiscovered ? tile.color : 'black',
+        backgroundColor,
         position: 'relative',
       }}
       onClick={onClick}
     >
-      {isDiscovered && <span className="movement-cost">{tile.movementCost}</span>}
+      {showCost && <span className="movement-cost">{tile.movementCost}</span>}
       {children}
     </div>
   );
 };
 
-export default Tile;
+export default Tile2;

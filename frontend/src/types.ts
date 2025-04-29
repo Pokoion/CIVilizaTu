@@ -7,6 +7,7 @@ export interface Tile {
   col: number;
   tileType: TerrainType;
   isDiscovered: boolean;
+  fogStatus: 'undiscovered' | 'fog' | 'visible';
 }
 
 export interface TileProps extends Tile {
