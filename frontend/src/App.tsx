@@ -37,7 +37,7 @@ const App: React.FC = () => {
         <Route path="/main-menu" element={<ProtectedRoute><MainMenu /></ProtectedRoute> } />
         <Route path="/game-setup" element={<ProtectedRoute><GameSetup /></ProtectedRoute>} />
         <Route path="/game-intro" element={<ProtectedRoute><GameIntro /></ProtectedRoute>} />
-        <Route path="/game2" element={<ProtectedRoute><Map2 /></ProtectedRoute>} />
+        <Route path="/game" element={<ProtectedRoute><Map2 /></ProtectedRoute>} />
       </Routes>
     </Router>
   );

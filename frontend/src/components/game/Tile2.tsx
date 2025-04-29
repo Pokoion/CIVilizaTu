@@ -12,32 +12,28 @@ const Tile2: React.FC<TileProps> = ({
   children,
 }) => {
   const tile = TILE_TYPES[tileType];
-
-  let backgroundColor = tile.color;
-  let className = 'map-tile';
+  let className = `map-tile ${tileType}`;
   let showCost = false;
+  let style: React.CSSProperties = { position: 'relative' };
 
   if (fogStatus === 'undiscovered') {
-    backgroundColor = '#222';
+    style.background = '#222'; // Fondo negro, sin imagen
     className += ' fog-undiscovered';
-  } else if (fogStatus === 'fog') {
-    backgroundColor = tile.color;
-    className += ' fog-fog';
-    showCost = false;
-  } else if (fogStatus === 'visible') {
-    className += ' fog-visible';
-    showCost = true;
+  } else {
+    style.backgroundImage = `url(${tile.image})`;
+    style.backgroundSize = 'cover';
+    style.backgroundPosition = 'center';
+    if (fogStatus === 'fog') {
+      className += ' fog-fog';
+      showCost = false;
+    } else if (fogStatus === 'visible') {
+      className += ' fog-visible';
+      showCost = true;
+    }
   }
 
   return (
-    <div
-      className={className}
-      style={{
-        backgroundColor,
-        position: 'relative',
-      }}
-      onClick={onClick}
-    >
+    <div className={className} style={style} onClick={onClick}>
       {showCost && <span className="movement-cost">{tile.movementCost}</span>}
       {children}
     </div>

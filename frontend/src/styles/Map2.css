@@ -1,44 +1,42 @@
 html, body {
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Elimina el scroll */
+  overflow: hidden;
   width: 100%;
   height: 100%;
+  background-color: #222;
 }
 
 .map-wrapper {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-  
+
 .map-grid {
   display: grid;
-  grid-template-columns: repeat(50, 140px);
-  grid-template-rows: repeat(50, 140px);
-  transform: rotateX(60deg) rotateZ(45deg);
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) rotateX(60deg) rotateZ(45deg); /* Centra el mapa */
+  transform: translate(-50%, -50%) rotateX(60deg) rotateZ(45deg);
   overflow: hidden;
 }
 
 .map-tile {
   width: 140px;
   height: 140px;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(220,220,220,0.3);
   box-sizing: border-box;
-  position: relative; /* Asegura que los elementos hijos se posicionen correctamente */
+  position: relative;
 }
 
 .fog-fog::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(80, 80, 80, 0.45); /* gris oscuro, 45% opacidad */
+  background: rgba(0, 0, 0, 0.637);
   pointer-events: none;
   z-index: 2;
   border-radius: 6px;
@@ -47,7 +45,7 @@ html, body {
 .unit {
   position: absolute;
   left: 50%;
-  bottom: 50px; /* Ajusta este valor hasta que el círculo esté visualmente en el suelo del tile */
+  bottom: 50px;
   width: 30px;
   height: 30px;
   transform: translateX(-50%);
