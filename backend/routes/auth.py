@@ -1,3 +1,4 @@
+import firebase_admin
 from flask import Blueprint, request, jsonify, redirect, url_for
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from firebase_admin import auth as firebase_auth, credentials, initialize_app
@@ -8,9 +9,9 @@ from datetime import datetime
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate("path/to/your/firebase-service-account.json")
-initialize_app(cred)
-
+if not firebase_admin._apps:
+    cred = credentials.Certificate("firebase-service-account.json")
+    initialize_app(cred)
 
 # POST /api/auth/register
 @auth_bp.route('/register', methods=['POST'])
