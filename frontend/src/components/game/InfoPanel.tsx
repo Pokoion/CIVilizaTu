@@ -22,21 +22,21 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ selectedUnit, selectedTile }) => 
     if (!selectedTile.isDiscovered) {
       return (
         <div>
-          <h3>Tile</h3>
-          <p>Sin descubrir</p>
+          <h3>Lurraldea</h3>
+          <p>Ezagutu gabea</p>
         </div>
       );
     }
     return (
       <div>
-        <h3>Tile</h3>
-        <p>Tipo: {selectedTile.type}</p>
-        <p>Costo de movimiento: {TILE_TYPES[selectedTile.type].movementCost}</p>
+        <h3>Lurraldea</h3>
+        <p>Mota: {selectedTile.type}</p>
+        <p>Mugimendu kostua: {TILE_TYPES[selectedTile.type].movementCost}</p>
         {/* Más info del tile */}
       </div>
     );
   }
-  return <div>Haz click en una unidad o tile para ver información.</div>;
+  return <div>Egin ezazu klik unitate edo lurralde batean informazioa ikusteko.</div>;
 };
 
 export default InfoPanel;

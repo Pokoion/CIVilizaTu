@@ -3,24 +3,21 @@ import Map2 from './Map2';
 import InfoPanel from './InfoPanel';
 import { UnitProps, TerrainType } from '../../types';
 import '../../styles/GameUI.css';
-import TurnManager from '../../managers/TurnManager';
-import GameManager from '../../managers/GameManager';
-
-const turnManager = new TurnManager();
-const gameManager = new GameManager();
+import { useGame } from '../../context/GameContext';
 
 const GameUI: React.FC = () => {
     const [selectedUnit, setSelectedUnit] = useState<UnitProps | null>(null);
     const [selectedTile, setSelectedTile] = useState<{ row: number; col: number; type: TerrainType } | null>(null);
-    const [turn, setTurn] = useState(1);
-
-    const endTurn = () => {
-        turnManager.nextTurn(gameManager);
-        setTurn(prev => prev + 1);
-        // Aquí podrías actualizar el estado de unidades si lo necesitas
-    };
+    const { message, setMessage } = useGame();
+    const { turn, endTurn, currentPlayer } = useGame();
 
     return (
+        <>
+        {message && (
+            <div className="game-message" onClick={() => setMessage(null)}>
+                {message}
+            </div>
+        )}
         <div className="game-ui">
             <div className="ui-top">
                 <div className="ui-top-left">
@@ -32,7 +29,7 @@ const GameUI: React.FC = () => {
                     <span>X: 100</span>
                 </div>
                 <div className="ui-top-right">
-                    <span>Jokalaria: {turnManager.getCurrentPlayer() === 'player' ? 'Player' : 'AI'}</span>
+                    <span>Jokalaria: {currentPlayer === 'player' ? 'Player' : 'AI'}</span>
                 </div>
             </div>
             <div className="ui-main">
@@ -51,6 +48,7 @@ const GameUI: React.FC = () => {
                 <button>Menú</button>
             </div>
         </div>
+        </>
     );
 };
 

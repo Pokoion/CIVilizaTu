@@ -3,10 +3,11 @@ import GameManager from '../../managers/GameManager';
 import Tile2 from './Tile2';
 import Unit from './Unit';
 import '../../styles/Map2.css';
-import { MapState, TerrainType, UnitProps } from '../../types';
+import { TerrainType, UnitProps } from '../../types';
 import { useUnitMovement } from './hooks/useUnitMovement';
 import { useGameInit } from './hooks/useGameInit';
 import { useCameraDrag } from './hooks/useCameraDrag';
+import { useGame } from '../../context/GameContext'; // <-- Nuevo
 
 const gameManager = new GameManager();
 
@@ -16,16 +17,7 @@ type Map2Props = {
 };
 
 const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile }) => {
-  const [mapState, setMapState] = useState<MapState>({
-    map: {
-      size: { width: 0, height: 0 },
-      tiles: [] as TerrainType[][],
-      fog_of_war: [],
-    },
-  });
-
-  const [units, setUnits] = useState<UnitProps[]>([]);
-  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
+  const { mapState, setMapState, units, setUnits, selectedUnitId, setSelectedUnitId, setMessage } = useGame();
 
   // Camera offset state
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
@@ -46,15 +38,25 @@ const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile }) => {
   );
 
   // Movimiento de unidades (mantén la lógica original)
-  const handleTileClick = (rowIndex: number, colIndex: number, selectedUnitId: string | null) => {
+  const handleTileClick = async (rowIndex: number, colIndex: number, selectedUnitId: string | null) => {
     setSelectedTile({
       row: rowIndex,
       col: colIndex,
       type: mapState.map.tiles[rowIndex][colIndex],
       isDiscovered: !!mapState.map.fog_of_war[rowIndex]?.[colIndex],
     });
-    setSelectedUnit(null); // Deselecciona unidad en el InfoPanel
-    moveUnit(rowIndex, colIndex, selectedUnitId);
+    setSelectedUnit(null);
+  
+    // Solo intenta mover si hay unidad seleccionada
+    if (!selectedUnitId) {
+      return; // No mostrar mensaje, solo seleccionar tile
+    }
+  
+    const result = await moveUnit(rowIndex, colIndex, selectedUnitId);
+    if (result !== true) {
+      setMessage(result); // El mensaje será el string devuelto
+      setTimeout(() => setMessage(null), 2000);
+    }
   };
 
   const handleUnitClick = (unitId: string) => {

@@ -30,22 +30,23 @@ export function useUnitMovement(
   setUnits: (units: Unit[]) => void,
   setMapState: (map: MapState) => void,
   setSelectedUnitId: (id: string | null) => void,
-  setVisibleTiles?: (tiles: boolean[][]) => void // Añade este parámetro si usas visibleTiles en el estado
+  setVisibleTiles?: (tiles: boolean[][]) => void
 ) {
   return useCallback(
     async (row: number, col: number, selectedUnitId: string | null) => {
-      if (
-        selectedUnitId &&
-        mapState.map.fog_of_war[row]?.[col]
-      ) {
+      // Nuevo: comprobar si el tile está descubierto
+      if (!mapState.map.fog_of_war[row]?.[col]) {
+        return "Ezin zara lurralde ezkutatura mugitu";
+      }
+
+      if (selectedUnitId) {
         const unit = units.find(u => u.id === selectedUnitId);
-        if (!unit) return;
+        if (!unit) return "Unitatea ez da aurkitu";
 
         const destTerrain = mapState.map.tiles[row][col];
         const destMoveCost = TILE_TYPES[destTerrain].movementCost;
         if (destMoveCost === Infinity) {
-          console.warn('No puedes mover a un tile inaccesible.');
-          return;
+          return "Ezin zara lurralde iritsezin batera mugitu";
         }
 
         const path = Pathfinding2.findPath(
@@ -55,12 +56,16 @@ export function useUnitMovement(
           unit.movement_points_left,
           mapState.map.fog_of_war
         );
-
+        
+        // Si el path no llega al destino, probablemente es por falta de puntos
         if (
-          path.length > 1 &&
-          path[path.length - 1].row === row &&
-          path[path.length - 1].col === col
+          !path ||
+          path.length <= 1 ||
+          path[path.length - 1].row !== row ||
+          path[path.length - 1].col !== col
         ) {
+          return "Unitateak ez ditu beharrezko mugimendu puntuak";
+        } {
           let currentUnit = { ...unit };
           let movementLeft = currentUnit.movement_points_left;
 
@@ -70,11 +75,12 @@ export function useUnitMovement(
             const moveCost = TILE_TYPES[terrain].movementCost;
 
             if (moveCost === Infinity) {
-              console.warn('No puedes mover a un tile inaccesible.');
-              break;
+              return "Ezin zara lurralde iritsezin batera mugitu";
             }
 
-            if (movementLeft < moveCost) break;
+            if (movementLeft < moveCost) {
+              return "Unitateak ez ditu beharrezko mugimendu puntuak";
+            }
 
             movementLeft -= moveCost;
             currentUnit.position = { x: step.col, y: step.row };
@@ -84,27 +90,24 @@ export function useUnitMovement(
             const updatedUnit = gameManager.getMapManager().getUnits().find(u => u.id === selectedUnitId);
             if (updatedUnit) {
               updatedUnit.movement_points_left = currentUnit.movement_points_left;
-              console.log(
-                `Unidad ${updatedUnit.id} (${updatedUnit.type}) - Movimiento total: ${updatedUnit.movement_points}, Restante: ${updatedUnit.movement_points_left}`
-              );
             }
             setUnits([...gameManager.getMapManager().getUnits()]);
             setMapState({ ...gameManager.getMapManager().getMap() });
 
-            // Calcula los tiles visibles tras cada movimiento
             if (setVisibleTiles) {
               const mapRows = mapState.map.tiles.length;
               const mapCols = mapState.map.tiles[0].length;
-              const visibles = getVisibleTiles(gameManager.getMapManager().getUnits(), mapRows, mapCols, 1); // Ajusta el rango si lo necesitas
+              const visibles = getVisibleTiles(gameManager.getMapManager().getUnits(), mapRows, mapCols, 1);
               setVisibleTiles(visibles);
             }
 
-            // eslint-disable-next-line no-await-in-loop
             await new Promise(res => setTimeout(res, 120));
           }
           setSelectedUnitId(null);
+          return true;
         }
       }
+      return "Mugimendua ez da balioazkoa";
     },
     [gameManager, mapState, units, setUnits, setMapState, setSelectedUnitId, setVisibleTiles]
   );

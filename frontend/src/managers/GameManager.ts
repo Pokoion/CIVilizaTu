@@ -1,10 +1,9 @@
 import MapManager from './MapManager';
-import TurnManager from './TurnManager';
+import { UnitProps } from '../types';
 import { loadMap } from '../services/api';
 
 class GameManager {
   private mapManager: MapManager;
-  private turnManager = new TurnManager();
 
   constructor() {
     // Inicializa con un mapa vacío temporalmente; se sobrescribirá en initializeGame
@@ -46,6 +45,13 @@ class GameManager {
     } catch (error) {
       console.error('Error loading map from API:', error);
     }
+  }
+
+  reloadUnitsMovement(units: UnitProps[]): UnitProps[] {
+    return units.map(unit => ({
+      ...unit,
+      movement_points_left: unit.movement_points,
+    }));
   }
 
   public getMapManager(): MapManager {
