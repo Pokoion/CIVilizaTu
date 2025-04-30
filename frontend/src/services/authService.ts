@@ -1,6 +1,5 @@
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import '../config/firebase-config'; // Importa la configuración de Firebase
-import axios from 'axios';
 
 const auth = getAuth();
 

@@ -1,8 +1,10 @@
 import MapManager from './MapManager';
+import TurnManager from './TurnManager';
 import { loadMap } from '../services/api';
 
 class GameManager {
   private mapManager: MapManager;
+  private turnManager = new TurnManager();
 
   constructor() {
     // Inicializa con un mapa vacío temporalmente; se sobrescribirá en initializeGame

@@ -32,16 +32,6 @@ html, body {
   position: relative;
 }
 
-.fog-fog::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.637);
-  pointer-events: none;
-  z-index: 2;
-  border-radius: 6px;
-}
-
 .unit {
   position: absolute;
   left: 50%;

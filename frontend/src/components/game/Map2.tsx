@@ -4,13 +4,18 @@ import Tile2 from './Tile2';
 import Unit from './Unit';
 import '../../styles/Map2.css';
 import { MapState, TerrainType, UnitProps } from '../../types';
-import { useUnitMovement, getVisibleTiles } from './hooks/useUnitMovement';
+import { useUnitMovement } from './hooks/useUnitMovement';
 import { useGameInit } from './hooks/useGameInit';
 import { useCameraDrag } from './hooks/useCameraDrag';
 
 const gameManager = new GameManager();
 
-const Map2 = () => {
+type Map2Props = {
+  setSelectedUnit: (unit: UnitProps | null) => void;
+  setSelectedTile: (tile: { row: number; col: number; type: TerrainType; isDiscovered?: boolean } | null) => void;
+};
+
+const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile }) => {
   const [mapState, setMapState] = useState<MapState>({
     map: {
       size: { width: 0, height: 0 },
@@ -31,16 +36,7 @@ const Map2 = () => {
   // Inicialización del juego
   useGameInit(gameManager, setMapState, setUnits, setCameraOffset);
 
-  // Calcular tiles visibles por las unidades del jugador
-  const visibleTiles = getVisibleTiles(
-    units,
-    mapState.map.tiles.length,
-    mapState.map.tiles[0]?.length || 0,
-    1 // Puedes ajustar el rango de visión aquí si lo necesitas
-  );
-
-  // Movimiento de unidades
-  const handleTileClick = useUnitMovement(
+  const moveUnit = useUnitMovement(
     gameManager,
     mapState,
     units,
@@ -49,7 +45,22 @@ const Map2 = () => {
     setSelectedUnitId
   );
 
+  // Movimiento de unidades (mantén la lógica original)
+  const handleTileClick = (rowIndex: number, colIndex: number, selectedUnitId: string | null) => {
+    setSelectedTile({
+      row: rowIndex,
+      col: colIndex,
+      type: mapState.map.tiles[rowIndex][colIndex],
+      isDiscovered: !!mapState.map.fog_of_war[rowIndex]?.[colIndex],
+    });
+    setSelectedUnit(null); // Deselecciona unidad en el InfoPanel
+    moveUnit(rowIndex, colIndex, selectedUnitId);
+  };
+
   const handleUnitClick = (unitId: string) => {
+    const unit = units.find(u => u.id === unitId) || null;
+    setSelectedUnit(unit); // Selecciona la unidad para el InfoPanel
+    setSelectedTile(null); // Deselecciona tile en el InfoPanel
     setSelectedUnitId(prev => prev === unitId ? null : unitId);
   };
 
@@ -69,12 +80,9 @@ const Map2 = () => {
               (u) => u.position.x === colIndex && u.position.y === rowIndex
             );
 
-            // Determinar el estado de niebla para este tile
-            let fogStatus: 'undiscovered' | 'fog' | 'visible';
+            let fogStatus: 'undiscovered' | 'visible';
             if (!mapState.map.fog_of_war[rowIndex]?.[colIndex]) {
               fogStatus = 'undiscovered';
-            } else if (!visibleTiles[rowIndex]?.[colIndex]) {
-              fogStatus = 'fog';
             } else {
               fogStatus = 'visible';
             }

@@ -6,7 +6,7 @@ import MainMenu from './components/MainMenu';
 import GameSetup from './components/GameSetup';
 import GameIntro from './components/GameIntro';
 import ProtectedRoute from './components/ProtectedRoute';
-import Map2 from './components/game/Map2';
+import GameUI from './components/game/GameUI';
 import './styles/index.css';
 
 const Home: React.FC = () => (
@@ -37,7 +37,7 @@ const App: React.FC = () => {
         <Route path="/main-menu" element={<ProtectedRoute><MainMenu /></ProtectedRoute> } />
         <Route path="/game-setup" element={<ProtectedRoute><GameSetup /></ProtectedRoute>} />
         <Route path="/game-intro" element={<ProtectedRoute><GameIntro /></ProtectedRoute>} />
-        <Route path="/game" element={<ProtectedRoute><Map2 /></ProtectedRoute>} />
+        <Route path="/game" element={<ProtectedRoute><GameUI /></ProtectedRoute>} />
       </Routes>
     </Router>
   );

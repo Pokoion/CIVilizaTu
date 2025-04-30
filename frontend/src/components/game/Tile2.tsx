@@ -23,13 +23,8 @@ const Tile2: React.FC<TileProps> = ({
     style.backgroundImage = `url(${tile.image})`;
     style.backgroundSize = 'cover';
     style.backgroundPosition = 'center';
-    if (fogStatus === 'fog') {
-      className += ' fog-fog';
-      showCost = false;
-    } else if (fogStatus === 'visible') {
-      className += ' fog-visible';
-      showCost = true;
-    }
+    className += ' fog-visible';
+    showCost = true;
   }
 
   return (
