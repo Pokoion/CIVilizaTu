@@ -34,13 +34,19 @@ class GameManager {
         id: unit.id,
         type: unit.type,
         position: unit.position,
-        visible: true, // Inicialmente todas las unidades son visibles
         movement_points: unit.movement_points,
         movement_points_left: unit.movement_points_left,
       }));
 
+      const cities = apiResponse.cities.map((city: any) => ({
+        id: city.id,
+        name: city.name,
+        position: city.position,
+      }));
+
       this.mapManager.setMap(mapState); // Pasar el objeto MapState al MapManager
       this.mapManager.setUnits(units); // Establecer las unidades
+      this.mapManager.setCities(cities); // Establecer las unidades
       console.log('Game initialized with map from API.');
     } catch (error) {
       console.error('Error loading map from API:', error);

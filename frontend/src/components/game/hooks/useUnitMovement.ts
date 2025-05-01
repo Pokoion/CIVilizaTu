@@ -43,6 +43,10 @@ export function useUnitMovement(
         const unit = units.find(u => u.id === selectedUnitId);
         if (!unit) return "Unitatea ez da aurkitu";
 
+        if (unit.position.x === col && unit.position.y === row) {
+          return "Unitatea dagoen tilean zaude jada";
+        }
+
         const destTerrain = mapState.map.tiles[row][col];
         const destMoveCost = TILE_TYPES[destTerrain].movementCost;
         if (destMoveCost === Infinity) {
@@ -103,11 +107,10 @@ export function useUnitMovement(
 
             await new Promise(res => setTimeout(res, 120));
           }
-          setSelectedUnitId(null);
           return true;
         }
       }
-      return "Mugimendua ez da balioazkoa";
+      return "Mugimendua ez da baliozkoa";
     },
     [gameManager, mapState, units, setUnits, setMapState, setSelectedUnitId, setVisibleTiles]
   );

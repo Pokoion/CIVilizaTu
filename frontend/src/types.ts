@@ -19,12 +19,22 @@ export interface Unit {
   id: string;
   type: string;
   position: { x: number; y: number };
-  visible: boolean;
   movement_points: number;
   movement_points_left: number;
 }
 
 export interface UnitProps extends Unit {
+  selected?: boolean;
+  onClick?: () => void;
+}
+
+export interface City {
+  id: string;
+  name: string;
+  position: { x: number; y: number };
+}
+
+export interface CityProps extends City {
   selected?: boolean;
   onClick?: () => void;
 }

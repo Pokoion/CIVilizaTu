@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { MapState, UnitProps } from '../types';
+import { MapState, UnitProps, CityProps } from '../types';
 import TurnManager from '../managers/TurnManager';
 import GameManager from '../managers/GameManager';
 
@@ -10,6 +10,8 @@ type GameContextType = {
   setUnits: React.Dispatch<React.SetStateAction<UnitProps[]>>;
   selectedUnitId: string | null;
   setSelectedUnitId: React.Dispatch<React.SetStateAction<string | null>>;
+  cities: CityProps[];
+  setCities: React.Dispatch<React.SetStateAction<CityProps[]>>;
   turn: number;
   endTurn: () => void;
   currentPlayer: string;
@@ -27,6 +29,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     map: { size: { width: 0, height: 0 }, tiles: [], fog_of_war: [] },
   });
   const [units, setUnits] = useState<UnitProps[]>([]);
+  const [cities, setCities] = useState<CityProps[]>([]);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [turn, setTurn] = useState(1);
   const [message, setMessage] = useState<string | null>(null);
@@ -44,7 +47,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <GameContext.Provider value={{
       mapState, setMapState, units, setUnits, selectedUnitId, setSelectedUnitId,
-      turn, endTurn, currentPlayer, message, setMessage,
+      cities, setCities, turn, endTurn, currentPlayer, message, setMessage,
     }}>
       {children}
     </GameContext.Provider>

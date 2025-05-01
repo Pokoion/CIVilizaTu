@@ -30,24 +30,5 @@ html, body {
   border: 1px solid rgba(220,220,220,0.3);
   box-sizing: border-box;
   position: relative;
-}
-
-.unit {
-  position: absolute;
-  left: 50%;
-  bottom: 50px;
-  width: 30px;
-  height: 30px;
-  transform: translateX(-50%);
-  background-color: red;
-  border-radius: 50%;
-  z-index: 10;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-.unit.selected {
-  box-shadow: 0 0 0 4px yellow;
-  outline: 2px solid orange;
+  overflow: visible;
 }

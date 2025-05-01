@@ -1,8 +1,9 @@
-import { MapState, Unit } from '../types';
+import { City, MapState, Unit } from '../types';
 
 class MapManager {
   private map: MapState;
   private units: Unit[] = [];
+  private cities: City[] = [];
 
   constructor(map: MapState) {
     this.map = map;
@@ -27,6 +28,16 @@ class MapManager {
   // Devuelve las unidades actuales
   public getUnits(): Unit[] {
     return this.units;
+  }
+
+  // Establece las ciudades en el mapa
+  public setCities(cities: City[]): void {
+    this.cities = cities;
+  }
+
+  // Devuelve las ciudades actuales
+  public getCities(): City[] {
+    return this.cities;
   }
 
   // Actualiza la niebla de guerra en función de las posiciones de las unidades

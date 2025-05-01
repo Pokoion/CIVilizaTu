@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { TERRAIN_TYPES, MAP_DEFAULT_SIZE } from '../utils/Constants';
-import { TerrainType } from '../types';
+import { TerrainType, Unit, City, MapState } from '../types';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -32,18 +32,9 @@ export const fetchUnits = async (): Promise<{ name: string; attack: number; defe
 };
 
 export const loadMap = async (): Promise<{
-  map: {
-    size: { width: number; height: number };
-    tiles: TerrainType[][];
-    fog_of_war: boolean[][];
-  };
-  units: {
-    id: string;
-    type: string;
-    position: { x: number; y: number };
-    movement_points: number;
-    movement_points_left: number;
-  }[];
+  map: MapState['map'];
+  units: Unit[];
+  cities: City[];
 }> => {
   return new Promise(async (resolve) => {
     const width = MAP_DEFAULT_SIZE;
@@ -77,18 +68,31 @@ export const loadMap = async (): Promise<{
         id: "unit1",
         type: "settler",
         position: { x: 18, y: 18 },
-        movement_points: 10,
-        movement_points_left: 10,
+        movement_points: 5,
+        movement_points_left: 5,
       },
       {
         id: "unit2",
         type: "settler",
         position: { x: 10, y: 18 },
-        movement_points: 10,
-        movement_points_left: 10,
+        movement_points: 5,
+        movement_points_left: 5,
       }
     ];
-    resolve({ map, units });
+
+    const cities = [
+      {
+        id: "city1",
+        name: "Roma",
+        position: { x: 11, y: 18 },
+      },
+      {
+        id: "city2",
+        name: "Atenas",
+        position: { x: 9, y: 18 },
+      }
+    ];
+    resolve({ map, units, cities });
   });
 };
 
