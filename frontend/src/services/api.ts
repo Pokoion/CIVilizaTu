@@ -85,11 +85,13 @@ export const loadMap = async (): Promise<{
         id: "city1",
         name: "Roma",
         position: { x: 11, y: 18 },
+        population: 100,
       },
       {
         id: "city2",
         name: "Atenas",
         position: { x: 9, y: 18 },
+        population: 50,
       }
     ];
     resolve({ map, units, cities });

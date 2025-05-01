@@ -32,6 +32,9 @@ export interface City {
   id: string;
   name: string;
   position: { x: number; y: number };
+  population: number;
+  onClick?: () => void;
+  onEnter?: () => void;
 }
 
 export interface CityProps extends City {

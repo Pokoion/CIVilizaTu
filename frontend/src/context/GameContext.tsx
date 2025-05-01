@@ -12,6 +12,8 @@ type GameContextType = {
   setSelectedUnitId: React.Dispatch<React.SetStateAction<string | null>>;
   cities: CityProps[];
   setCities: React.Dispatch<React.SetStateAction<CityProps[]>>;
+  selectedCity: CityProps | null; 
+  setSelectedCity: React.Dispatch<React.SetStateAction<CityProps | null>>;
   turn: number;
   endTurn: () => void;
   currentPlayer: string;
@@ -31,6 +33,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [units, setUnits] = useState<UnitProps[]>([]);
   const [cities, setCities] = useState<CityProps[]>([]);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
+  const [selectedCity, setSelectedCity] = useState<CityProps | null>(null);
   const [turn, setTurn] = useState(1);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -47,7 +50,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <GameContext.Provider value={{
       mapState, setMapState, units, setUnits, selectedUnitId, setSelectedUnitId,
-      cities, setCities, turn, endTurn, currentPlayer, message, setMessage,
+      cities, setCities, selectedCity, setSelectedCity, // Cambia esto
+      turn, endTurn, currentPlayer, message, setMessage,
     }}>
       {children}
     </GameContext.Provider>

@@ -42,6 +42,7 @@ class GameManager {
         id: city.id,
         name: city.name,
         position: city.position,
+        population: city.population,
       }));
 
       this.mapManager.setMap(mapState); // Pasar el objeto MapState al MapManager

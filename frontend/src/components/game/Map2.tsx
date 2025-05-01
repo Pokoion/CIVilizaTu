@@ -4,7 +4,7 @@ import Tile2 from './Tile2';
 import Unit from './Unit';
 import City from './City';
 import '../../styles/Map2.css';
-import { TerrainType, UnitProps } from '../../types';
+import { TerrainType, UnitProps, CityProps } from '../../types';
 import { useUnitMovement } from './hooks/useUnitMovement';
 import { useGameInit } from './hooks/useGameInit';
 import { useCameraDrag } from './hooks/useCameraDrag';
@@ -18,7 +18,7 @@ type Map2Props = {
 };
 
 const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile }) => {
-  const { mapState, setMapState, units, setUnits, cities, setCities, selectedUnitId, setSelectedUnitId, setMessage } = useGame();
+  const { mapState, setMapState, units, setUnits, cities, setCities, setSelectedCity, selectedUnitId, setSelectedUnitId, setMessage } = useGame();
 
   // Camera offset state
   const [cameraOffset, setCameraOffset] = useState({ x: 0, y: 0 });
@@ -46,24 +46,32 @@ const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile }) => {
       isDiscovered: !!mapState.map.fog_of_war[rowIndex]?.[colIndex],
     });
     setSelectedUnit(null);
+    setSelectedCity(null);
   
     // Solo intenta mover si hay unidad seleccionada
     if (!selectedUnitId) {
-      return; // No mostrar mensaje, solo seleccionar tile
+      return;
     }
   
     const result = await moveUnit(rowIndex, colIndex, selectedUnitId);
     if (result !== true) {
-      setMessage(result); // El mensaje será el string devuelto
+      setMessage(result);
       setTimeout(() => setMessage(null), 2000);
     }
   };
 
   const handleUnitClick = (unitId: string) => {
     const unit = units.find(u => u.id === unitId) || null;
-    setSelectedUnit(unit); // Selecciona la unidad para el InfoPanel
-    setSelectedTile(null); // Deselecciona tile en el InfoPanel
+    setSelectedUnit(unit);
+    setSelectedTile(null);
     setSelectedUnitId(prev => prev === unitId ? null : unitId);
+    setSelectedCity(null); // <-- Añade esto
+  };
+
+  const handleCityClick = (city: CityProps) => {
+    setSelectedCity(city);      // Selecciona la ciudad globalmente
+    setSelectedUnit(null);      // Deselecciona unidad
+    setSelectedTile(null);      // Deselecciona tile
   };
 
   return (
@@ -102,14 +110,15 @@ const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile }) => {
                 fogStatus={fogStatus}
                 onClick={() => handleTileClick(rowIndex, colIndex, selectedUnitId)}
               >
-              {city && (
-                <City
-                  id={city.id}
-                  name={city.name}
-                  position={city.position}
-                  onClick={() => {/* handler si lo necesitas */}}
-                />
-              )}
+                {city && (
+                  <City
+                    id={city.id}
+                    name={city.name}
+                    position={city.position}
+                    population={city.population}
+                    onClick={() => handleCityClick(city)}
+                  />
+                )}
                 {unit && (
                   <Unit
                     id={unit.id}

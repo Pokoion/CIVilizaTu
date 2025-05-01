@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import Map2 from './Map2';
 import InfoPanel from './InfoPanel';
-import { UnitProps, TerrainType } from '../../types';
+import CityView from './CityView';
+import { UnitProps, TerrainType, CityProps } from '../../types';
 import '../../styles/GameUI.css';
 import { useGame } from '../../context/GameContext';
 
 const GameUI: React.FC = () => {
     const [selectedUnit, setSelectedUnit] = useState<UnitProps | null>(null);
     const [selectedTile, setSelectedTile] = useState<{ row: number; col: number; type: TerrainType } | null>(null);
-    const { message, setMessage } = useGame();
-    const { turn, endTurn, currentPlayer } = useGame();
+    const [cityViewCity, setCityViewCity] = useState<CityProps | null>(null);
+
+    const { 
+        message, setMessage, 
+        turn, endTurn, currentPlayer, 
+        selectedCity, setSelectedCity 
+    } = useGame();
 
     return (
         <>
@@ -40,7 +46,15 @@ const GameUI: React.FC = () => {
                     <Map2 setSelectedUnit={setSelectedUnit} setSelectedTile={setSelectedTile} />
                 </div>
                 <div className="ui-right">
-                    <InfoPanel selectedUnit={selectedUnit} selectedTile={selectedTile} />
+                <InfoPanel
+                    selectedUnit={selectedUnit}
+                    selectedTile={selectedTile}
+                    selectedCity={selectedCity}
+                    onEnterCity={city => setCityViewCity(city)}
+                />
+                {cityViewCity && (
+                    <CityView city={cityViewCity} onClose={() => setCityViewCity(null)} />
+                )}
                 </div>
             </div>
             <div className="ui-bottom">

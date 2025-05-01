@@ -1,0 +1,55 @@
+.city-view-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.city-view-content {
+    background: linear-gradient(135deg, #f8fafc 60%, #e2e8f0 100%);
+    padding: 3rem 4rem 2.5rem 4rem;
+    border-radius: 2rem;
+    min-width: 700px;
+    min-height: 480px;
+    max-width: 95vw;
+    max-height: 85vh;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.25), 0 2px 8px rgba(0,0,0,0.10);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+    overflow: auto;
+}
+
+.city-view-content h2 {
+    margin-top: 0;
+    font-size: 2.5rem;
+    color: #2d3748;
+    letter-spacing: 1px;
+}
+
+.city-view-content p {
+    font-size: 1.3rem;
+    color: #374151;
+    margin: 1.2rem 0 0.8rem 0;
+}
+
+.city-view-content button {
+    margin-top: 2rem;
+    padding: 0.8rem 2.2rem;
+    font-size: 1.1rem;
+    background: #3182ce;
+    color: #fff;
+    border: none;
+    border-radius: 0.7rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(49,130,206,0.10);
+    transition: background 0.2s;
+}
+.city-view-content button:hover {
+    background: #2563eb;
+}
