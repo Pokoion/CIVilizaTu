@@ -6,19 +6,16 @@ const MainMenu: React.FC = () => {
   const navigate = useNavigate();
 
   const handleNewGame = () => {
-    navigate('/game-setup'); // Navigate to the game setup screen
+    navigate('/game-setup');
   };
 
   const handleLoadGame = () => {
     alert('Partida kargatzen.');
   };
 
-  const handleSettings = () => {
-    alert('Ezarpenak ireki dira.');
-  };
-
   const handleExit = () => {
-    alert('Jokotik irteten.');
+    localStorage.removeItem('jwt_token');
+    navigate('/login');
   };
 
   return (
@@ -26,7 +23,6 @@ const MainMenu: React.FC = () => {
       <h1>Menu Nagusia</h1>
       <button onClick={handleNewGame}>Partida Berria</button>
       <button onClick={handleLoadGame}>Partida Kargatu</button>
-      <button onClick={handleSettings}>Ezarpenak</button>
       <button onClick={handleExit}>Irten</button>
     </div>
   );

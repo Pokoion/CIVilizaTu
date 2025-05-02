@@ -1,40 +1,54 @@
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import '../config/firebase-config'; // Importa la configuración de Firebase
+import axios from 'axios';
 
+const url = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const auth = getAuth();
 
 export const loginUser = async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
   try {
-    await signInWithEmailAndPassword(auth, email, password);
-    return { success: true, message: 'Saioa hasi da.' };
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    const idToken = await user.getIdToken();
+
+    const response = await axios.post(`${url}/api/auth/login`, {
+      email: user.email,
+      id_token: idToken,
+    });
+    if (response.status === 200) {
+      localStorage.setItem('jwt_token', response.data.token);
+      return { success: true, message: 'Saioa hasi da.' };
+    } else {
+      return { success: false, message: 'Errorea saioa hastean.' };
+    }
   } catch (error: any) {
-    const errorMessage = handleFirebaseError(error.code || 'unknown');
-    return { success: false, message: errorMessage };
+    return { success: false, message: handleFirebaseError(error.code || 'unknown') };
   }
 };
 
 export const registerUser = async (email: string, password: string): Promise<{ success: boolean; message: string }> => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    console.log(userCredential); // Log the user credential for debugging
-    /*
-    const response = await axios.post(`${process.env.REACT_APP_API_URL}/register`, {
+    const user = userCredential.user;
+    const idToken = await user.getIdToken();
+
+    const response = await axios.post(`${url}/api/auth/register`, {
       username: email.split('@')[0],
       email: user.email,
-      uid: user.uid,
+      id_token: idToken,
     });
-    */
-    const response = {status: 200}; // Mock response for testing
 
-    if (response.status === 200) {
-      return { success: true, message: 'Erregistratuta.' };
+    if (response.status === 201) {
+      return { success: true, message: response.data.message || 'Erregistratuta.' };
     } else {
+      await user.delete();
       return { success: false, message: 'Errorea erregistratzean.' };
     }
-
   } catch (error: any) {
-    const errorMessage = handleFirebaseError(error.code || 'unknown');
-    return { success: false, message: errorMessage };
+    if (auth.currentUser) {
+      await auth.currentUser.delete();
+    }
+    return { success: false, message: handleFirebaseError(error.code || 'unknown') };
   }
 };
 
