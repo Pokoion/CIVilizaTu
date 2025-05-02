@@ -2,7 +2,6 @@ import firebase_admin
 from flask import Blueprint, request, jsonify, redirect, url_for
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from firebase_admin import auth as firebase_auth, credentials, initialize_app
-from flask_dance.contrib.google import make_google_blueprint, google
 from models.schemas import Erabiltzaile
 from datetime import datetime
 
@@ -45,6 +44,7 @@ def register():
     except firebase_auth.InvalidIdTokenError:
         return jsonify({"error": "ID token baliogabea da"}), 401
     except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 500
 
 # POST /api/auth/login
@@ -68,7 +68,7 @@ def login():
 
         # Generate JWT for session management
         token = create_access_token(identity=str(user.id))
-        return jsonify({"token": token, "user_id": str(user.id)})
+        return jsonify({"token": token, "user_id": str(user.id)}), 200
     except firebase_auth.InvalidIdTokenError:
         return jsonify({"error": "ID token baliogabea da"}), 401
     except Exception as e:

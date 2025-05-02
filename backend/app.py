@@ -17,20 +17,15 @@ app = Flask(__name__)
 CORS(app)
 
 # MongoDB configuration
+mongo_uri = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/civilizatu')
 app.config['MONGODB_SETTINGS'] = {
-    'db': 'civilizatu',
-    'host': 'localhost',
-    'port': 27017
+    'host': mongo_uri
 }
 db = MongoEngine(app)
 
 # JWT configuration
 app.config['JWT_SECRET_KEY'] = 'your_jwt_secret'
 jwt = JWTManager(app)
-
-# OAuth2 configuration
-app.config['GOOGLE_OAUTH_CLIENT_ID'] = 'your_google_client_id'
-app.config['GOOGLE_OAUTH_CLIENT_SECRET'] = 'your_google_client_secret'
 
 # URL del servicio LLM
 LLM_SERVICE_URL = os.environ.get('LLM_SERVICE_URL', 'http://localhost:5001')

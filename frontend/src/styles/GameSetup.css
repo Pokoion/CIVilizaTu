@@ -1,0 +1,122 @@
+.game-setup-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: url('../assets/others/images/backgroundLogin.jpeg') no-repeat center center/cover;
+  font-family: 'Cinzel', serif;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.setup-section {
+  margin: 20px 0;
+}
+
+.setup-section h2 {
+  margin-bottom: 10px;
+  font-family: 'MedievalSharp', cursive;
+}
+
+select {
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-family: 'Cinzel', serif;
+}
+
+button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 1.2rem;
+  background-color: #8b4513;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-family: 'Cinzel', serif;
+  max-width: 300px;
+}
+
+button:hover {
+  background-color: #a0522d;
+}
+
+.difficulty-buttons, .civilization-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  background-color: #f9f9f9;
+  color: #8b4513;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button.selected {
+  background-color: #9c644a;
+  color: white;
+  border-color: #8b4513;
+}
+
+button img {
+  display: block;
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 5px;
+}
+
+.civilization-buttons button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 10px;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+  font-family: 'Cinzel', serif; /* Consistencia con el tema global */
+}
+
+.civilization-buttons button:hover {
+  background-color: #e0e0e0;
+  transform: scale(1.05);
+}
+
+.civilization-buttons button.selected {
+  border-color: #007bff;
+  background-color: #d0e7ff;
+}
+
+.civilization-buttons img {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 10px;
+}
+
+.civilization-buttons strong {
+  font-size: 1.2rem;
+  margin-bottom: 5px;
+  color: #333;
+  font-family: 'Cinzel', serif;
+}
+
+.civilization-buttons p {
+  font-size: 0.9rem;
+  margin: 2px 0;
+  color: #555;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+}
