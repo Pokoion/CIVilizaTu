@@ -5,8 +5,7 @@ import os
 from dotenv import load_dotenv
 from flask_mongoengine import MongoEngine
 from flask_jwt_extended import JWTManager
-from flask_dance.contrib.google import make_google_blueprint
-from routes.auth import auth_bp, google_bp
+from routes.auth import auth_bp
 from routes.games import games_bp
 
 # Cargar variables de entorno
@@ -36,7 +35,6 @@ LLM_SERVICE_URL = os.environ.get('LLM_SERVICE_URL', 'http://localhost:5001')
 
 # Register blueprints
 app.register_blueprint(auth_bp)
-app.register_blueprint(google_bp, url_prefix="/login")
 app.register_blueprint(games_bp)
 
 if __name__ == '__main__':

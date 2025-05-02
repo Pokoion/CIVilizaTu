@@ -63,4 +63,5 @@ llm_service.log
 /frontend/public/assets/ai-generated/*
 !/frontend/public/assets/ai-generated/.gitkeep
 
-.env
+# Archivos de configuración de Firebase
+/backend/firebase-service-account.json
