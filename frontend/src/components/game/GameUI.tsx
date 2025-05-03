@@ -16,7 +16,7 @@ const GameUI: React.FC = () => {
     const { 
         message, setMessage, 
         turn, endTurn, currentPlayer, 
-        selectedCity, setSelectedCity 
+        selectedCity 
     } = useGame();
 
     return (

@@ -27,7 +27,7 @@ export function useUnitMovement(
   gameManager: GameManager,
   mapState: MapState,
   units: Unit[],
-  setUnits: (units: Unit[]) => void,
+  setUnits: React.Dispatch<React.SetStateAction<Unit[]>>,
   setMapState: (map: MapState) => void,
   setSelectedUnitId: (id: string | null) => void,
   setVisibleTiles?: (tiles: boolean[][]) => void
@@ -95,7 +95,11 @@ export function useUnitMovement(
             if (updatedUnit) {
               updatedUnit.movement_points_left = currentUnit.movement_points_left;
             }
-            setUnits([...gameManager.getMapManager().getUnits()]);
+            setUnits((prevUnits: Unit[]) =>
+              prevUnits.map(u =>
+                u.id === selectedUnitId ? { ...u, ...currentUnit } : u
+              )
+            );
             setMapState({ ...gameManager.getMapManager().getMap() });
 
             if (setVisibleTiles) {
