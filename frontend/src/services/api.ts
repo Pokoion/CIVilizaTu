@@ -84,15 +84,15 @@ export const loadMap = async (): Promise<{
             id: "unit1",
             type: "settler",
             position: { x: 26, y: 25 },
-            movement_points: 2,
-            movement_points_left: 1
+            movement_points: 1000,
+            movement_points_left: 1000
           },
           {
             id: "unit2",
             type: "warrior",
             position: { x: 24, y: 25 },
-            movement_points: 2,
-            movement_points_left: 0,
+            movement_points: 1000,
+            movement_points_left: 1000,
             strength: 5,
             health: 100
           }

@@ -3,6 +3,7 @@ import Map2 from './Map2';
 import InfoPanel from './InfoPanel';
 import CityView from './CityView';
 import TechTreeView from './TechTreeView';
+import MiniMap from './MiniMap';
 import { UnitProps, TerrainType, CityProps } from '../../types';
 import '../../styles/GameUI.css';
 import { useGame } from '../../context/GameContext';
@@ -42,7 +43,7 @@ const GameUI: React.FC = () => {
             </div>
             <div className="ui-main">
                 <div className="ui-left">
-                    <div className="minimap-placeholder">Minimapa</div>
+                    <MiniMap />
                 </div>
                 <div className="ui-center">
                     <Map2 setSelectedUnit={setSelectedUnit} setSelectedTile={setSelectedTile} />
