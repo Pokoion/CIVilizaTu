@@ -4,13 +4,15 @@
   "scenario_id": "665f1a2b3c4d5e6f7a8b9c0e",
   "created_at": "2025-04-01T18:30:22.123Z",
   "last_saved": "2025-04-01T19:45:33.456Z",
-  "is_autosave": false,
   "cheats_used": ["mapa_agertu", "maila_igo"],
   "game_state": {
     "turn": 12,
     "current_player": "player",
     "cheats_used": ["mapa_agertu", "maila_igo"],
     "player": {
+      "civilization": "Basques",
+      "era": "Ancient",
+      "leader_name": "Iker",
       "resources": {
         "food": 35,
         "production": 28,
@@ -25,8 +27,7 @@
           "population": 5,
           "buildings": [
             { "id": "granary", "type": "food_building" },
-            { "id": "library", "type": "science_building" },
-            { "id": "barracks", "type": "military_building" }
+            { "id": "library", "type": "science_building" }
           ],
           "production": {
             "current_item": "warrior",
@@ -40,25 +41,20 @@
           "type": "settler",
           "position": { "x": 12, "y": 18 },
           "movement_points": 2,
-          "movement_points_left": 1
-        },
-        {
-          "id": "unit2",
-          "type": "warrior",
-          "position": { "x": 14, "y": 20 },
-          "movement_points": 2,
-          "movement_points_left": 0,
-          "strength": 5,
-          "health": 100
+          "movement_points_left": 1,
+          "strength": 0,
+          "health": 100,
+          "visible": true
         }
       ],
       "technologies": [
-        { "id": "agriculture", "completed": true },
-        { "id": "pottery", "completed": true },
-        { "id": "animal_husbandry", "in_progress": true, "turns_remaining": 4 }
+        { "id": "agriculture", "completed": true, "in_progress": false, "turns_remaining": 0 }
       ]
     },
     "ai": {
+      "civilization": "Romans",
+      "era": "Ancient",
+      "leader_name": "Caesar",
       "resources": {
         "food": 40,
         "production": 22,
@@ -70,14 +66,23 @@
           "id": "ai_city1",
           "name": "Erroma",
           "position": { "x": 42, "y": 35 },
-          "visible": false
+          "population": 4,
+          "buildings": [],
+          "production": {
+            "current_item": "",
+            "turns_remaining": 0
+          }
         }
       ],
       "units": [
         {
           "id": "ai_unit1",
-          "type": "unknown",
+          "type": "warrior",
           "position": { "x": 45, "y": 38 },
+          "movement_points": 2,
+          "movement_points_left": 2,
+          "strength": 5,
+          "health": 100,
           "visible": false
         }
       ],
@@ -85,28 +90,12 @@
     },
     "map": {
       "size": { "width": 72, "height": 72 },
-      "explored": [
-        [0, 0, 0, 0, 1, 1, 1, 0, 0],
-        [0, 0, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 0],
-        [1, 1, 1, 1, 1, 1, 1, 0, 0]
-      ],
       "visible_objects": [
         {
           "type": "resource",
           "resource_type": "iron",
           "position": { "x": 14, "y": 25 },
           "improved": true
-        },
-        {
-          "type": "resource",
-          "resource_type": "cattle",
-          "position": { "x": 18, "y": 19 },
-          "improved": false
-        },
-        {
-          "type": "barbarian_camp",
-          "position": { "x": 22, "y": 28 }
         }
       ],
       "fog_of_war_player": [

@@ -61,6 +61,9 @@ class Resources(EmbeddedDocument):
     gold = IntField()
 
 class PlayerState(EmbeddedDocument):
+    civilization = StringField()   
+    era = StringField()            
+    leader_name = StringField()   
     resources = EmbeddedDocumentField(Resources)
     cities = EmbeddedDocumentListField(City)
     units = EmbeddedDocumentListField(Unit)
@@ -78,7 +81,6 @@ class VisibleObject(EmbeddedDocument):
 
 class GameMap(EmbeddedDocument):
     size = EmbeddedDocumentField(MapSize)
-    explored = ListField(ListField(IntField()))
     visible_objects = EmbeddedDocumentListField(VisibleObject)
     fog_of_war_player = ListField(ListField(IntField()))  
     fog_of_war_ai = ListField(ListField(IntField()))     
@@ -91,13 +93,11 @@ class GameState(EmbeddedDocument):
     ai = EmbeddedDocumentField(PlayerState)
     map = EmbeddedDocumentField(GameMap)
 
-# --- Partida principal ---
 class Partida(Document):
     user_id = StringField(required=True)
     name = StringField(required=True)
     scenario_id = StringField(required=True)
     created_at = DateTimeField()
     last_saved = DateTimeField()
-    is_autosave = BooleanField(default=False)
     cheats_used = ListField(StringField(), default=[])
     game_state = EmbeddedDocumentField(GameState)

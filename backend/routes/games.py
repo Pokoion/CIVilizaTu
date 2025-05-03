@@ -14,9 +14,10 @@ def create_game():
     data = request.get_json()
     name = data.get('name')
     scenario_id = data.get('scenario_id')
+    game_state = data.get('game_state')
 
-    if not name or not scenario_id:
-        return jsonify({"error": "Izena eta eszenatoki ID-a beharrezkoak dira"}), 400
+    if not name or not scenario_id or not game_state:
+        return jsonify({"error": "Izena, eszenatoki ID-a eta game_state beharrezkoak dira"}), 400
 
     user_id = get_jwt_identity()
     try:
@@ -26,7 +27,7 @@ def create_game():
             scenario_id=scenario_id,
             created_at=datetime.utcnow(),
             last_saved=datetime.utcnow(),
-            game_state={"turn": 0, "current_player": "player"}
+            game_state=game_state
         )
         game.save()
         return jsonify({"game_id": str(game.id), "message": "Partida arrakastaz sortu da"}), 201
