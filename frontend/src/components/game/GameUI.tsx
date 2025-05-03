@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Map2 from './Map2';
 import InfoPanel from './InfoPanel';
 import CityView from './CityView';
+import TechTreeView from './TechTreeView';
 import { UnitProps, TerrainType, CityProps } from '../../types';
 import '../../styles/GameUI.css';
 import { useGame } from '../../context/GameContext';
@@ -10,6 +11,7 @@ const GameUI: React.FC = () => {
     const [selectedUnit, setSelectedUnit] = useState<UnitProps | null>(null);
     const [selectedTile, setSelectedTile] = useState<{ row: number; col: number; type: TerrainType } | null>(null);
     const [cityViewCity, setCityViewCity] = useState<CityProps | null>(null);
+    const [showTechTree, setShowTechTree] = useState(false);
 
     const { 
         message, setMessage, 
@@ -55,11 +57,14 @@ const GameUI: React.FC = () => {
                 {cityViewCity && (
                     <CityView city={cityViewCity} onClose={() => setCityViewCity(null)} />
                 )}
+                {showTechTree && (
+                    <TechTreeView onClose={() => setShowTechTree(false)} />
+                )}
                 </div>
             </div>
             <div className="ui-bottom">
                 <button onClick={endTurn}>Txanda amaitu</button>
-                <button>Menú</button>
+                <button onClick={() => setShowTechTree(true)}>Teknologia zuhaitza</button>
             </div>
         </div>
         </>

@@ -49,3 +49,18 @@ export interface MapState {
     fog_of_war: boolean[][];
   };
 }
+
+export interface Tech {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  parents: string[];
+  era: string;
+  cost: { science: number; gold: number };
+}
+
+export interface TechNode extends Tech {
+  x: number;
+  y: number;
+}
