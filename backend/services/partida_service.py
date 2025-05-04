@@ -22,6 +22,11 @@ def save_partida_game_state(game, game_state_dict):
             game_state_dict["map"].setdefault("visible_objects", [])
             game_state_dict["map"].setdefault("fog_of_war_player", [])
             game_state_dict["map"].setdefault("fog_of_war_ai", [])
+            # Asegura que terrain existe y es una matriz de strings
+            if "terrain" not in game_state_dict["map"]:
+                width = game_state_dict["map"].get("size", {}).get("width", 0)
+                height = game_state_dict["map"].get("size", {}).get("height", 0)
+                game_state_dict["map"]["terrain"] = [["" for _ in range(width)] for _ in range(height)]
             # Si tienes size, asegúrate de que sea un dict con width y height
             if "size" in game_state_dict["map"] and not isinstance(game_state_dict["map"]["size"], dict):
                 game_state_dict["map"]["size"] = dict(game_state_dict["map"]["size"])

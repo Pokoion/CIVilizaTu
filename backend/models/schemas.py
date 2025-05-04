@@ -84,6 +84,7 @@ class GameMap(EmbeddedDocument):
     visible_objects = EmbeddedDocumentListField(VisibleObject)
     fog_of_war_player = ListField(ListField(IntField()))  
     fog_of_war_ai = ListField(ListField(IntField()))     
+    terrain = ListField(ListField(StringField()))  
 
 class GameState(EmbeddedDocument):
     turn = IntField()

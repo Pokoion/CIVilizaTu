@@ -19,6 +19,13 @@ def create_game():
     if not name or not scenario_id or not game_state:
         return jsonify({"error": "Izena, eszenatoki ID-a eta game_state beharrezkoak dira"}), 400
 
+    # Asegura que el campo terrain existe en el mapa
+    if "map" in game_state:
+        if "terrain" not in game_state["map"]:
+            width = game_state["map"].get("size", {}).get("width", 0)
+            height = game_state["map"].get("size", {}).get("height", 0)
+            game_state["map"]["terrain"] = [["" for _ in range(width)] for _ in range(height)]
+
     user_id = get_jwt_identity()
     try:
         game = Partida(
