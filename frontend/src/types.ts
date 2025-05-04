@@ -42,13 +42,11 @@ export interface CityProps extends City {
   onClick?: () => void;
 }
 
-export interface MapState {
-  map: {
-    size: { width: number; height: number };
-    tiles: TerrainType[][];
-    fog_of_war: boolean[][];
-  };
-}
+export type MapState = {
+  size: { width: number; height: number };
+  tiles: TerrainType[][];
+  fog_of_war: boolean[][];
+};
 
 export interface Tech {
   id: string;

@@ -42,17 +42,17 @@ const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile }) => {
     setSelectedTile({
       row: rowIndex,
       col: colIndex,
-      type: mapState.map.tiles[rowIndex][colIndex],
-      isDiscovered: !!mapState.map.fog_of_war[rowIndex]?.[colIndex],
+      type: mapState.tiles[rowIndex][colIndex],
+      isDiscovered: !!mapState.fog_of_war[rowIndex]?.[colIndex],
     });
     setSelectedUnit(null);
     setSelectedCity(null);
-  
+
     // Solo intenta mover si hay unidad seleccionada
     if (!selectedUnitId) {
       return;
     }
-  
+
     const result = await moveUnit(rowIndex, colIndex, selectedUnitId);
     if (result !== true) {
       setMessage(result);
@@ -65,13 +65,13 @@ const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile }) => {
     setSelectedUnit(unit);
     setSelectedTile(null);
     setSelectedUnitId(prev => prev === unitId ? null : unitId);
-    setSelectedCity(null); // <-- Añade esto
+    setSelectedCity(null);
   };
 
   const handleCityClick = (city: CityProps) => {
-    setSelectedCity(city);      // Selecciona la ciudad globalmente
-    setSelectedUnit(null);      // Deselecciona unidad
-    setSelectedTile(null);      // Deselecciona tile
+    setSelectedCity(city);
+    setSelectedUnit(null);
+    setSelectedTile(null);
   };
 
   return (
@@ -79,12 +79,12 @@ const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile }) => {
       <div
         className="map-grid"
         style={{
-          gridTemplateColumns: `repeat(${mapState.map.size.width}, 1fr)`,
-          gridTemplateRows: `repeat(${mapState.map.size.height}, 1fr)`,
+          gridTemplateColumns: `repeat(${mapState.size.width}, 1fr)`,
+          gridTemplateRows: `repeat(${mapState.size.height}, 1fr)`,
           transform: `translate(${cameraOffset.x}px, ${cameraOffset.y}px) rotateX(60deg) rotateZ(45deg)`,
         }}
       >
-        {mapState.map.tiles.map((row, rowIndex) =>
+        {mapState.tiles.map((row, rowIndex) =>
           row.map((tileType, colIndex) => {
             const unit = units.find(
               (u) => u.position.x === colIndex && u.position.y === rowIndex
@@ -94,7 +94,7 @@ const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile }) => {
             );
 
             let fogStatus: 'undiscovered' | 'visible';
-            if (!mapState.map.fog_of_war[rowIndex]?.[colIndex]) {
+            if (!mapState.fog_of_war[rowIndex]?.[colIndex]) {
               fogStatus = 'undiscovered';
             } else {
               fogStatus = 'visible';
@@ -106,7 +106,7 @@ const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile }) => {
                 row={rowIndex}
                 col={colIndex}
                 tileType={tileType}
-                isDiscovered={mapState.map.fog_of_war[rowIndex]?.[colIndex] || false}
+                isDiscovered={mapState.fog_of_war[rowIndex]?.[colIndex] || false}
                 fogStatus={fogStatus}
                 onClick={() => handleTileClick(rowIndex, colIndex, selectedUnitId)}
               >

@@ -35,7 +35,7 @@ export function useUnitMovement(
   return useCallback(
     async (row: number, col: number, selectedUnitId: string | null) => {
       // Nuevo: comprobar si el tile está descubierto
-      if (!mapState.map.fog_of_war[row]?.[col]) {
+      if (!mapState.fog_of_war[row]?.[col]) {
         return "Ezin zara lurralde ezkutatura mugitu";
       }
 
@@ -47,18 +47,18 @@ export function useUnitMovement(
           return "Unitatea dagoen tilean zaude jada";
         }
 
-        const destTerrain = mapState.map.tiles[row][col];
+        const destTerrain = mapState.tiles[row][col];
         const destMoveCost = TILE_TYPES[destTerrain].movementCost;
         if (destMoveCost === Infinity) {
           return "Ezin zara lurralde iritsezin batera mugitu";
         }
 
         const path = Pathfinding2.findPath(
-          mapState.map.tiles,
+          mapState.tiles,
           { row: unit.position.y, col: unit.position.x },
           { row, col },
           unit.movement_points_left,
-          mapState.map.fog_of_war
+          mapState.fog_of_war
         );
         
         // Si el path no llega al destino, probablemente es por falta de puntos
@@ -69,13 +69,13 @@ export function useUnitMovement(
           path[path.length - 1].col !== col
         ) {
           return "Unitateak ez ditu beharrezko mugimendu puntuak";
-        } {
+        } else {
           let currentUnit = { ...unit };
           let movementLeft = currentUnit.movement_points_left;
 
           for (let i = 1; i < path.length; i++) {
             const step = path[i];
-            const terrain = mapState.map.tiles[step.row][step.col];
+            const terrain = mapState.tiles[step.row][step.col];
             const moveCost = TILE_TYPES[terrain].movementCost;
 
             if (moveCost === Infinity) {
@@ -103,8 +103,8 @@ export function useUnitMovement(
             setMapState({ ...gameManager.getMapManager().getMap() });
 
             if (setVisibleTiles) {
-              const mapRows = mapState.map.tiles.length;
-              const mapCols = mapState.map.tiles[0].length;
+              const mapRows = mapState.tiles.length;
+              const mapCols = mapState.tiles[0].length;
               const visibles = getVisibleTiles(gameManager.getMapManager().getUnits(), mapRows, mapCols, 1);
               setVisibleTiles(visibles);
             }

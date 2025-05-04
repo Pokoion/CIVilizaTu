@@ -10,7 +10,7 @@ const MiniMap: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const { tiles, fog_of_war, size } = mapState.map;
+    const { tiles, fog_of_war, size } = mapState;
     const ctx = canvasRef.current?.getContext('2d');
     if (!ctx) return;
 

@@ -35,27 +35,28 @@ export const fetchUnits = async (): Promise<{ name: string; attack: number; defe
 };
 
 export const loadMap = async (): Promise<{
-  map: MapState['map'];
+  map: MapState;
   units: Unit[];
   cities: City[];
   unlockedTechs: string[];
   turn: number;
   currentPlayer: string;
 }> => {
-  // Simula que recibes este JSON del backend:
   const fakeGameState = {
     user_id: "665f1a2b3c4d5e6f7a8b9c0d",
     name: "Nire partida IA-ren aurka",
     scenario_id: "665f1a2b3c4d5e6f7a8b9c0e",
     created_at: "2025-04-01T18:30:22.123Z",
     last_saved: "2025-04-01T19:45:33.456Z",
-    is_autosave: false,
     cheats_used: ["mapa_agertu", "maila_igo"],
     game_state: {
       turn: 12,
       current_player: "player",
       cheats_used: ["mapa_agertu", "maila_igo"],
       player: {
+        civilization: "Basques",
+        era: "Ancient",
+        leader_name: "Iker",
         resources: {
           food: 35,
           production: 28,
@@ -66,12 +67,11 @@ export const loadMap = async (): Promise<{
           {
             id: "city1",
             name: "Bilbo",
-            position: { x: 25, y: 25 },
+            position: { x: 15, y: 22 },
             population: 5,
             buildings: [
               { id: "granary", type: "food_building" },
-              { id: "library", type: "science_building" },
-              { id: "barracks", type: "military_building" }
+              { id: "library", type: "science_building" }
             ],
             production: {
               current_item: "warrior",
@@ -83,27 +83,32 @@ export const loadMap = async (): Promise<{
           {
             id: "unit1",
             type: "settler",
-            position: { x: 26, y: 25 },
-            movement_points: 1000,
-            movement_points_left: 1000
+            position: { x: 12, y: 18 },
+            movement_points: 2,
+            movement_points_left: 1,
+            strength: 0,
+            health: 100,
+            visible: true
           },
           {
             id: "unit2",
-            type: "warrior",
-            position: { x: 24, y: 25 },
+            type: "settler",
+            position: { x: 13, y: 18 },
             movement_points: 1000,
             movement_points_left: 1000,
-            strength: 5,
-            health: 100
+            strength: 0,
+            health: 100,
+            visible: true
           }
         ],
         technologies: [
-          { id: "agriculture", completed: true },
-          { id: "pottery", completed: true },
-          { id: "animal_husbandry", in_progress: true, turns_remaining: 4 }
+          { id: "agriculture", completed: true, in_progress: false, turns_remaining: 0 }
         ]
       },
       ai: {
+        civilization: "Romans",
+        era: "Ancient",
+        leader_name: "Caesar",
         resources: {
           food: 40,
           production: 22,
@@ -114,15 +119,24 @@ export const loadMap = async (): Promise<{
           {
             id: "ai_city1",
             name: "Erroma",
-            position: { x: 40, y: 40 },
-            visible: false
+            position: { x: 42, y: 35 },
+            population: 4,
+            buildings: [],
+            production: {
+              current_item: "",
+              turns_remaining: 0
+            }
           }
         ],
         units: [
           {
             id: "ai_unit1",
-            type: "unknown",
-            position: { x: 41, y: 41 },
+            type: "warrior",
+            position: { x: 45, y: 38 },
+            movement_points: 2,
+            movement_points_left: 2,
+            strength: 5,
+            health: 100,
             visible: false
           }
         ],
@@ -131,18 +145,47 @@ export const loadMap = async (): Promise<{
       map: {
         size: { width: size, height: size },
         tiles: customTiles,
-        fog_of_war: Array.from({ length: size }, () =>
-          Array.from({ length: size }, () => false)
-        ),
+        visible_objects: [
+          {
+            type: "resource",
+            resource_type: "iron",
+            position: { x: 14, y: 25 },
+            improved: true
+          }
+        ],
+        fog_of_war_player: [] as boolean[][],
+        fog_of_war_ai: [] as boolean[][]
       }
     }
   };
+
+  // --- Generar fog_of_war_player dinámicamente según las unidades del jugador ---
+  const fog_of_war_player: boolean[][] = Array.from({ length: size }, () =>
+    Array.from({ length: size }, () => false)
+  );
+
+  const playerUnits = fakeGameState.game_state.player.units;
+  playerUnits.forEach(unit => {
+    const { x, y } = unit.position;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+          fog_of_war_player[ny][nx] = true;
+        }
+      }
+    }
+  });
+
+  // Asigna el fog generado al fakeGameState
+  fakeGameState.game_state.map.fog_of_war_player = fog_of_war_player;
 
   // Extrae los datos para el estado del juego
   const map = {
     size: fakeGameState.game_state.map.size,
     tiles: fakeGameState.game_state.map.tiles,
-    fog_of_war: fakeGameState.game_state.map.fog_of_war,
+    fog_of_war: fakeGameState.game_state.map.fog_of_war_player,
   };
 
   const units = fakeGameState.game_state.player.units.map((u: any) => ({
@@ -153,6 +196,7 @@ export const loadMap = async (): Promise<{
     movement_points_left: u.movement_points_left,
     strength: u.strength,
     health: u.health,
+    visible: u.visible,
   }));
 
   const cities = fakeGameState.game_state.player.cities.map((c: any) => ({
@@ -160,6 +204,8 @@ export const loadMap = async (): Promise<{
     name: c.name,
     position: c.position,
     population: c.population,
+    buildings: c.buildings,
+    production: c.production,
   }));
 
   const unlockedTechs = fakeGameState.game_state.player.technologies

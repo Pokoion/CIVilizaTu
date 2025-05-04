@@ -98,10 +98,10 @@ function buildGameSave({
         technologies: [],
       },
       map: {
-        size: mapState.map.size,
+        size: mapState.size,
         explored: [],
         visible_objects: [],
-        fog_of_war_player: mapState.map.fog_of_war, // <-- boolean[][]
+        fog_of_war_player: mapState.fog_of_war, // <-- boolean[][]
         fog_of_war_ai: [],
       },
     },
@@ -110,7 +110,7 @@ function buildGameSave({
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mapState, setMapState] = useState<MapState>({
-    map: { size: { width: 0, height: 0 }, tiles: [], fog_of_war: [] },
+    size: { width: 0, height: 0 }, tiles: [], fog_of_war: []
   });
   const [units, setUnits] = useState<UnitProps[]>([]);
   const [cities, setCities] = useState<CityProps[]>([]);

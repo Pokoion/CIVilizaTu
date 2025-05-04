@@ -9,61 +9,43 @@ class MapManager {
     this.map = map;
   }
 
-  // Establece un nuevo mapa
   public setMap(map: MapState): void {
     this.map = map;
   }
 
-  // Devuelve el estado actual del mapa
   public getMap(): MapState {
-    return this.map;
+    // Devuelve SIEMPRE una copia profunda del fog para que React detecte cambios
+    return {
+      ...this.map,
+      fog_of_war: this.map.fog_of_war.map(row => [...row]),
+    };
   }
 
-  // Establece las unidades en el mapa
   public setUnits(units: Unit[]): void {
     this.units = units;
-    this.updateFogOfWar();
   }
 
-  // Devuelve las unidades actuales
   public getUnits(): Unit[] {
     return this.units;
   }
 
-  // Establece las ciudades en el mapa
   public setCities(cities: City[]): void {
     this.cities = cities;
   }
 
-  // Devuelve las ciudades actuales
   public getCities(): City[] {
     return this.cities;
   }
 
-  // Actualiza la niebla de guerra en función de las posiciones de las unidades
-  private updateFogOfWar(): void {
-    const { width, height } = this.map.map.size;
-    this.map.map.fog_of_war = this.generateFogOfWar(width, height);
-    this.units.forEach((unit) => {
-      const { x, y } = unit.position;
-      this.discoverTiles(y, x);
-    });
-  }
-
-  // Genera la niebla de guerra inicial
-  private generateFogOfWar(width: number, height: number): boolean[][] {
-    return Array.from({ length: height }, () => Array(width).fill(false));
-  }
-
   // Descubre los tiles alrededor de una posición
-  private discoverTiles(row: number, col: number): void {
-    const { width, height } = this.map.map.size;
+  public discoverTiles(row: number, col: number): void {
+    const { width, height } = this.map.size;
     for (let dr = -1; dr <= 1; dr++) {
       for (let dc = -1; dc <= 1; dc++) {
         const newRow = row + dr;
         const newCol = col + dc;
         if (newRow >= 0 && newRow < height && newCol >= 0 && newCol < width) {
-          this.map.map.fog_of_war[newRow][newCol] = true;
+          this.map.fog_of_war[newRow][newCol] = true;
         }
       }
     }
@@ -76,7 +58,6 @@ class MapManager {
     this.discoverTiles(newPosition.y, newPosition.x);
     return true;
   }
-
 }
 
 export default MapManager;
