@@ -41,3 +41,7 @@
     opacity: 0.7;
     pointer-events: none;
   }
+
+  .unit-enemy {
+    filter: hue-rotate(-30deg) sepia(0.7) saturate(2) brightness(0.9);
+  }

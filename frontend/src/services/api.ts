@@ -86,17 +86,17 @@ export const loadMap = async (): Promise<{
             position: { x: 12, y: 18 },
             movement_points: 2,
             movement_points_left: 1,
-            strength: 0,
+            strength: 30,
             health: 100,
             visible: true
           },
           {
             id: "unit2",
             type: "settler",
-            position: { x: 13, y: 18 },
+            position: { x: 14, y: 18 },
             movement_points: 1000,
             movement_points_left: 1000,
-            strength: 0,
+            strength: 30,
             health: 100,
             visible: true
           }
@@ -132,7 +132,7 @@ export const loadMap = async (): Promise<{
           {
             id: "ai_unit1",
             type: "warrior",
-            position: { x: 45, y: 38 },
+            position: { x: 15, y: 18 },
             movement_points: 2,
             movement_points_left: 2,
             strength: 5,
@@ -188,25 +188,51 @@ export const loadMap = async (): Promise<{
     fog_of_war: fakeGameState.game_state.map.fog_of_war_player,
   };
 
-  const units = fakeGameState.game_state.player.units.map((u: any) => ({
-    id: u.id,
-    type: u.type,
-    position: u.position,
-    movement_points: u.movement_points,
-    movement_points_left: u.movement_points_left,
-    strength: u.strength,
-    health: u.health,
-    visible: u.visible,
-  }));
+  const units = [
+    ...fakeGameState.game_state.player.units.map((u: any) => ({
+      id: u.id,
+      type: u.type,
+      position: u.position,
+      movement_points: u.movement_points,
+      movement_points_left: u.movement_points_left,
+      strength: u.strength,
+      health: u.health,
+      visible: u.visible,
+      owner: 'player' as 'player', // <-- type assertion
+    })),
+    ...fakeGameState.game_state.ai.units.map((u: any) => ({
+      id: u.id,
+      type: u.type,
+      position: u.position,
+      movement_points: u.movement_points,
+      movement_points_left: u.movement_points_left,
+      strength: u.strength,
+      health: u.health,
+      visible: u.visible,
+      owner: 'ai' as 'ai', // <-- type assertion
+    })),
+  ];
 
-  const cities = fakeGameState.game_state.player.cities.map((c: any) => ({
-    id: c.id,
-    name: c.name,
-    position: c.position,
-    population: c.population,
-    buildings: c.buildings,
-    production: c.production,
-  }));
+  const cities = [
+    ...fakeGameState.game_state.player.cities.map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      position: c.position,
+      population: c.population,
+      buildings: c.buildings,
+      production: c.production,
+      owner: 'player' as 'player', // <-- type assertion
+    })),
+    ...fakeGameState.game_state.ai.cities.map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      position: c.position,
+      population: c.population,
+      buildings: c.buildings,
+      production: c.production,
+      owner: 'ai' as 'ai', // <-- type assertion
+    })),
+  ];
 
   const unlockedTechs = fakeGameState.game_state.player.technologies
     .filter((t: any) => t.completed)

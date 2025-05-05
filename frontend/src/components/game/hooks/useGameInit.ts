@@ -8,7 +8,8 @@ export function useGameInit(
   setMapState: (map: MapState) => void,
   setUnits: (units: Unit[]) => void,
   setCities: (cities: City[]) => void,
-  setCameraOffset: (offset: { x: number; y: number }) => void
+  setCameraOffset: (offset: { x: number; y: number }) => void,
+  setInitialCameraOffset: (offset: { x: number; y: number }) => void
 ) {
   useEffect(() => {
     gameManager.initializeGame().then(() => {
@@ -23,9 +24,12 @@ export function useGameInit(
 
       const mapWidthPx = map.size.width * TILE_SIZE;
       const mapHeightPx = map.size.height * TILE_SIZE;
-      const offsetX = (window.innerWidth - mapWidthPx) / 2;
-      const offsetY = (window.innerHeight - mapHeightPx) / 2;
-      setCameraOffset({ x: offsetX, y: offsetY });
+      const initialCameraOffset = {
+        x: (window.innerWidth / 2) - (mapWidthPx / 2),
+        y: (window.innerHeight / 2) - (mapHeightPx / 2),
+      };
+      setCameraOffset(initialCameraOffset);
+      setInitialCameraOffset(initialCameraOffset); // ahora sí existe
     });
-  }, [gameManager, setMapState, setUnits, setCameraOffset]);
+  }, [gameManager, setMapState, setUnits, setCameraOffset, setInitialCameraOffset]);
 }

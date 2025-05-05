@@ -21,6 +21,10 @@ type GameContextType = {
   setMessage: (msg: string | null) => void;
   unlockedTechs: Tech[];
   setUnlockedTechs: React.Dispatch<React.SetStateAction<Tech[]>>;
+  camera: { offset: { x: number, y: number } };
+  setCamera: React.Dispatch<React.SetStateAction<{ offset: { x: number, y: number } }>>;
+  initialCameraOffset: { x: number; y: number };
+  setInitialCameraOffset: (offset: { x: number; y: number }) => void;
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -28,7 +32,6 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 const turnManager = new TurnManager();
 const gameManager = new GameManager();
 
-// Función para construir el JSON de guardado de partida
 function buildGameSave({
   userId,
   name,
@@ -101,7 +104,7 @@ function buildGameSave({
         size: mapState.size,
         explored: [],
         visible_objects: [],
-        fog_of_war_player: mapState.fog_of_war, // <-- boolean[][]
+        fog_of_war_player: mapState.fog_of_war,
         fog_of_war_ai: [],
       },
     },
@@ -119,6 +122,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [turn, setTurn] = useState(1);
   const [message, setMessage] = useState<string | null>(null);
   const [unlockedTechs, setUnlockedTechs] = useState<Tech[]>([]);
+  const [camera, setCamera] = useState<{ offset: { x: number, y: number } }>({
+    offset: { x: 0, y: 0 }
+  });
+  const [initialCameraOffset, setInitialCameraOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const currentPlayer = turnManager.getCurrentPlayer();
 
@@ -126,10 +133,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     turnManager.nextTurn(gameManager);
     setTurn(prev => prev + 1);
 
-    // Recarga los puntos de movimiento usando GameManager
     setUnits(prevUnits => gameManager.reloadUnitsMovement(prevUnits));
 
-    // JSON real para backend (con boolean[][])
     const saveJson = buildGameSave({
       userId: "665f1a2b3c4d5e6f7a8b9c0d",
       name: "Nire partida IA-ren aurka",
@@ -153,6 +158,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       cities, setCities, selectedCity, setSelectedCity,
       turn, endTurn, currentPlayer, message, setMessage,
       unlockedTechs, setUnlockedTechs,
+      camera, setCamera, initialCameraOffset, setInitialCameraOffset,
     }}>
       {children}
     </GameContext.Provider>

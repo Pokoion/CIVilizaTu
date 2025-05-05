@@ -18,25 +18,31 @@ export function useCameraDrag(setCameraOffset: SetCameraOffset) {
       if (dragging.current) {
         const dx = e.clientX - lastPos.current.x;
         const dy = e.clientY - lastPos.current.y;
-        setCameraOffset(prev => ({
-          x: prev.x + dx,
-          y: prev.y + dy,
-        }));
+        setCameraOffset(prev => {
+          const nuevo = { x: prev.x + dx, y: prev.y + dy };
+          console.log('Cámara arrastrada:', nuevo);
+          return nuevo;
+        });
         lastPos.current = { x: e.clientX, y: e.clientY };
       }
     };
     const onMouseUp = () => {
       dragging.current = false;
     };
+    const onContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
     window.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
-    window.addEventListener('contextmenu', e => e.preventDefault());
+    window.addEventListener('contextmenu', onContextMenu);
+
     return () => {
       window.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
-      window.removeEventListener('contextmenu', e => e.preventDefault());
+      window.removeEventListener('contextmenu', onContextMenu);
     };
   }, [setCameraOffset]);
 }

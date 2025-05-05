@@ -21,11 +21,15 @@ export interface Unit {
   position: { x: number; y: number };
   movement_points: number;
   movement_points_left: number;
+  health: number;
+  strength: number;
+  owner: 'player' | 'ai';
 }
 
 export interface UnitProps extends Unit {
   selected?: boolean;
   onClick?: () => void;
+  disabled?: boolean;
 }
 
 export interface City {
@@ -35,6 +39,7 @@ export interface City {
   population: number;
   onClick?: () => void;
   onEnter?: () => void;
+  owner: 'player' | 'ai';
 }
 
 export interface CityProps extends City {

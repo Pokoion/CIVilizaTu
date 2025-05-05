@@ -14,7 +14,6 @@ class MapManager {
   }
 
   public getMap(): MapState {
-    // Devuelve SIEMPRE una copia profunda del fog para que React detecte cambios
     return {
       ...this.map,
       fog_of_war: this.map.fog_of_war.map(row => [...row]),
