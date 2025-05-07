@@ -8,7 +8,7 @@ from flask_jwt_extended import JWTManager
 from routes.auth import auth_bp
 from routes.games import games_bp
 from routes.scenarios import scenarios_bp
-from routes.llm import llm_bp
+from routes.llm_events import llm_events_bp
 
 # Cargar variables de entorno
 load_dotenv()
@@ -34,7 +34,7 @@ LLM_SERVICE_URL = os.environ.get('LLM_SERVICE_URL', 'http://localhost:5001')
 app.register_blueprint(auth_bp)
 app.register_blueprint(games_bp)
 app.register_blueprint(scenarios_bp)
-app.register_blueprint(llm_bp)
+app.register_blueprint(llm_events_bp)
 
 if __name__ == '__main__':
     app.run(port=5000)

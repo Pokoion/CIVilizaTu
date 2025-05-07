@@ -22,13 +22,14 @@ class Position(EmbeddedDocument):
     x = IntField(required=True)
     y = IntField(required=True)
 
-class Building(EmbeddedDocument):
-    id = StringField(required=True)
-    type = StringField(required=True)
-
 class Production(EmbeddedDocument):
     current_item = StringField()
     turns_remaining = IntField()
+
+class Building(EmbeddedDocument):
+    id = StringField(required=True)
+    type = StringField(required=True)
+    production = EmbeddedDocumentField(Production)  
 
 class City(EmbeddedDocument):
     id = StringField(required=True)
@@ -36,7 +37,6 @@ class City(EmbeddedDocument):
     position = EmbeddedDocumentField(Position)
     population = IntField()
     buildings = EmbeddedDocumentListField(Building)
-    production = EmbeddedDocumentField(Production)
 
 class Unit(EmbeddedDocument):
     id = StringField(required=True)
@@ -56,7 +56,7 @@ class Technology(EmbeddedDocument):
 
 class Resources(EmbeddedDocument):
     food = IntField()
-    production = IntField()
+    natural_resources = IntField()
     science = IntField()
     gold = IntField()
 

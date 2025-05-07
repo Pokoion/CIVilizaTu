@@ -26,12 +26,15 @@
           "position": { "x": 5, "y": 7 },
           "population": 3,
           "buildings": [
-            { "id": "granary", "type": "food_building" }
-          ],
-          "production": {
-            "current_item": "warrior",
-            "turns_remaining": 2
-          }
+            {
+              "id": "granary",
+              "type": "food_building",
+              "production": {
+                "current_item": "warrior",
+                "turns_remaining": 2
+              }
+            }
+          ]
         }
       ],
       "units": [
@@ -71,11 +74,16 @@
           "name": "Erroma",
           "position": { "x": 10, "y": 12 },
           "population": 2,
-          "buildings": [],
-          "production": {
-            "current_item": "",
-            "turns_remaining": 0
-          }
+          "buildings": [
+            {
+              "id": "barracks",
+              "type": "military_building",
+              "production": {
+                "current_item": "",
+                "turns_remaining": 0
+              }
+            }
+          ]
         }
       ],
       "units": [
