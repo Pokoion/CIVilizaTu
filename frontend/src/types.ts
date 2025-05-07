@@ -21,11 +21,15 @@ export interface Unit {
   position: { x: number; y: number };
   movement_points: number;
   movement_points_left: number;
+  health: number;
+  strength: number;
+  owner: 'player' | 'ai';
 }
 
 export interface UnitProps extends Unit {
   selected?: boolean;
   onClick?: () => void;
+  disabled?: boolean;
 }
 
 export interface City {
@@ -35,6 +39,7 @@ export interface City {
   population: number;
   onClick?: () => void;
   onEnter?: () => void;
+  owner: 'player' | 'ai';
 }
 
 export interface CityProps extends City {
@@ -42,10 +47,23 @@ export interface CityProps extends City {
   onClick?: () => void;
 }
 
-export interface MapState {
-  map: {
-    size: { width: number; height: number };
-    tiles: TerrainType[][];
-    fog_of_war: boolean[][];
-  };
+export type MapState = {
+  size: { width: number; height: number };
+  tiles: TerrainType[][];
+  fog_of_war: boolean[][];
+};
+
+export interface Tech {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  parents: string[];
+  era: string;
+  cost: { science: number; gold: number };
+}
+
+export interface TechNode extends Tech {
+  x: number;
+  y: number;
 }

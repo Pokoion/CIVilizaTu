@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { TILE_TYPES } from '../../../utils/Constants';
 import Pathfinding2 from '../../../utils/Pathfinding2';
 import GameManager from '../../../managers/GameManager';
-import { MapState, Unit } from '../../../types';
+import { MapState, Unit, City } from '../../../types';
 
 export function getVisibleTiles(units: Unit[], mapRows: number, mapCols: number, visionRange = 1) {
   const visible: boolean[][] = Array.from({ length: mapRows }, () => Array(mapCols).fill(false));
@@ -27,7 +27,8 @@ export function useUnitMovement(
   gameManager: GameManager,
   mapState: MapState,
   units: Unit[],
-  setUnits: (units: Unit[]) => void,
+  cities: City[], // <-- Añadido aquí
+  setUnits: React.Dispatch<React.SetStateAction<Unit[]>>,
   setMapState: (map: MapState) => void,
   setSelectedUnitId: (id: string | null) => void,
   setVisibleTiles?: (tiles: boolean[][]) => void
@@ -35,8 +36,15 @@ export function useUnitMovement(
   return useCallback(
     async (row: number, col: number, selectedUnitId: string | null) => {
       // Nuevo: comprobar si el tile está descubierto
-      if (!mapState.map.fog_of_war[row]?.[col]) {
+      if (!mapState.fog_of_war[row]?.[col]) {
         return "Ezin zara lurralde ezkutatura mugitu";
+      }
+
+      // Nuevo: comprobar si hay unidad o ciudad en el destino
+      const unitOnTile = units.some(u => u.position.x === col && u.position.y === row);
+      const cityOnTile = cities.some(c => c.position.x === col && c.position.y === row);
+      if (unitOnTile || cityOnTile) {
+        return "Ezin zara beste unitate edo hirira mugitu";
       }
 
       if (selectedUnitId) {
@@ -47,18 +55,18 @@ export function useUnitMovement(
           return "Unitatea dagoen tilean zaude jada";
         }
 
-        const destTerrain = mapState.map.tiles[row][col];
+        const destTerrain = mapState.tiles[row][col];
         const destMoveCost = TILE_TYPES[destTerrain].movementCost;
         if (destMoveCost === Infinity) {
           return "Ezin zara lurralde iritsezin batera mugitu";
         }
 
         const path = Pathfinding2.findPath(
-          mapState.map.tiles,
+          mapState.tiles,
           { row: unit.position.y, col: unit.position.x },
           { row, col },
           unit.movement_points_left,
-          mapState.map.fog_of_war
+          mapState.fog_of_war
         );
         
         // Si el path no llega al destino, probablemente es por falta de puntos
@@ -69,14 +77,21 @@ export function useUnitMovement(
           path[path.length - 1].col !== col
         ) {
           return "Unitateak ez ditu beharrezko mugimendu puntuak";
-        } {
+        } else {
           let currentUnit = { ...unit };
           let movementLeft = currentUnit.movement_points_left;
 
           for (let i = 1; i < path.length; i++) {
             const step = path[i];
-            const terrain = mapState.map.tiles[step.row][step.col];
+            const terrain = mapState.tiles[step.row][step.col];
             const moveCost = TILE_TYPES[terrain].movementCost;
+
+            // Nuevo: comprobar si hay unidad o ciudad en el camino
+            const unitOnStep = units.some(u => u.position.x === step.col && u.position.y === step.row && u.id !== selectedUnitId);
+            const cityOnStep = cities.some(c => c.position.x === step.col && c.position.y === step.row);
+            if (unitOnStep || cityOnStep) {
+              return "Ezin zara beste unitate edo hirira mugitu";
+            }
 
             if (moveCost === Infinity) {
               return "Ezin zara lurralde iritsezin batera mugitu";
@@ -95,12 +110,16 @@ export function useUnitMovement(
             if (updatedUnit) {
               updatedUnit.movement_points_left = currentUnit.movement_points_left;
             }
-            setUnits([...gameManager.getMapManager().getUnits()]);
+            setUnits((prevUnits: Unit[]) =>
+              prevUnits.map(u =>
+                u.id === selectedUnitId ? { ...u, ...currentUnit } : u
+              )
+            );
             setMapState({ ...gameManager.getMapManager().getMap() });
 
             if (setVisibleTiles) {
-              const mapRows = mapState.map.tiles.length;
-              const mapCols = mapState.map.tiles[0].length;
+              const mapRows = mapState.tiles.length;
+              const mapCols = mapState.tiles[0].length;
               const visibles = getVisibleTiles(gameManager.getMapManager().getUnits(), mapRows, mapCols, 1);
               setVisibleTiles(visibles);
             }
@@ -112,6 +131,6 @@ export function useUnitMovement(
       }
       return "Mugimendua ez da baliozkoa";
     },
-    [gameManager, mapState, units, setUnits, setMapState, setSelectedUnitId, setVisibleTiles]
+    [gameManager, mapState, units, cities, setUnits, setMapState, setSelectedUnitId, setVisibleTiles]
   );
 }

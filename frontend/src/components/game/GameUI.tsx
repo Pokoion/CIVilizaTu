@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import Map2 from './Map2';
 import InfoPanel from './InfoPanel';
 import CityView from './CityView';
+import TechTreeView from './TechTreeView';
+import MiniMap from './MiniMap';
+import BattleView from './BattleView';
 import { UnitProps, TerrainType, CityProps } from '../../types';
 import '../../styles/GameUI.css';
 import { useGame } from '../../context/GameContext';
@@ -10,11 +13,20 @@ const GameUI: React.FC = () => {
     const [selectedUnit, setSelectedUnit] = useState<UnitProps | null>(null);
     const [selectedTile, setSelectedTile] = useState<{ row: number; col: number; type: TerrainType } | null>(null);
     const [cityViewCity, setCityViewCity] = useState<CityProps | null>(null);
+    const [showTechTree, setShowTechTree] = useState(false);
+    const [selectedEnemyUnit, setSelectedEnemyUnit] = useState<UnitProps | null>(null);
+    const [showBattle, setShowBattle] = useState(false);
+
+    const handleAttackEnemy = (attacker: UnitProps, defender: UnitProps) => {
+        setShowBattle(true);
+        setSelectedUnit(attacker);
+        setSelectedEnemyUnit(defender);
+    };
 
     const { 
         message, setMessage, 
         turn, endTurn, currentPlayer, 
-        selectedCity, setSelectedCity 
+        selectedCity 
     } = useGame();
 
     return (
@@ -40,28 +52,44 @@ const GameUI: React.FC = () => {
             </div>
             <div className="ui-main">
                 <div className="ui-left">
-                    <div className="minimap-placeholder">Minimapa</div>
+                    <MiniMap />
                 </div>
                 <div className="ui-center">
-                    <Map2 setSelectedUnit={setSelectedUnit} setSelectedTile={setSelectedTile} />
+                    <Map2
+                        setSelectedUnit={setSelectedUnit}
+                        setSelectedTile={setSelectedTile}
+                        setSelectedEnemyUnit={setSelectedEnemyUnit}
+                    />
                 </div>
                 <div className="ui-right">
-                <InfoPanel
-                    selectedUnit={selectedUnit}
-                    selectedTile={selectedTile}
-                    selectedCity={selectedCity}
-                    onEnterCity={city => setCityViewCity(city)}
-                />
-                {cityViewCity && (
-                    <CityView city={cityViewCity} onClose={() => setCityViewCity(null)} />
-                )}
+                    <InfoPanel
+                        selectedUnit={selectedUnit}
+                        selectedEnemyUnit={selectedEnemyUnit}
+                        selectedTile={selectedTile}
+                        selectedCity={selectedCity}
+                        onEnterCity={city => setCityViewCity(city)}
+                        onAttackEnemy={handleAttackEnemy}
+                    />
+                    {cityViewCity && (
+                        <CityView city={cityViewCity} onClose={() => setCityViewCity(null)} />
+                    )}
+                    {showTechTree && (
+                        <TechTreeView onClose={() => setShowTechTree(false)} />
+                    )}
                 </div>
             </div>
             <div className="ui-bottom">
                 <button onClick={endTurn}>Txanda amaitu</button>
-                <button>Menú</button>
+                <button onClick={() => setShowTechTree(true)}>Teknologia zuhaitza</button>
             </div>
         </div>
+        {showBattle && selectedUnit && selectedEnemyUnit && (
+            <BattleView
+                attacker={selectedUnit}
+                defender={selectedEnemyUnit}
+                onClose={() => setShowBattle(false)}
+            />
+        )}
         </>
     );
 };

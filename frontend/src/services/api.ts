@@ -1,15 +1,18 @@
-import axios from 'axios';
-import { TERRAIN_TYPES, MAP_DEFAULT_SIZE } from '../utils/Constants';
+import { TILE_TYPES } from '../utils/Constants';
 import { TerrainType, Unit, City, MapState } from '../types';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
+// Mapa 50x50 con sentido: bordes de agua, interior variado
+const size = 50;
+const customTiles: TerrainType[][] = Array.from({ length: size }, (_, y) =>
+  Array.from({ length: size }, (_, x) => {
+    if (x === 0 || y === 0 || x === size - 1 || y === size - 1) return 'water';
+    if (x < 5 || y < 5 || x > size - 6 || y > size - 6) return 'grass';
+    if ((x + y) % 13 === 0) return 'mountain';
+    if ((x * y) % 17 === 0) return 'forest';
+    if ((x + y) % 19 === 0) return 'desert';
+    return 'grass';
+  })
+);
 
 export const fetchCivilizations = async (): Promise<{ name: string; attack: number; defense: number }[]> => {
   return new Promise((resolve) => {
@@ -17,7 +20,7 @@ export const fetchCivilizations = async (): Promise<{ name: string; attack: numb
         { name: 'rome', attack: 1, defense: 2 },
         { name: 'greece', attack: 2, defense: 3 },
         { name: 'egypt', attack: 3, defense: 1 }
-      ]); // Civilizaciones simuladas con atributos
+      ]);
   });
 };
 
@@ -27,81 +30,231 @@ export const fetchUnits = async (): Promise<{ name: string; attack: number; defe
         { name: 'swordsman', attack: 5, defense: 3 },
         { name: 'archer', attack: 3, defense: 2 },
         { name: 'cavalry', attack: 4, defense: 4 }
-      ]); // Unidades simuladas con atributos
+      ]);
   });
 };
 
 export const loadMap = async (): Promise<{
-  map: MapState['map'];
+  map: MapState;
   units: Unit[];
   cities: City[];
+  unlockedTechs: string[];
+  turn: number;
+  currentPlayer: string;
 }> => {
-  return new Promise(async (resolve) => {
-    const width = MAP_DEFAULT_SIZE;
-    const height = MAP_DEFAULT_SIZE;
-
-    // Obtener los tipos de terreno desde el nuevo constant
-    const terrainTypes = TERRAIN_TYPES;
-
-    // Generar tiles aleatorios tipados
-    const tiles: TerrainType[][] = Array.from({ length: height }, () =>
-      Array.from({ length: width }, () =>
-        terrainTypes[Math.floor(Math.random() * terrainTypes.length)]
-      )
-    );
-
-    // Generar fog_of_war (todo oculto inicialmente)
-    const fog_of_war = Array.from({ length: height }, () =>
-      Array(width).fill(false)
-    );
-
-    // Crear el objeto MapState
-    const map = {
-      size: { width, height },
-      tiles,
-      fog_of_war,
-    };
-
-    // Simular una unidad
-    const units = [
-      {
-        id: "unit1",
-        type: "settler",
-        position: { x: 18, y: 18 },
-        movement_points: 5,
-        movement_points_left: 5,
+  const fakeGameState = {
+    user_id: "665f1a2b3c4d5e6f7a8b9c0d",
+    name: "Nire partida IA-ren aurka",
+    scenario_id: "665f1a2b3c4d5e6f7a8b9c0e",
+    created_at: "2025-04-01T18:30:22.123Z",
+    last_saved: "2025-04-01T19:45:33.456Z",
+    cheats_used: ["mapa_agertu", "maila_igo"],
+    game_state: {
+      turn: 12,
+      current_player: "player",
+      cheats_used: ["mapa_agertu", "maila_igo"],
+      player: {
+        civilization: "Basques",
+        era: "Ancient",
+        leader_name: "Iker",
+        resources: {
+          food: 35,
+          production: 28,
+          science: 15,
+          gold: 420
+        },
+        cities: [
+          {
+            id: "city1",
+            name: "Bilbo",
+            position: { x: 15, y: 22 },
+            population: 5,
+            buildings: [
+              { id: "granary", type: "food_building" },
+              { id: "library", type: "science_building" }
+            ],
+            production: {
+              current_item: "warrior",
+              turns_remaining: 3
+            }
+          }
+        ],
+        units: [
+          {
+            id: "unit1",
+            type: "settler",
+            position: { x: 12, y: 18 },
+            movement_points: 2,
+            movement_points_left: 1,
+            strength: 30,
+            health: 100,
+            visible: true
+          },
+          {
+            id: "unit2",
+            type: "settler",
+            position: { x: 14, y: 18 },
+            movement_points: 1000,
+            movement_points_left: 1000,
+            strength: 30,
+            health: 100,
+            visible: true
+          }
+        ],
+        technologies: [
+          { id: "agriculture", completed: true, in_progress: false, turns_remaining: 0 }
+        ]
       },
-      {
-        id: "unit2",
-        type: "settler",
-        position: { x: 10, y: 18 },
-        movement_points: 5,
-        movement_points_left: 5,
-      }
-    ];
-
-    const cities = [
-      {
-        id: "city1",
-        name: "Roma",
-        position: { x: 11, y: 18 },
-        population: 100,
+      ai: {
+        civilization: "Romans",
+        era: "Ancient",
+        leader_name: "Caesar",
+        resources: {
+          food: 40,
+          production: 22,
+          science: 10,
+          gold: 380
+        },
+        cities: [
+          {
+            id: "ai_city1",
+            name: "Erroma",
+            position: { x: 42, y: 35 },
+            population: 4,
+            buildings: [],
+            production: {
+              current_item: "",
+              turns_remaining: 0
+            }
+          }
+        ],
+        units: [
+          {
+            id: "ai_unit1",
+            type: "warrior",
+            position: { x: 15, y: 18 },
+            movement_points: 2,
+            movement_points_left: 2,
+            strength: 5,
+            health: 100,
+            visible: false
+          }
+        ],
+        technologies: []
       },
-      {
-        id: "city2",
-        name: "Atenas",
-        position: { x: 9, y: 18 },
-        population: 50,
+      map: {
+        size: { width: size, height: size },
+        tiles: customTiles,
+        visible_objects: [
+          {
+            type: "resource",
+            resource_type: "iron",
+            position: { x: 14, y: 25 },
+            improved: true
+          }
+        ],
+        fog_of_war_player: [] as boolean[][],
+        fog_of_war_ai: [] as boolean[][]
       }
-    ];
-    resolve({ map, units, cities });
+    }
+  };
+
+  // --- Generar fog_of_war_player dinámicamente según las unidades del jugador ---
+  const fog_of_war_player: boolean[][] = Array.from({ length: size }, () =>
+    Array.from({ length: size }, () => false)
+  );
+
+  const playerUnits = fakeGameState.game_state.player.units;
+  playerUnits.forEach(unit => {
+    const { x, y } = unit.position;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+          fog_of_war_player[ny][nx] = true;
+        }
+      }
+    }
   });
+
+  // Asigna el fog generado al fakeGameState
+  fakeGameState.game_state.map.fog_of_war_player = fog_of_war_player;
+
+  // Extrae los datos para el estado del juego
+  const map = {
+    size: fakeGameState.game_state.map.size,
+    tiles: fakeGameState.game_state.map.tiles,
+    fog_of_war: fakeGameState.game_state.map.fog_of_war_player,
+  };
+
+  const units = [
+    ...fakeGameState.game_state.player.units.map((u: any) => ({
+      id: u.id,
+      type: u.type,
+      position: u.position,
+      movement_points: u.movement_points,
+      movement_points_left: u.movement_points_left,
+      strength: u.strength,
+      health: u.health,
+      visible: u.visible,
+      owner: 'player' as 'player', // <-- type assertion
+    })),
+    ...fakeGameState.game_state.ai.units.map((u: any) => ({
+      id: u.id,
+      type: u.type,
+      position: u.position,
+      movement_points: u.movement_points,
+      movement_points_left: u.movement_points_left,
+      strength: u.strength,
+      health: u.health,
+      visible: u.visible,
+      owner: 'ai' as 'ai', // <-- type assertion
+    })),
+  ];
+
+  const cities = [
+    ...fakeGameState.game_state.player.cities.map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      position: c.position,
+      population: c.population,
+      buildings: c.buildings,
+      production: c.production,
+      owner: 'player' as 'player', // <-- type assertion
+    })),
+    ...fakeGameState.game_state.ai.cities.map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      position: c.position,
+      population: c.population,
+      buildings: c.buildings,
+      production: c.production,
+      owner: 'ai' as 'ai', // <-- type assertion
+    })),
+  ];
+
+  const unlockedTechs = fakeGameState.game_state.player.technologies
+    .filter((t: any) => t.completed)
+    .map((t: any) => t.id);
+
+  const turn = fakeGameState.game_state.turn;
+  const currentPlayer = fakeGameState.game_state.current_player;
+
+  return {
+    map,
+    units,
+    cities,
+    unlockedTechs,
+    turn,
+    currentPlayer,
+  };
 };
 
 export const saveGame = async (gameState: any): Promise<void> => {
   return new Promise((resolve) => {
-      resolve(); // Guardar el estado del juego simulado
+      resolve();
   });
-};  
+};
 
-export default api;
+export default {};

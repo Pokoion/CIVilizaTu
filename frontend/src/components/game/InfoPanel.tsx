@@ -6,10 +6,34 @@ type InfoPanelProps = {
   selectedUnit: UnitProps | null;
   selectedTile: { row: number; col: number; type: TerrainType; isDiscovered?: boolean } | null;
   selectedCity: CityProps | null;
+  selectedEnemyUnit: UnitProps | null;
   onEnterCity?: (city: CityProps) => void;
+  onAttackEnemy?: (attacker: UnitProps, defender: UnitProps) => void;
 };
 
-const InfoPanel: React.FC<InfoPanelProps> = ({ selectedUnit, selectedTile, selectedCity, onEnterCity }) => {
+const InfoPanel: React.FC<InfoPanelProps> = ({
+  selectedUnit,
+  selectedTile,
+  selectedCity,
+  selectedEnemyUnit,
+  onEnterCity,
+  onAttackEnemy,
+}) => {
+  if (selectedUnit && selectedEnemyUnit) {
+    return (
+      <div>
+        <h3>Enemigo</h3>
+        <p>Tipo: {selectedEnemyUnit.type}</p>
+        <p>Vida: {selectedEnemyUnit.health}</p>
+        <p>Fuerza: {selectedEnemyUnit.strength}</p>
+        <button
+          onClick={() => onAttackEnemy && onAttackEnemy(selectedUnit, selectedEnemyUnit)}
+        >
+          Atacar
+        </button>
+      </div>
+    );
+  }
   if (selectedUnit) {
     return (
       <div>
