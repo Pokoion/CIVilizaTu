@@ -103,7 +103,7 @@ const BattleView: React.FC<BattleViewProps> = ({ attacker, defender, onClose }) 
               }
             >
               <img
-                src="/images/warrior.png"
+                src={`/images/units/${attacker.type}.png`}
                 alt={attacker.type}
                 className="battle-unit-img"
                 style={{
@@ -134,7 +134,7 @@ const BattleView: React.FC<BattleViewProps> = ({ attacker, defender, onClose }) 
               }
             >
               <img
-                src="/images/warrior.png"
+                src={`/images/units/${defender.type}.png`}
                 alt={defender.type}
                 className="battle-unit-img"
                 style={{

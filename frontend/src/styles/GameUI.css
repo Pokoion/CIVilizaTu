@@ -111,3 +111,32 @@
     90% { opacity: 1; }
     100% { opacity: 0; }
   }
+
+  /* Estilo para los recursos en ui-top-center */
+.ui-top-center {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+.resource {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resource-icon {
+  width: 48px;
+  height: 48px;
+}
+
+.resource-name {
+  color: #ffffff; /* Color del texto del nombre del recurso */
+  font-weight: normal;
+}
+
+.resource-value {
+  color: #ffd700; /* Color del número del recurso */
+  font-weight: bold;
+}

@@ -5,6 +5,7 @@ import CityView from './CityView';
 import TechTreeView from './TechTreeView';
 import MiniMap from './MiniMap';
 import BattleView from './BattleView';
+import FoundCityView from './FoundCityView';
 import { UnitProps, TerrainType, CityProps } from '../../types';
 import '../../styles/GameUI.css';
 import { useGame } from '../../context/GameContext';
@@ -17,17 +18,55 @@ const GameUI: React.FC = () => {
     const [selectedEnemyUnit, setSelectedEnemyUnit] = useState<UnitProps | null>(null);
     const [showBattle, setShowBattle] = useState(false);
 
+    // Estados para FoundCityView
+    const [showFoundCityView, setShowFoundCityView] = useState(false);
+    const [kolonoToFoundCity, setKolonoToFoundCity] = useState<UnitProps | null>(null);
+
+    const { 
+        message, setMessage, 
+        turn, endTurn, currentPlayer, 
+        selectedCity, cities, setCities, units, setUnits, resources
+    } = useGame();
+
     const handleAttackEnemy = (attacker: UnitProps, defender: UnitProps) => {
         setShowBattle(true);
         setSelectedUnit(attacker);
         setSelectedEnemyUnit(defender);
     };
 
-    const { 
-        message, setMessage, 
-        turn, endTurn, currentPlayer, 
-        selectedCity 
-    } = useGame();
+    const handleFoundCity = (kolono: UnitProps) => {
+        // Mostrar FoundCityView y guardar el kolono seleccionado
+        setShowFoundCityView(true);
+        setKolonoToFoundCity(kolono);
+    };
+
+    const confirmFoundCity = (cityName: string) => {
+        if (!kolonoToFoundCity) return;
+
+        const { position } = kolonoToFoundCity;
+
+        // Crear una nueva ciudad con el nombre proporcionado
+        const newCity: CityProps = {
+            id: `city-${Date.now()}`,
+            name: cityName || `Hiria ${cities.length + 1}`, // Usar el nombre ingresado o un nombre por defecto
+            position,
+            population: 1,
+            owner: 'player',
+        };
+
+        // Actualizar el estado global
+        setCities([...cities, newCity]);
+        setUnits(units.filter((unit) => unit.id !== kolonoToFoundCity.id)); // Eliminar el Kolono
+        setSelectedUnit(null); // Deseleccionar la unidad
+        setSelectedTile(null); // Deseleccionar el tile
+        setShowFoundCityView(false); // Cerrar FoundCityView
+        setKolonoToFoundCity(null); // Limpiar el kolono seleccionado
+    };
+
+    const cancelFoundCity = () => {
+        setShowFoundCityView(false);
+        setKolonoToFoundCity(null);
+    };
 
     return (
         <>
@@ -42,9 +81,31 @@ const GameUI: React.FC = () => {
                     <span>Txanda: {turn}</span>
                 </div>
                 <div className="ui-top-center">
-                    <span>Urrea: 100</span>
-                    <span>Janaria: 50</span>
-                    <span>X: 100</span>
+                    <div className="resource">
+                        <img src="/images/resources/urrea.png" alt="Urrea" className="resource-icon" />
+                        <span className="resource-name">Urrea:</span>
+                        <span className="resource-value">{resources.gold}</span>
+                    </div>
+                    <div className="resource">
+                        <img src="/images/resources/janaria.png" alt="Janaria" className="resource-icon" />
+                        <span className="resource-name">Janaria:</span>
+                        <span className="resource-value">{resources.food}</span>
+                    </div>
+                    <div className="resource">
+                        <img src="/images/resources/kultura.png" alt="Kultura" className="resource-icon" />
+                        <span className="resource-name">Kultura:</span>
+                        <span className="resource-value">{resources.culture}</span>
+                    </div>
+                    <div className="resource">
+                        <img src="/images/resources/baliabide_naturalak.png" alt="Baliabide Naturalak" className="resource-icon" />
+                        <span className="resource-name">Baliabide Naturalak:</span>
+                        <span className="resource-value">{resources.natural_resources}</span>
+                    </div>
+                    <div className="resource">
+                        <img src="/images/resources/zientzia.png" alt="Zientzia" className="resource-icon" />
+                        <span className="resource-name">Zientzia:</span>
+                        <span className="resource-value">{resources.science}</span>
+                    </div>
                 </div>
                 <div className="ui-top-right">
                     <span>Jokalaria: {currentPlayer === 'player' ? 'Player' : 'AI'}</span>
@@ -69,6 +130,7 @@ const GameUI: React.FC = () => {
                         selectedCity={selectedCity}
                         onEnterCity={city => setCityViewCity(city)}
                         onAttackEnemy={handleAttackEnemy}
+                        onFoundCity={handleFoundCity}
                     />
                     {cityViewCity && (
                         <CityView city={cityViewCity} onClose={() => setCityViewCity(null)} />
@@ -88,6 +150,14 @@ const GameUI: React.FC = () => {
                 attacker={selectedUnit}
                 defender={selectedEnemyUnit}
                 onClose={() => setShowBattle(false)}
+            />
+        )}
+
+        {/* FoundCityView */}
+        {showFoundCityView && (
+            <FoundCityView
+                onConfirm={confirmFoundCity}
+                onCancel={cancelFoundCity}
             />
         )}
         </>

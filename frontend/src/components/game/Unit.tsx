@@ -17,7 +17,7 @@ const Unit: React.FC<UnitProps> = ({ id, type, selected, onClick, owner }) => {
         if (onClick) onClick();
       }}
     >
-      <img src="images/warrior.png" alt="Unidad" className="unit-person" />
+      <img src={`/images/units/${type}.png`} alt={type} className="unit-person" />
     </div>
   );
 };

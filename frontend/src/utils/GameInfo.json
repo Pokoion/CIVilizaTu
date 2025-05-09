@@ -1,0 +1,219 @@
+{
+    "units": [
+        {
+            "id": "militar",
+            "type": "Militar",
+            "health": 75,
+            "strength": 15,
+            "movement_points": 2,
+            "range": 1,
+            "civilization": "all",
+            "image": "/images/units/militar.png"
+        },
+        {
+            "id": "kolono",
+            "type": "Kolono",
+            "health": 50,
+            "strength": 0,
+            "movement_points": 2,
+            "range": 1,
+            "civilization": "all",
+            "image": "/images/units/kolono.png"
+        },
+        {
+            "id": "langile",
+            "type": "Langile",
+            "health": 50,
+            "strength": 0,
+            "movement_points": 2,
+            "range": 1,
+            "civilization": "all",
+            "image": "/images/units/langile.png"
+        },
+        {
+            "id": "gudaria",
+            "type": "Gudaria",
+            "health": 150,
+            "strength": 20,
+            "movement_points": 2,
+            "range": 1,
+            "civilization": "euskaldunak",
+            "image": "/images/units/gudaria.png"
+        }
+    ],
+    "resources": [
+        { "id": "janaria", "name": "Janaria", "description": "Hiriko biztanleria hazten du" },
+        { "id": "urrea", "name": "Urrea", "description": "Eraikinak erosteko" },
+        { "id": "baliabide_naturalak", "name": "Baliabide Naturalak", "description": "Eraikuntzarako" },
+        { "id": "zientzia", "name": "Zientzia", "description": "Teknologia berriak garatzeko" }
+    ],
+    "buildings": [
+        { "id": "granero", "name": "Granero", "bonus": "+2 janari", "requirement": "buztingintza" },
+        { "id": "kuartela", "name": "Kuartela", "bonus": "Unitate militarren ekoizpena", "requirement": "burdina" },
+        { "id": "eskola", "name": "Eskola", "bonus": "+1 kultura (biztanleko)", "requirement": "idazketa" },
+        { "id": "merkatu", "name": "Merkatua", "bonus": "+2 urre", "requirement": "merkataritza" },
+        { "id": "harresia", "name": "Harresia", "bonus": "Hiriaren defentsan laguntzen du", "requirement": null },
+        { "id": "unibertsitatea", "name": "Unibertsitatea", "bonus": "+2 kultura (biztanleko)", "requirement": "ingeniaritza" }
+    ],
+    "technologies": [
+    {
+        "id": "nekazaritza",
+        "name": "Nekazaritza",
+        "bonus": "Janaria +10",
+        "cost": 3,
+        "era": "Antzinaroa",
+        "dependencies": [],
+        "x": 100,
+        "y": 100
+    },
+    {
+        "id": "idazketa",
+        "name": "Idazketa",
+        "bonus": "Eskolak desblokeatu eta biztanle bakoitzeko kultura puntuak +1",
+        "cost": 8,
+        "era": "Antzinaroa",
+        "dependencies": ["nekazaritza"],
+        "x": 300,
+        "y": 100
+    },
+    {
+        "id": "penizilina",
+        "name": "Penizilina",
+        "bonus": "Osasuna +20Unitate guztien bizitza +30",
+        "cost": 15,
+        "era": "Aro Modernoa",
+        "dependencies": ["idazketa"],
+        "x": 500,
+        "y": 50
+    },
+    {
+        "id": "ekonomia",
+        "name": "Ekonomia",
+        "bonus": "Txanda bakoitzeko hirietatik lortzen en urre kopurua +1",
+        "cost": 14,
+        "era": "Erdi Aroa",
+        "dependencies": ["idazketa"],
+        "x": 500,
+        "y": 170
+    },
+    {
+        "id": "merkataritza",
+        "name": "Merkataritza",
+        "bonus": "Merkatuak desblokeatu",
+        "cost": 12,
+        "era": "Aro Modernoa",
+        "dependencies": ["ekonomia"],
+        "x": 700,
+        "y": 130
+    },
+    {
+        "id": "burdina",
+        "name": "Burdina",
+        "bonus": "Unitate militar hobeak, +1 eraso zibilizazioaren unitate bakoitzeko eta kuartelak desblokeatu",
+        "cost": 8,
+        "era": "Antzinaroa",
+        "dependencies": ["nekazaritza"],
+        "x": 300,
+        "y": 300
+    },
+    {
+        "id": "meatzaritza",
+        "name": "Meatzaritza",
+        "bonus": "Mapatik baliabide-naturalak eskuratzea desblokeatzen du",
+        "cost": 4,
+        "era": "Antzinaroa",
+        "dependencies": ["burdina"],
+        "x": 500,
+        "y": 300
+    },
+    {
+        "id": "ingeniaritza",
+        "name": "Ingeniaritza",
+        "bonus": "Unibertsitateak desblokeatzen ditu eta biztanle bakoitzeko kultura puntuak +2",
+        "cost": 12,
+        "era": "Erdi Aroa",
+        "dependencies": ["meatzaritza"],
+        "x": 700,
+        "y": 250
+    },
+    {
+        "id": "artilleria",
+        "name": "Artilleria",
+        "bonus": "Unitate militar hobeak (+1 eraso zibilizazioaren unitate bakoitzeko) eta tankeak desblokeatu",
+        "cost": 16,
+        "era": "Aro Modernoa",
+        "dependencies": ["ingeniaritza"],
+        "x": 900,
+        "y": 250
+    },
+    {
+        "id": "arkitektura",
+        "name": "Arkitektura",
+        "bonus": "Produkzio guztien txanda kopurua murriztu",
+        "cost": 14,
+        "era": "Erdi Aroa",
+        "dependencies": ["meatzaritza"],
+        "x": 700,
+        "y": 370
+    },
+    {
+        "id": "buztingintza",
+        "name": "Buztingintza",
+        "bonus": "Graneroa desblokeatu",
+        "cost": 5,
+        "era": "Antzinaroa",
+        "dependencies": [],
+        "x": 100,
+        "y": 400
+    },
+    {
+        "id": "industria",
+        "name": "Industria",
+        "bonus": "Produkzio guztien txanda kopurua murriztu",
+        "cost": 14,
+        "era": "Aro Modernoa",
+        "dependencies": ["buztingintza"],
+        "x": 300,
+        "y": 420
+    },
+    {
+        "id": "arku_tiroa",
+        "name": "Arku Tiroa",
+        "bonus": "Distantziako oinarrizko unitatea desblokeatu",
+        "cost": 15,
+        "era": "Antzinaroa",
+        "dependencies": [],
+        "x": 100,
+        "y": 520
+    },
+    {
+        "id": "gurpila",
+        "name": "Gurpila",
+        "bonus": "Unitate guztien mugimendu kostua -1",
+        "cost": 10,
+        "era": "Antzinaroa",
+        "dependencies": [],
+        "x": 100,
+        "y": 640
+    },
+    {
+        "id": "nabigazioa",
+        "name": "Nabigazioa",
+        "bonus": "Ura zeharkatzea ahalbidetzen duen ontzia desblokeatzen du",
+        "cost": 6,
+        "era": "Erdi Aroa",
+        "dependencies": [],
+        "x": 100,
+        "y": 760
+    }
+    ],
+    "terrains": [
+    { "id": "lautada", "name": "Lautada", "movement_cost": 1, "requires_boat": false, "color": "#7CFC00" },
+    { "id": "basoa", "name": "Basoa", "movement_cost": 2, "requires_boat": false, "color": "#228B22" },
+    { "id": "mendia", "name": "Mendia", "movement_cost": 2, "requires_boat": false, "color": "#A9A9A9" },
+    { "id": "ura", "name": "Ura", "movement_cost": 1, "requires_boat": true, "color": "#1E90FF" },
+    { "id": "desertua", "name": "Desertua", "movement_cost": 3, "requires_boat": false, "color": "#EDC9AF" },
+    { "id": "pantano", "name": "Pantano", "movement_cost": 3, "requires_boat": false, "color": "#556B2F" },
+    { "id": "itsasoa", "name": "Itsasoa", "movement_cost": 1, "requires_boat": true, "color": "#00008B" }
+    ]
+}

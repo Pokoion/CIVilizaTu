@@ -7,9 +7,11 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const jwt = localStorage.getItem('jwt_token');
+  /*
   if (!jwt) {
     return <Navigate to="/login" />;
   }
+  */
   return children;
 };
 

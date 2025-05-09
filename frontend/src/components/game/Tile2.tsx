@@ -24,6 +24,12 @@ const Tile2: React.FC<TileProps> = ({
     style.backgroundSize = 'cover';
     style.backgroundPosition = 'center';
     className += ' fog-visible';
+
+    // Añadir clase para tiles que requieren barco
+    if (tile.requiresBoat) {
+      className += ' requires-boat';
+    }
+
     showCost = true;
   }
 

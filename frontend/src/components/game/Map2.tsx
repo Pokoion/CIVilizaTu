@@ -81,30 +81,31 @@ const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile, setSelect
     }
   };
 
-  const handleUnitClick = (unitId: string) => {
-    const unit = units.find(u => u.id === unitId) || null;
-    console.log('Unidad seleccionada:', unit);
-    console.log('ID de unidad seleccionada:', unitId);
-    console.log('ID de unidad seleccionada en el contexto:', selectedUnitId);
-  
-    // Solo si tienes una unidad seleccionada y haces click en una enemiga
-    if (selectedUnitId && unit && unit.owner === 'ai') {
-      console.log('Unidad enemiga seleccionada:', unit);
-      setSelectedEnemyUnit(unit);
-      setSelectedTile(null);
-      setSelectedCity(null);
-      return;
-    }
-  
-    // Si es una unidad propia, selecciónala normalmente
-    if (unit && unit.owner === 'player') {
-      setSelectedUnit(unit);
-      setSelectedEnemyUnit(null);
-      setSelectedTile(null);
-      setSelectedUnitId(prev => prev === unitId ? null : unitId);
-      setSelectedCity(null);
-    }
-  };
+const handleUnitClick = (unitId: string) => {
+  const unit = units.find(u => u.id === unitId) || null;
+  console.log('Unidad seleccionada:', unit);
+  console.log('ID de unidad seleccionada:', unitId);
+  console.log('ID de unidad seleccionada en el contexto:', selectedUnitId);
+
+  // Si tienes una unidad seleccionada y haces clic en una enemiga
+  if (selectedUnitId && unit && unit.owner === 'ai') {
+    console.log('Unidad enemiga seleccionada:', unit);
+    setSelectedEnemyUnit(unit);
+    setSelectedTile(null);
+    setSelectedCity(null);
+    return;
+  }
+
+  // Si es una unidad propia, selecciónala normalmente
+  if (unit && unit.owner === 'player') {
+    console.log('Unidad aliada seleccionada:', unit);
+    setSelectedUnit(unit);
+    setSelectedEnemyUnit(null);
+    setSelectedTile(null);
+    setSelectedUnitId(prev => prev === unitId ? null : unitId);
+    setSelectedCity(null);
+  }
+};
 
   const handleCityClick = (city: CityProps) => {
     setSelectedCity(city);

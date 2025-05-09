@@ -9,6 +9,7 @@ type InfoPanelProps = {
   selectedEnemyUnit: UnitProps | null;
   onEnterCity?: (city: CityProps) => void;
   onAttackEnemy?: (attacker: UnitProps, defender: UnitProps) => void;
+  onFoundCity?: (unit: UnitProps) => void;
 };
 
 const InfoPanel: React.FC<InfoPanelProps> = ({
@@ -18,44 +19,63 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   selectedEnemyUnit,
   onEnterCity,
   onAttackEnemy,
+  onFoundCity,
 }) => {
+  console.log('Selected unit InfoPanel:', selectedUnit);
+  console.log('Selected enemy unit InfoPanel:', selectedEnemyUnit);
+
+  // Priorizar el caso de ataque enemigo
   if (selectedUnit && selectedEnemyUnit) {
+    console.log('Mostrando botón de atacar enemigo');
     return (
       <div>
-        <h3>Enemigo</h3>
-        <p>Tipo: {selectedEnemyUnit.type}</p>
-        <p>Vida: {selectedEnemyUnit.health}</p>
-        <p>Fuerza: {selectedEnemyUnit.strength}</p>
-        <button
-          onClick={() => onAttackEnemy && onAttackEnemy(selectedUnit, selectedEnemyUnit)}
-        >
-          Atacar
-        </button>
+        <h3>Atacar enemigo</h3>
+        <p>Atacante: {selectedUnit.type} - {selectedUnit.id}</p>
+        <p>Enemigo: {selectedEnemyUnit.type} - {selectedEnemyUnit.id}</p>
+        <div style={{ textAlign: 'right' }}>
+          <button onClick={() => onAttackEnemy && onAttackEnemy(selectedUnit, selectedEnemyUnit)}>
+            Atacar enemigo
+          </button>
+        </div>
       </div>
     );
   }
+
+  // Mostrar información de la unidad seleccionada
   if (selectedUnit) {
     return (
       <div>
-        <h3>Unidad</h3>
+        <h3>Unitatea</h3>
         <p>Nombre: {selectedUnit.type} - {selectedUnit.id}</p>
         <p>Movimiento: {selectedUnit.movement_points_left}/{selectedUnit.movement_points}</p>
-        {/* Más info de la unidad */}
+        {selectedUnit.type === 'kolono' && (
+          <div style={{ textAlign: 'right' }}>
+            <button onClick={() => onFoundCity && onFoundCity(selectedUnit)}>
+              Fundar Ciudad
+            </button>
+          </div>
+        )}
       </div>
     );
   }
+
+  // Mostrar información de la ciudad seleccionada
   if (selectedCity) {
     return (
       <div>
         <h3>Hiria</h3>
         <p>Izena: {selectedCity.name}</p>
         <p>Populazioa: {selectedCity.population} </p>
-        <button onClick={() => onEnterCity && onEnterCity(selectedCity)}>
-          Sartu hirian
-        </button>
+        <div style={{ textAlign: 'right' }}>
+          <button onClick={() => onEnterCity && onEnterCity(selectedCity)}>
+            Sartu hirian
+          </button>
+        </div>
       </div>
     );
   }
+
+  // Mostrar información del tile seleccionado
   if (selectedTile) {
     if (!selectedTile.isDiscovered) {
       return (
@@ -70,10 +90,11 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         <h3>Lurraldea</h3>
         <p>Mota: {selectedTile.type}</p>
         <p>Mugimendu kostua: {TILE_TYPES[selectedTile.type].movementCost}</p>
-        {/* Más info del tile */}
       </div>
     );
   }
+
+  // Mensaje por defecto
   return <div>Egin ezazu klik unitate edo lurralde batean informazioa ikusteko.</div>;
 };
 

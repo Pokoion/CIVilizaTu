@@ -1,255 +1,318 @@
+/* Overlay del árbol tecnológico */
 .tech-tree-overlay {
-    z-index: 1000;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.45);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .tech-tree-content {
-    position: relative;
-    width: 1200px;
-    min-height: 700px;
-    background: #fafdff;
-    border-radius: 18px;
-    box-shadow: 0 4px 32px rgba(49,130,206,0.18);
-    padding: 32px 32px 24px 32px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-  }
-  
-  .tech-tree-title {
-    font-size: 2rem;
-    color: #22577a;
-    margin-bottom: 18px;
-    letter-spacing: 1px;
-  }
-  
-  .tech-tree-canvas {
-    position: relative;
-    background: linear-gradient(90deg, #e3f0ff 0%, #fafdff 100%);
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(49,130,206,0.08);
-    margin-bottom: 32px;
-    overflow: auto;
-  }
-  
-  .tech-tree-svg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 1100px;
-    height: 650px;
-    pointer-events: none;
-    z-index: 1;
-  }
-  
-  .tech-node {
-    position: absolute;
-    width: 120px;
-    height: 80px;
-    background: #fff;
-    border: 2px solid #3182ce;
-    border-radius: 12px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(49,130,206,0.10);
-    cursor: pointer;
-    padding: 8px;
-    z-index: 2;
-    transition: transform 0.1s, box-shadow 0.1s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-  }
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
 
-  .tech-node:hover {
-    transform: scale(1.06);
-    box-shadow: 0 4px 16px rgba(49,130,206,0.18);
-    border-color: #22577a;
-  }
-  
+/* Contenedor principal */
+.tech-tree-content {
+  position: relative;
+  width: 1400px;
+  height: 600px; /* Reducir la altura */
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Título */
+.tech-tree-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1a202c;
+  margin-bottom: 16px;
+}
+
+/* Canvas del árbol */
+/* Canvas del árbol */
+.tech-tree-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background: #f4f4f4;
+  border-radius: 12px;
+}
+
+/* SVG para las conexiones */
+.tech-tree-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  pointer-events: none; /* Evitar que el SVG bloquee los clics */
+}
+
+/* Nodo de tecnología */
+.tech-node {
+  position: absolute;
+  width: 120px;
+  height: 100px;
+  background: #ffffff;
+  border: 2px solid #3182ce;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 2; /* Asegurar que los nodos estén encima del SVG */
+  pointer-events: auto; /* Permitir clics en los nodos */
+}
+
+.tech-node:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Imagen del nodo */
 .tech-node-img {
-  width: 56px;      /* Más grande */
-  height: 40px;     /* Más grande, ocupa la mitad vertical */
-  margin-bottom: 4px;
-  object-fit: contain;
+  width: 60px;
+  height: 60px;
+  margin-bottom: 8px;
 }
 
+/* Nombre de la tecnología */
 .tech-node-name {
+  font-size: 14px;
   font-weight: bold;
-  color: #22577a;
-  margin-bottom: 2px;
-  font-size: 15px;
+  color: #1a202c;
 }
 
-.tech-node-desc {
-  font-size: 12px;
-  color: #555;
-  margin-bottom: 2px;
-}
-
+/* Era de la tecnología en los nodos */
 .tech-node-era {
-  font-size: 11px;
+  font-size: 12px;
+  color: #ffffff; /* Texto blanco */
+  background-color: #3182ce; /* Fondo azul */
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+  display: inline-block;
+  text-align: center;
+}
+
+/* Botón de cierre */
+.tech-tree-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #3182ce;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
   font-weight: bold;
-  color: #fff;
+  transition: background 0.2s;
+}
+
+.tech-tree-close-btn:hover {
+  background: #22577a;
+}
+
+/* Overlay para el detalle de la tecnología */
+.tech-detail-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+/* Contenedor del detalle */
+.tech-detail-content {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  padding: 32px;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Botón de cierre */
+.tech-detail-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #3182ce;
+  color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tech-detail-close-btn:hover {
+  background: #22577a;
+}
+
+/* Imagen de la tecnología */
+.tech-detail-img {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Título de la tecnología */
+.tech-detail-title {
+  font-size: 1.5rem;
+  color: #1a202c;
+  margin-bottom: 8px;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Era de la tecnología */
+.tech-detail-era {
+  font-size: 1rem;
+  color: #ffffff;
   background: #3182ce;
   border-radius: 6px;
-  padding: 2px 8px;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 3;
-  pointer-events: none;
-  box-shadow: 0 1px 4px rgba(49,130,206,0.10);
+  padding: 4px 12px;
+  margin-bottom: 16px;
 }
 
-.tech-node-era-bottom {
-  bottom: -26px;
-  top: auto;
+/* Descripción */
+.tech-detail-desc {
+  font-size: 1rem;
+  color: #4a5568;
+  margin-bottom: 16px;
+  text-align: center;
 }
-  
-  .tech-tree-close-btn {
-    align-self: flex-end;
-    margin-top: 0;
-    margin-bottom: 8px;
-    padding: 10px 32px;
-    background: #3182ce;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.15s;
-    box-shadow: 0 2px 8px rgba(49,130,206,0.10);
-  }
-  .tech-tree-close-btn:hover {
-    background: #22577a;
-  }
 
-  /* Añade esto a tu TechTreeView.css */
-.tech-detail-overlay {
-    position: fixed;
-    z-index: 2000;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .tech-detail-content {
-    background: #fafdff;
-    border-radius: 14px;
-    box-shadow: 0 4px 32px rgba(49,130,206,0.18);
-    padding: 32px 40px 24px 40px;
-    min-width: 320px;
-    min-height: 320px;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .tech-detail-close-btn {
-    position: absolute;
-    top: 18px;
-    right: 22px;
-    background: #3182ce;
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.15s;
-    box-shadow: 0 2px 8px rgba(49,130,206,0.10);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .tech-detail-close-btn:hover {
-    background: #22577a;
-    color: #ffd700;
-  }
-  .tech-detail-img {
-    width: 220px;
-    height: 180px;
-    object-fit: contain;
-    margin-bottom: 18px;
-    margin-top: 12px;
-    border-radius: 10px;
-    box-shadow: 0 2px 12px rgba(49,130,206,0.10);
-  }
-  .tech-detail-title {
-    font-size: 1.5rem;
-    color: #22577a;
-    margin-bottom: 4px;
-  }
-  .tech-detail-era {
-    font-size: 1rem;
-    color: #fff;
-    background: #3182ce;
-    border-radius: 6px;
-    padding: 2px 12px;
-    margin-bottom: 12px;
-  }
-  .tech-detail-desc {
-    font-size: 1rem;
-    color: #333;
-    margin-bottom: 16px;
-    text-align: center;
-  }
-  .tech-detail-req {
-    font-size: 1rem;
-    color: #22577a;
-    margin-top: 8px;
-  }
-  .tech-detail-req ul {
-    margin: 4px 0 0 0;
-    padding-left: 18px;
-  }
-  .tech-detail-cost {
-    margin: 16px 0 8px 0;
-    padding: 10px 18px;
-    background: #e3f0ff;
-    border-radius: 8px;
-    color: #22577a;
-    font-size: 1rem;
-    box-shadow: 0 1px 6px rgba(49,130,206,0.08);
-    font-family: 'Cinzel', serif;
-  }
-  .tech-detail-cost ul {
-    margin: 6px 0 0 0;
-    padding-left: 18px;
-  }
-  .tech-detail-cost li {
-    font-size: 0.98em;
-    margin-bottom: 2px;
-  }
-  .tech-detail-unlock-btn {
-    margin-top: 18px;
-    padding: 10px 32px;
-    background: #22577a;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.15s;
-    box-shadow: 0 2px 8px rgba(49,130,206,0.10);
-    font-family: 'Cinzel', serif;
-  }
-  .tech-detail-unlock-btn:hover {
-    background: #3182ce;
-    color: #ffd700;
-  }
+/* Bonus */
+.tech-detail-bonus {
+  font-size: 1rem;
+  color: #1a202c;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+/* Costos */
+.tech-detail-cost {
+  margin: 16px 0;
+  padding: 12px 16px;
+  background: #f0f4f8;
+  border-radius: 8px;
+  color: #1a202c;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tech-detail-cost ul {
+  margin: 8px 0 0 0;
+  padding-left: 16px;
+}
+
+.tech-detail-cost li {
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+/* Requisitos */
+.tech-detail-req {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  color: #1a202c;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tech-detail-req ul {
+  margin: 8px 0 0 0;
+  padding-left: 16px;
+}
+
+.tech-detail-req li {
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+/* Botón para aprender la tecnología */
+.tech-detail-learn-btn {
+  margin-top: 16px;
+  padding: 10px 24px;
+  background: #22577a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tech-detail-learn-btn:hover {
+  background: #3182ce;
+  color: #ffd700;
+}
+
+/* Nodo bloqueado */
+.tech-node.locked {
+  border-color: #ccc; /* Gris */
+  background-color: #f9f9f9; /* Fondo claro */
+  opacity: 0.6; /* Más transparente */
+}
+
+/* Imagen del nodo bloqueado */
+.tech-node.locked .tech-node-img {
+  filter: grayscale(100%); /* Imagen en blanco y negro */
+}
+
+/* Nombre de la tecnología bloqueada */
+.tech-node.locked .tech-node-name {
+  color: #a0a0a0; /* Texto gris */
+}
+
+/* Era de la tecnología bloqueada */
+.tech-node.locked .tech-node-era {
+  background-color: #d3d3d3; /* Fondo gris claro */
+  color: #808080; /* Texto gris oscuro */
+}
+
+.tech-detail-era-warning {
+  margin-top: 16px;
+  padding: 8px 12px;
+  background-color: #ffe4e1; /* Fondo rojo claro */
+  color: #b22222; /* Texto rojo oscuro */
+  border: 1px solid #b22222;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+}

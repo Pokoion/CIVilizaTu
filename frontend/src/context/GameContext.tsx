@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useState } from 'react';
-import { MapState, UnitProps, CityProps, Tech } from '../types';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { MapState, UnitProps, CityProps } from '../types';
 import TurnManager from '../managers/TurnManager';
 import GameManager from '../managers/GameManager';
+import { loadMap } from '../services/api'; // Importar la función para cargar datos desde la API
 
 type GameContextType = {
   mapState: MapState;
@@ -19,8 +20,24 @@ type GameContextType = {
   currentPlayer: string;
   message: string | null;
   setMessage: (msg: string | null) => void;
-  unlockedTechs: Tech[];
-  setUnlockedTechs: React.Dispatch<React.SetStateAction<Tech[]>>;
+  unlockedTechs: string[];
+  setUnlockedTechs: React.Dispatch<React.SetStateAction<string[]>>;
+  playerEra: string;
+  setPlayerEra: React.Dispatch<React.SetStateAction<string>>;
+  resources: {
+    food: number;
+    gold: number;
+    culture: number;
+    science: number;
+    natural_resources: number;
+  };
+  setResources: React.Dispatch<React.SetStateAction<{
+    food: number;
+    gold: number;
+    culture: number;
+    science: number;
+    natural_resources: number;
+  }>>;
   camera: { offset: { x: number, y: number } };
   setCamera: React.Dispatch<React.SetStateAction<{ offset: { x: number, y: number } }>>;
   initialCameraOffset: { x: number; y: number };
@@ -52,7 +69,7 @@ function buildGameSave({
   cheatsUsed: string[];
   turn: number;
   currentPlayer: string;
-  unlockedTechs: Tech[];
+  unlockedTechs: string[]; // Cambiado a string[]
   units: UnitProps[];
   cities: CityProps[];
   mapState: MapState;
@@ -89,10 +106,10 @@ function buildGameSave({
           movement_points: unit.movement_points,
           movement_points_left: unit.movement_points_left,
         })),
-        technologies: unlockedTechs.map(tech => ({
-          id: tech.id,
+        technologies: unlockedTechs.map(techId => ({
+          id: techId,
           completed: true,
-        })),
+        })), // Ahora mapea solo los IDs
       },
       ai: {
         resources: {},
@@ -121,13 +138,40 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [selectedCity, setSelectedCity] = useState<CityProps | null>(null);
   const [turn, setTurn] = useState(1);
   const [message, setMessage] = useState<string | null>(null);
-  const [unlockedTechs, setUnlockedTechs] = useState<Tech[]>([]);
+  const [unlockedTechs, setUnlockedTechs] = useState<string[]>([]);
   const [camera, setCamera] = useState<{ offset: { x: number, y: number } }>({
     offset: { x: 0, y: 0 }
   });
   const [initialCameraOffset, setInitialCameraOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-
+  const [playerEra, setPlayerEra] = useState<string>("");
   const currentPlayer = turnManager.getCurrentPlayer();
+  const [resources, setResources] = useState({
+    food: 0,
+    gold: 0,
+    culture: 0,
+    science: 0,
+    natural_resources: 0,
+  });
+
+  // Cargar datos desde la API al inicializar el contexto
+  useEffect(() => {
+    const loadGameState = async () => {
+      try {
+        const { map, units, cities, unlockedTechs, turn, currentPlayer, playerEra, resources } = await loadMap();
+        setMapState(map);
+        setUnits(units);
+        setCities(cities);
+        setUnlockedTechs(unlockedTechs);
+        setTurn(turn);
+        setPlayerEra(playerEra);
+        setResources(resources); // Actualizar los recursos con los datos de la API
+      } catch (error) {
+        console.error("Error al cargar el estado del juego:", error);
+      }
+    };
+
+    loadGameState();
+  }, []);
 
   const endTurn = () => {
     turnManager.nextTurn(gameManager);
@@ -157,7 +201,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       mapState, setMapState, units, setUnits, selectedUnitId, setSelectedUnitId,
       cities, setCities, selectedCity, setSelectedCity,
       turn, endTurn, currentPlayer, message, setMessage,
-      unlockedTechs, setUnlockedTechs,
+      unlockedTechs, setUnlockedTechs, playerEra, setPlayerEra, resources, setResources,
       camera, setCamera, initialCameraOffset, setInitialCameraOffset,
     }}>
       {children}

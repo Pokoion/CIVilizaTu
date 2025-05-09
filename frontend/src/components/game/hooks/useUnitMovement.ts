@@ -27,7 +27,7 @@ export function useUnitMovement(
   gameManager: GameManager,
   mapState: MapState,
   units: Unit[],
-  cities: City[], // <-- Añadido aquí
+  cities: City[],
   setUnits: React.Dispatch<React.SetStateAction<Unit[]>>,
   setMapState: (map: MapState) => void,
   setSelectedUnitId: (id: string | null) => void,
@@ -35,12 +35,12 @@ export function useUnitMovement(
 ) {
   return useCallback(
     async (row: number, col: number, selectedUnitId: string | null) => {
-      // Nuevo: comprobar si el tile está descubierto
+      // Comprobar si el tile está descubierto
       if (!mapState.fog_of_war[row]?.[col]) {
         return "Ezin zara lurralde ezkutatura mugitu";
       }
 
-      // Nuevo: comprobar si hay unidad o ciudad en el destino
+      // Comprobar si hay unidad o ciudad en el destino
       const unitOnTile = units.some(u => u.position.x === col && u.position.y === row);
       const cityOnTile = cities.some(c => c.position.x === col && c.position.y === row);
       if (unitOnTile || cityOnTile) {
@@ -56,9 +56,11 @@ export function useUnitMovement(
         }
 
         const destTerrain = mapState.tiles[row][col];
-        const destMoveCost = TILE_TYPES[destTerrain].movementCost;
-        if (destMoveCost === Infinity) {
-          return "Ezin zara lurralde iritsezin batera mugitu";
+        const destTile = TILE_TYPES[destTerrain];
+
+        // Comprobar si el tile requiere barco y si la unidad es del tipo adecuado
+        if (destTile.requiresBoat && unit.type !== 'boat') {
+          return "Ezin zara lurralde honetara mugitu, beharrezkoa da itsasontzi bat";
         }
 
         const path = Pathfinding2.findPath(
@@ -68,7 +70,7 @@ export function useUnitMovement(
           unit.movement_points_left,
           mapState.fog_of_war
         );
-        
+
         // Si el path no llega al destino, probablemente es por falta de puntos
         if (
           !path ||
@@ -84,15 +86,14 @@ export function useUnitMovement(
           for (let i = 1; i < path.length; i++) {
             const step = path[i];
             const terrain = mapState.tiles[step.row][step.col];
-            const moveCost = TILE_TYPES[terrain].movementCost;
+            const tile = TILE_TYPES[terrain];
 
-            // Nuevo: comprobar si hay unidad o ciudad en el camino
-            const unitOnStep = units.some(u => u.position.x === step.col && u.position.y === step.row && u.id !== selectedUnitId);
-            const cityOnStep = cities.some(c => c.position.x === step.col && c.position.y === step.row);
-            if (unitOnStep || cityOnStep) {
-              return "Ezin zara beste unitate edo hirira mugitu";
+            // Comprobar si el tile requiere barco
+            if (tile.requiresBoat && unit.type !== 'boat') {
+              return "Ezin zara lurralde honetara mugitu, beharrezkoa da itsasontzi bat";
             }
 
+            const moveCost = tile.movementCost;
             if (moveCost === Infinity) {
               return "Ezin zara lurralde iritsezin batera mugitu";
             }
