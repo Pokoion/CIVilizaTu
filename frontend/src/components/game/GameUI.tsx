@@ -52,6 +52,14 @@ const GameUI: React.FC = () => {
             position,
             population: 1,
             owner: 'player',
+            buildings: [],
+            production: {
+                food: 0,
+                gold: 0,
+                culture: 0,
+                science: 0,
+                natural_resources: 0,
+            }
         };
 
         // Actualizar el estado global

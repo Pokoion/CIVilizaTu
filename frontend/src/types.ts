@@ -32,6 +32,13 @@ export interface UnitProps extends Unit {
   disabled?: boolean;
 }
 
+export interface Building {
+  id: string; // Identificador único del edificio
+  type: string; // Tipo de edificio (por ejemplo, 'granary', 'barracks', etc.)
+  name: string; // Nombre del edificio
+  description: string; // Descripción del edificio
+}
+
 export interface City {
   id: string;
   name: string;
@@ -40,6 +47,14 @@ export interface City {
   onClick?: () => void;
   onEnter?: () => void;
   owner: 'player' | 'ai';
+  buildings: Building[]; // Agregar la propiedad buildings
+  production: {
+    food: number;
+    gold: number;
+    culture: number;
+    science: number;
+    natural_resources: number;
+  };
 }
 
 export interface CityProps extends City {

@@ -162,6 +162,8 @@ const handleUnitClick = (unitId: string) => {
                     population={city.population}
                     owner={city.owner}
                     onClick={() => handleCityClick(city)}
+                    buildings={city.buildings}
+                    production={city.production}
                   />
                 )}
                 {unit && isDiscovered && (

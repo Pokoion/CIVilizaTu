@@ -1,47 +1,233 @@
+/* Fondo translúcido */
+.city-view-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+/* Fondo temático */
+.city-view-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6); /* Fondo oscuro simple */
+  filter: blur(8px);
+  z-index: -1;
+}
+
+/* Contenedor principal */
 .city-view-content {
+  position: relative;
+  width: 1100px;
+  height: 650px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  overflow-y: auto; /* Habilitar scroll vertical */
+  color: #1a202c; /* Cambiar el color del texto para mejor legibilidad */
 }
 
-.city-buildings, .city-build-options {
-  width: 100%;
+/* Título de la ciudad */
+.city-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #2d3748; /* Texto oscuro */
+  text-align: center;
+  margin-bottom: 16px;
 }
 
-.city-buildings h3, .city-build-options h3 {
-  font-size: 1.8rem;
-  color: #2d3748;
-  margin-bottom: 1rem;
+/* Población */
+.city-population {
+  font-size: 1.2rem;
+  color: #4a5568; /* Texto más claro */
+  text-align: center;
+  margin-bottom: 24px;
 }
 
-.city-buildings ul, .city-build-options ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+/* Producción de recursos */
+.city-production {
+  margin-bottom: 24px;
 }
 
-.city-buildings li, .city-build-options li {
+.resource-list {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.8rem 1rem;
-  background: #f7fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  margin-bottom: 0.8rem;
+  gap: 16px;
+  justify-content: center;
 }
 
-.city-build-options button {
-  padding: 0.5rem 1rem;
+.resource-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 1rem;
+  color: #1a202c; /* Texto oscuro */
+}
+
+.resource-item img {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 8px;
+}
+
+/* Edificios construidos */
+.city-buildings {
+  margin-bottom: 24px;
+}
+
+.building-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.building-item {
+  background: #f7fafc;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  color: #1a202c; /* Texto oscuro */
+}
+
+.train-unit-btn {
+  margin-top: 8px;
+  padding: 8px 16px;
   background: #3182ce;
   color: #fff;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s;
 }
 
-.city-build-options button:hover {
-  background: #2563eb;
+.train-unit-btn:hover {
+  background: #22577a;
+}
+
+/* Construir nuevos edificios */
+.city-build-options {
+  margin-bottom: 24px;
+}
+
+.build-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.build-item {
+  background: #f7fafc;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  color: #1a202c; /* Texto oscuro */
+}
+
+.build-btn {
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: #38a169;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.build-btn:hover {
+  background: #2f855a;
+}
+
+/* Navegación de edificios */
+/* Navegación de edificios */
+.build-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.nav-btn-circle {
+  background: #3182ce;
+  color: #fff;
+  border: none;
+  border-radius: 50%; /* Botón circular */
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-btn-circle:hover {
+  background: #22577a;
+}
+
+.build-list {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+}
+
+.build-item {
+  text-align: center;
+  background: #f7fafc;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 250px; /* Ajustar el ancho para mostrar 3 edificios */
+  flex-shrink: 0;
+}
+
+.build-image {
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+
+/* Lista de edificios construidos */
+.city-buildings {
+  margin-bottom: 24px;
+}
+
+.building-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.building-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #f7fafc;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.building-image {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
 }
