@@ -1,137 +1,418 @@
-import React, { useState } from 'react';
-import { CityProps } from '../../types';
+import React, { useState, useMemo, useEffect } from 'react';
 import '../../styles/CityView.css';
 import BarracksView from './BarracksView';
+import { BUILDINGS, CITY_ERAS_BY_ID } from '../../utils/Constants';
+import { useGame } from '../../context/GameContext';
 
-const CityView: React.FC<{ city: CityProps; onClose: () => void }> = ({ city, onClose }) => {
-  const [selectedBuildingIndex, setSelectedBuildingIndex] = useState(0); // Índice del edificio central
-  const [constructedBuildings, setConstructedBuildings] = useState(city.buildings); // Edificios construidos
-  const [activeBarracks, setActiveBarracks] = useState<string | null>(null); // Cuartel activo
-  const buildingLimit = 5; // Límite de edificios en la ciudad
+// Eras y tipos
+const ERAS = ['Antzinaroa', 'Erdi Aroa', 'Aro Modernoa'] as const;
+type Era = typeof ERAS[number];
 
-  const availableBuildings = [
-    { id: 'granary', name: 'Aletegia', description: 'Aumenta la producción de alimentos.', image: '/images/buildings/Aletegia.png' },
-    { id: 'barracks', name: 'Kuartela', description: 'Permite entrenar unidades militares.', image: '/images/buildings/Kuartela.png' },
-    { id: 'library', name: 'Eskola', description: 'Aumenta la producción de ciencia.', image: '/images/buildings/Eskola.png' },
-    { id: 'market', name: 'Merkatua', description: 'Aumenta la producción de oro.', image: '/images/buildings/Merkatua.png' },
-    { id: 'temple', name: 'Unibertsitatea', description: 'Aumenta la producción de cultura.', image: '/images/buildings/Unibertsitatea.png' },
-    { id: 'wall', name: 'Harresia', description: 'Proporciona defensa adicional a la ciudad.', image: '/images/buildings/Harresia.png' },
+function getNextEra(currentEra: Era): Era {
+  const idx = ERAS.indexOf(currentEra);
+  return idx >= 0 && idx < ERAS.length - 1 ? ERAS[idx + 1] : currentEra;
+}
+
+// Mapeo de recursos a nombres de imagen reales
+const RESOURCE_IMAGE_MAP: Record<string, string> = {
+  gold: "urrea.png",
+  food: "janaria.png",
+  culture: "kultura.png",
+  science: "zientzia.png",
+  natural_resources: "baliabide_naturalak.png"
+};
+
+const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, onClose }) => {
+  const { cities, unlockedTechs, updateCity, resources, setResources, civilization, playerEra } = useGame();
+  const city = cities.find(c => c.id === cityId);
+
+  // --- Mueve todos los hooks arriba, antes de cualquier return ---
+  const [selectedBuildingIndex, setSelectedBuildingIndex] = useState(0);
+  const [constructedBuildings, setConstructedBuildings] = useState(city ? city.buildings : []);
+  const [activeBarracks, setActiveBarracks] = useState<string | null>(null);
+  const [buildingLimitMsg, setBuildingLimitMsg] = useState<string | null>(null);
+
+  const RESOURCE_KEY_MAP: Record<string, keyof typeof resources> = {
+    gold: "gold",
+    culture: "culture",
+    natural_resources: "natural_resources",
+    food: "food",
+    science: "science"
+  };
+
+  const PRODUCTION_KEYS: Array<keyof typeof resources> = [
+    "gold", "food", "culture", "science", "natural_resources"
   ];
 
+  // Filtrar edificios según tecnologías desbloqueadas
+  const availableBuildings = useMemo(() => {
+    return BUILDINGS.filter(b => {
+      if (!b.requirement) return true;
+      return unlockedTechs.includes(b.requirement);
+    }).map(b => ({
+      id: b.id,
+      name: b.name,
+      description: b.bonus,
+      type: b.id,
+    }));
+  }, [unlockedTechs]);
+
+  useEffect(() => {
+    if (selectedBuildingIndex >= availableBuildings.length) {
+      setSelectedBuildingIndex(0);
+    }
+    // eslint-disable-next-line
+  }, [availableBuildings.length, selectedBuildingIndex]);
+
+  // --- Fin hooks arriba ---
+
+  if (!city) return null;
+
+  const buildingLimit = CITY_ERAS_BY_ID[city.era || 'Antzinaroa']?.building_limit || 5;
+  const hasBarracks = constructedBuildings.some(bid => bid === 'kuartela');
+
   const handleNextBuilding = () => {
-    setSelectedBuildingIndex((prevIndex) => (prevIndex + 1) % availableBuildings.length);
+    setSelectedBuildingIndex((prevIndex) =>
+      availableBuildings.length === 0 ? 0 : (prevIndex + 1) % availableBuildings.length
+    );
   };
 
   const handlePreviousBuilding = () => {
     setSelectedBuildingIndex((prevIndex) =>
-      prevIndex === 0 ? availableBuildings.length - 1 : prevIndex - 1
+      availableBuildings.length === 0
+        ? 0
+        : prevIndex === 0
+          ? availableBuildings.length - 1
+          : prevIndex - 1
     );
   };
 
   const handleBuild = (building: typeof availableBuildings[0]) => {
     if (constructedBuildings.length >= buildingLimit) {
-      alert('Has alcanzado el límite de edificios en esta ciudad.');
+      setBuildingLimitMsg('Ezin duzu eraikin gehiago eraiki hiri honetan.');
+      setTimeout(() => setBuildingLimitMsg(null), 2500);
       return;
     }
 
-    // Agregar el edificio a la lista de construidos
+    const buildingData = BUILDINGS.find(b => b.id === building.id);
+    const cost = buildingData?.cost || {};
+
+    const notEnough = Object.entries(cost).some(
+      ([resource, amount]) => {
+        const key = RESOURCE_KEY_MAP[resource];
+        if (key === undefined) return false;
+        return resources[key] < (amount as number);
+      }
+    );
+    if (notEnough) {
+      setBuildingLimitMsg('Ez daukazu nahikoa baliabide eraikin hau egiteko.');
+      setTimeout(() => setBuildingLimitMsg(null), 2500);
+      return;
+    }
+
+    setResources(prev => {
+      const newRes = { ...prev };
+      Object.entries(cost).forEach(([resource, amount]) => {
+        const key = RESOURCE_KEY_MAP[resource];
+        if (key && key !== "culture") {
+          newRes[key] -= amount as number;
+        }
+      });
+      return newRes;
+    });
+
     setConstructedBuildings((prevBuildings) => [
       ...prevBuildings,
-      { id: `${building.id}-${Date.now()}`, type: building.id, name: building.name, description: building.description },
+      building.id
     ]);
+
+    updateCity(cityId, {
+      buildings: [...constructedBuildings, building.id]
+    });
   };
 
-    if (activeBarracks) {
-    return <BarracksView barracksName={activeBarracks} onClose={() => setActiveBarracks(null)} />;
+  // --- MEJORA DE ERA ---
+  const handleUpgradeEra = () => {
+    if (!city) return;
+    const currentEra = city.era as Era;
+    const nextEra = getNextEra(currentEra);
+    if (playerEra !== nextEra) {
+      setBuildingLimitMsg('Jokalaria ez dago hurrengo eran! Ezin da hobetu.');
+      setTimeout(() => setBuildingLimitMsg(null), 2500);
+      return;
+    }
+    const currentEraInfo = CITY_ERAS_BY_ID[currentEra];
+    if (!currentEraInfo) {
+      setBuildingLimitMsg('Ezin da gehiago hobetu.');
+      setTimeout(() => setBuildingLimitMsg(null), 2500);
+      return;
+    }
+    const cost = currentEraInfo.upgrade_cost;
+    if (resources.gold < cost.gold || resources.natural_resources < cost.natural_resources) {
+      setBuildingLimitMsg('Ez daukazu nahikoa urre eta baliabide naturalak hiriaren era hobetzeko!');
+      setTimeout(() => setBuildingLimitMsg(null), 2500);
+      return;
+    }
+    setResources(prev => ({
+      ...prev,
+      gold: prev.gold - cost.gold,
+      natural_resources: prev.natural_resources - cost.natural_resources,
+    }));
+    updateCity(cityId, {
+      era: nextEra,
+      production: {
+        food: (city.production.food || 0) + (CITY_ERAS_BY_ID[nextEra].base_production.food || 0),
+        gold: (city.production.gold || 0) + (CITY_ERAS_BY_ID[nextEra].base_production.gold || 0),
+        culture: (city.production.culture || 0) + (CITY_ERAS_BY_ID[nextEra].base_production.culture || 0),
+        science: (city.production.science || 0) + (CITY_ERAS_BY_ID[nextEra].base_production.science || 0),
+        natural_resources: (city.production.natural_resources || 0) + (CITY_ERAS_BY_ID[nextEra].base_production.natural_resources || 0),
+      }
+    });
+  };
+
+  if (activeBarracks) {
+    const barracksCount = constructedBuildings.filter(b => b === 'kuartela').length;
+    return (
+      <BarracksView
+        onClose={() => setActiveBarracks(null)}
+        barracksCount={barracksCount}
+        civilization={civilization}
+        unlockedTechs={unlockedTechs}
+        cityId={city.id}
+      />
+    );
   }
 
-  // Obtener los 3 edificios visibles (anterior, actual, siguiente)
-  const getVisibleBuildings = () => {
+  let visibleBuildings: typeof availableBuildings = [];
+  if (availableBuildings.length === 1) {
+    visibleBuildings = [availableBuildings[0]];
+  } else if (availableBuildings.length === 2) {
+    visibleBuildings = [
+      availableBuildings[selectedBuildingIndex],
+      availableBuildings[(selectedBuildingIndex + 1) % 2],
+    ];
+  } else if (availableBuildings.length >= 3) {
     const total = availableBuildings.length;
     const prev = (selectedBuildingIndex - 1 + total) % total;
     const next = (selectedBuildingIndex + 1) % total;
-    return [availableBuildings[prev], availableBuildings[selectedBuildingIndex], availableBuildings[next]];
-  };
+    visibleBuildings = [
+      availableBuildings[prev],
+      availableBuildings[selectedBuildingIndex],
+      availableBuildings[next],
+    ];
+  }
 
-  const visibleBuildings = getVisibleBuildings();
+  const currentEra = city.era as Era;
+  const nextEra = getNextEra(currentEra);
+  const canUpgradeEra = playerEra === nextEra && nextEra !== currentEra;
+  const currentEraInfo = CITY_ERAS_BY_ID[currentEra];
+  const upgradeCost = currentEraInfo?.upgrade_cost || { gold: 0, natural_resources: 0 };
 
   return (
     <div className="city-view-overlay">
-      <div className="city-view-background"></div>
       <div className="city-view-content">
         <button className="city-view-close-btn" onClick={onClose}>X</button>
         <h2 className="city-title">{city.name}</h2>
         <p className="city-population">Biztanleria: {city.population}</p>
+        <p className="city-era">Era: <b>{city.era}</b></p>
+
+        {buildingLimitMsg && (
+          <div
+            className="city-message city-message-warning"
+            style={{
+              margin: '12px 0 0 0',
+              background: '#ffe0e0',
+              color: '#a00',
+              border: '1px solid #f88',
+              borderRadius: 6,
+              padding: '8px 16px',
+              textAlign: 'center',
+              fontWeight: 500,
+              maxWidth: 400,
+              marginLeft: 'auto',
+              marginRight: 'auto'
+            }}
+          >
+            {buildingLimitMsg}
+          </div>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '16px 0' }}>
+          <button
+            className="city-upgrade-era-btn"
+            style={{
+              padding: '10px 28px',
+              background: canUpgradeEra ? 'linear-gradient(90deg, #f7d358 60%, #bfa32f 100%)' : '#ccc',
+              color: canUpgradeEra ? '#222' : '#888',
+              border: 'none',
+              borderRadius: 8,
+              fontWeight: 'bold',
+              fontSize: '1.1em',
+              cursor: canUpgradeEra ? 'pointer' : 'not-allowed',
+              opacity: canUpgradeEra ? 1 : 0.7,
+              boxShadow: canUpgradeEra ? '0 2px 8px #bfa32f44' : 'none',
+              transition: 'all 0.2s'
+            }}
+            disabled={!canUpgradeEra}
+            onClick={handleUpgradeEra}
+          >
+            {nextEra !== currentEra
+              ? (
+                <>
+                  <span style={{ fontWeight: 600 }}>Hiriaren era hobetu: {nextEra}</span>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    marginTop: 6,
+                    justifyContent: 'center'
+                  }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <img src={`/images/resources/${RESOURCE_IMAGE_MAP.gold}`} alt="Gold" style={{ width: 22, height: 22, verticalAlign: 'middle' }} />
+                      <span style={{ fontWeight: 500 }}>{upgradeCost.gold}</span>
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <img src={`/images/resources/${RESOURCE_IMAGE_MAP.natural_resources}`} alt="Natural resources" style={{ width: 22, height: 22, verticalAlign: 'middle' }} />
+                      <span style={{ fontWeight: 500 }}>{upgradeCost.natural_resources}</span>
+                    </span>
+                  </div>
+                </>
+              )
+              : <>Maximo erara iritsita</>
+            }
+          </button>
+        </div>
+
+        {hasBarracks && (
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
+            <button
+              onClick={() => setActiveBarracks("Kuartela")}
+              className="barracks-enter-btn"
+              style={{
+                padding: '8px 24px',
+                fontSize: '1.1em',
+                background: '#2d3e50',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px #0002'
+              }}
+            >
+              Kuartelera Sartu
+            </button>
+          </div>
+        )}
 
         <div className="city-production">
           <h3>Produkzioa</h3>
           <div className="resource-list">
-            <div className="resource-item">
-              <img src="/images/resources/urrea.png" alt="Oro" />
-              <span>{city.production.gold}</span>
-            </div>
-            <div className="resource-item">
-              <img src="/images/resources/janaria.png" alt="Alimentos" />
-              <span>{city.production.food}</span>
-            </div>
-            <div className="resource-item">
-              <img src="/images/resources/kultura.png" alt="Cultura" />
-              <span>{city.production.culture}</span>
-            </div>
-            <div className="resource-item">
-              <img src="/images/resources/zientzia.png" alt="Ciencia" />
-              <span>{city.production.science}</span>
-            </div>
-            <div className="resource-item">
-              <img src="/images/resources/baliabide_naturalak.png" alt="Recursos Naturales" />
-              <span>{city.production.natural_resources}</span>
-            </div>
+            {PRODUCTION_KEYS.map((res) => (
+              <div className="resource-item" key={res}>
+                <img src={`/images/resources/${RESOURCE_IMAGE_MAP[res]}`} alt={res} />
+                <span>{city.production[res]}</span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Lista de edificios construidos */}
         <div className="city-buildings">
           <h3>Edificios Construidos ({constructedBuildings.length}/{buildingLimit})</h3>
           {constructedBuildings.length > 0 ? (
             <ul className="building-list">
-              {constructedBuildings.map((building) => (
-                <li key={building.id} className="building-item">
-                  <img src={`/images/buildings/${building.name}.png`} alt={building.name} className="building-image" />
-                  <div>
-                    <strong>{building.name}</strong>
-                    <p>{building.description}</p>
-                    {building.type === 'barracks' && (
-                      <button onClick={() => setActiveBarracks(building.name)}>Entrar al Cuartel</button>
-                    )}
-                  </div>
-                </li>
-              ))}
+              {constructedBuildings.map((buildingId, idx) => {
+                const building = BUILDINGS.find(b => b.id === buildingId);
+                if (!building) return null;
+                return (
+                  <li key={buildingId + '-' + idx} className="building-item">
+                    <img src={`/images/buildings/${building.name}.png`} alt={building.name} className="building-image" />
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div>
+                        <strong>{building.name}</strong>
+                        <p>{building.bonus}</p>
+                        <div className="building-cost"
+                          style={{
+                            display: 'flex',
+                            gap: 12,
+                            margin: '12px 0',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            width: '100%',
+                          }}>
+                          {Object.entries(building.cost || {}).map(([resource, amount]) => (
+                            amount > 0 && (
+                              <span key={resource} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <img
+                                  src={`/images/resources/${RESOURCE_IMAGE_MAP[resource] || resource + ".png"}`}
+                                  alt={resource}
+                                  style={{ width: 20, height: 20 }}
+                                />
+                                <span>{amount}</span>
+                              </span>
+                            )
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
-            <p>No hay edificios construidos en esta ciudad.</p>
+            <p>Ez dago eraikinik hiri honetan.</p>
           )}
         </div>
-        
 
-        {/* Construir nuevos edificios con navegación */}
         <div className="city-build-options">
           <h3>Construir Edificios</h3>
-          <div className="build-navigation">
-            <button onClick={handlePreviousBuilding} className="nav-btn-circle">◀</button>
-            <div className="build-list">
-              {visibleBuildings.map((building) => (
-                <div key={building.id} className="build-item">
-                  <img src={building.image} alt={building.name} className="build-image" />
-                  <strong>{building.name}</strong>
-                  <p>{building.description}</p>
-                  <button onClick={() => handleBuild(building)} className="build-btn">
-                    Construir
-                  </button>
-                </div>
-              ))}
+          {availableBuildings.length === 0 ? (
+            <div className="city-message city-message-warning" style={{ marginTop: 16 }}>
+              Ez dago eraikin erabilgarririk teknologiarik gabe.
             </div>
-            <button onClick={handleNextBuilding} className="nav-btn-circle">▶</button>
-          </div>
+          ) : (
+            <div className="build-navigation">
+              <button onClick={handlePreviousBuilding} className="nav-btn-circle" disabled={availableBuildings.length < 2}>◀</button>
+              <div className="build-list">
+                {visibleBuildings.map((building) => (
+                  <div key={building.id} className="build-item">
+                    <img src={`/images/buildings/${building.name}.png`} alt={building.name} className="build-image" />
+                    <strong>{building.name}</strong>
+                    <p>{building.description}</p>
+                    <div className="building-cost"
+                      style={{
+                        display: 'flex',
+                        gap: 12,
+                        margin: '12px 0',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        width: '100%',
+                      }}>
+                      {Object.entries(BUILDINGS.find(b => b.id === building.id)?.cost || {}).map(([resource, amount]) => (
+                        amount > 0 && (
+                          <span key={resource} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <img
+                              src={`/images/resources/${RESOURCE_IMAGE_MAP[resource] || resource + ".png"}`}
+                              alt={resource}
+                              style={{ width: 20, height: 20 }}
+                            />
+                            <span>{amount}</span>
+                          </span>
+                        )
+                      ))}
+                    </div>
+                    <button onClick={() => handleBuild(building)} className="build-btn">
+                      Construir
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button onClick={handleNextBuilding} className="nav-btn-circle" disabled={availableBuildings.length < 2}>▶</button>
+            </div>
+          )}
+          {buildingLimitMsg && (
+            <div className="city-message city-message-warning" style={{ marginTop: 16 }}>
+              {buildingLimitMsg}
+            </div>
+          )}
         </div>
       </div>
     </div>

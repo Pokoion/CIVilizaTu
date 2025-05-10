@@ -39,6 +39,12 @@ export interface Building {
   description: string; // Descripción del edificio
 }
 
+export interface TrainingUnit {
+  id: string; // id único de la unidad en entrenamiento
+  type: string; // tipo de unidad (por ejemplo, 'gudaria', 'archer', etc.)
+  turnsLeft: number; // turnos restantes para completar el entrenamiento
+}
+
 export interface City {
   id: string;
   name: string;
@@ -47,7 +53,7 @@ export interface City {
   onClick?: () => void;
   onEnter?: () => void;
   owner: 'player' | 'ai';
-  buildings: Building[]; // Agregar la propiedad buildings
+  buildings: string[]; // Agregar la propiedad buildings
   production: {
     food: number;
     gold: number;
@@ -55,11 +61,28 @@ export interface City {
     science: number;
     natural_resources: number;
   };
+  era: string;
+  training: TrainingUnit[];
 }
 
 export interface CityProps extends City {
   selected?: boolean;
   onClick?: () => void;
+}
+
+export interface VisibleObjectProps {
+  type: string;
+  position: { x: number; y: number };
+}
+
+export class VisibleObject implements VisibleObjectProps {
+  type: string;
+  position: { x: number; y: number };
+
+  constructor(type: string, position: { x: number; y: number }) {
+    this.type = type;
+    this.position = position;
+  }
 }
 
 export type MapState = {

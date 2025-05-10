@@ -71,6 +71,21 @@ export function useUnitMovement(
           mapState.fog_of_war
         );
 
+        // Nueva comprobación: no pasar por encima de otras unidades o ciudades
+        if (path) {
+          for (let i = 1; i < path.length; i++) {
+            const step = path[i];
+            // ¿Hay unidad en este paso?
+            if (units.some(u => u.position.x === step.col && u.position.y === step.row)) {
+              return "Ezin zara beste unitate baten gainetik pasa";
+            }
+            // ¿Hay ciudad en este paso?
+            if (cities.some(c => c.position.x === step.col && c.position.y === step.row)) {
+              return "Ezin zara hiri baten gainetik pasa";
+            }
+          }
+        }
+
         // Si el path no llega al destino, probablemente es por falta de puntos
         if (
           !path ||

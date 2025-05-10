@@ -17,21 +17,21 @@ const customTiles: TerrainType[][] = Array.from({ length: size }, (_, y) =>
 
 export const fetchCivilizations = async (): Promise<{ name: string; attack: number; defense: number }[]> => {
   return new Promise((resolve) => {
-      resolve([
-        { name: 'rome', attack: 1, defense: 2 },
-        { name: 'greece', attack: 2, defense: 3 },
-        { name: 'egypt', attack: 3, defense: 1 }
-      ]);
+    resolve([
+      { name: 'rome', attack: 1, defense: 2 },
+      { name: 'greece', attack: 2, defense: 3 },
+      { name: 'egypt', attack: 3, defense: 1 }
+    ]);
   });
 };
 
 export const fetchUnits = async (): Promise<{ name: string; attack: number; defense: number }[]> => {
   return new Promise((resolve) => {
-      resolve([
-        { name: 'swordsman', attack: 5, defense: 3 },
-        { name: 'archer', attack: 3, defense: 2 },
-        { name: 'cavalry', attack: 4, defense: 4 }
-      ]);
+    resolve([
+      { name: 'swordsman', attack: 5, defense: 3 },
+      { name: 'archer', attack: 3, defense: 2 },
+      { name: 'cavalry', attack: 4, defense: 4 }
+    ]);
   });
 };
 
@@ -42,7 +42,8 @@ export const loadMap = async (): Promise<{
   unlockedTechs: string[];
   turn: number;
   currentPlayer: string;
-  playerEra: string; // Agregar la era del jugador
+  playerEra: string;
+  civilization: string;
   resources: {
     food: number;
     gold: number;
@@ -50,6 +51,10 @@ export const loadMap = async (): Promise<{
     science: number;
     natural_resources: number;
   };
+  visibleObjects: {
+    type: string;
+    position: { x: number; y: number };
+  }[];
 }> => {
   const fakeGameState = {
     user_id: "665f1a2b3c4d5e6f7a8b9c0d",
@@ -63,7 +68,7 @@ export const loadMap = async (): Promise<{
       current_player: "player",
       cheats_used: ["mapa_agertu", "maila_igo"],
       player: {
-        civilization: "Basques",
+        civilization: "euskaldunak",
         era: "Antzinaroa",
         leader_name: "Iker",
         resources: {
@@ -71,22 +76,36 @@ export const loadMap = async (): Promise<{
           culture: 28,
           science: 15,
           gold: 420,
-          natural_resources: 30
+          natural_resources: 200
         },
         cities: [
           {
             id: "city1",
             name: "Bilbo",
-            position: { x: 15, y: 22 },
+            position: { x: 13, y: 18 },
             population: 5,
-            buildings: [
-              { id: "granary", type: "food_building" },
-              { id: "library", type: "science_building" }
-            ],
+            buildings: ["aletegia", "unibertsitatea", "kuartela"],
             production: {
-              current_item: "warrior",
-              turns_remaining: 3
-            }
+              food: 10,
+              gold: 5,
+              culture: 2,
+              science: 3,
+              natural_resources: 1
+            },
+            owner: "player",
+            era: "Antzinaroa",
+            training: [
+              {
+                id: "city1-training",
+                type: "kolono",
+                turnsLeft: 3
+              },
+              {
+                id: "city1-training2",
+                type: "militar",
+                turnsLeft: 5
+              }
+            ]
           }
         ],
         units: [
@@ -121,17 +140,18 @@ export const loadMap = async (): Promise<{
             visible: true
           }
         ],
-        technologies: ["nekazaritza", "idazketa"]
+        technologies: ["nekazaritza", "idazketa", "burdina"]
       },
       ai: {
         civilization: "Romans",
         era: "Ancient",
         leader_name: "Caesar",
         resources: {
-          food: 40,
-          production: 22,
-          science: 10,
-          gold: 380
+          food: 35,
+          culture: 28,
+          science: 15,
+          gold: 420,
+          natural_resources: 30
         },
         cities: [
           {
@@ -165,10 +185,20 @@ export const loadMap = async (): Promise<{
         tiles: customTiles,
         visible_objects: [
           {
-            type: "resource",
-            resource_type: "iron",
+            type: "arbola",
             position: { x: 14, y: 25 },
-            improved: true
+          },
+          {
+            type: "urrea",
+            position: { x: 18, y: 22 },
+          },
+          {
+            type: "ganadua",
+            position: { x: 10, y: 18 },
+          },
+          {
+            type: "harria",
+            position: { x: 20, y: 15 },
           }
         ],
         fog_of_war_player: [] as boolean[][],
@@ -181,7 +211,7 @@ export const loadMap = async (): Promise<{
   const fog_of_war_player: boolean[][] = Array.from({ length: size }, () =>
     Array.from({ length: size }, () => false)
   );
-  
+
   const playerUnits = fakeGameState.game_state.player.units;
   playerUnits.forEach(unit => {
     const { x, y } = unit.position;
@@ -240,6 +270,21 @@ export const loadMap = async (): Promise<{
       buildings: c.buildings,
       production: c.production,
       owner: 'player' as 'player',
+      era: c.era ?? fakeGameState.game_state.player.era, // Usa la era de la ciudad o la del jugador
+      training: Array.isArray(c.training)
+        ? c.training
+        : c.training
+          ? [c.training]
+          : (
+            c.production?.current_item
+              ? [{
+                id: `${c.id}-training`,
+                type: c.production.current_item,
+                name: c.production.current_item,
+                turnsLeft: c.production.turns_remaining,
+              }]
+              : []
+          ),
     })),
     ...fakeGameState.game_state.ai.cities.map((c: any) => ({
       id: c.id,
@@ -249,14 +294,31 @@ export const loadMap = async (): Promise<{
       buildings: c.buildings,
       production: c.production,
       owner: 'ai' as 'ai',
+      era: c.era ?? fakeGameState.game_state.ai.era,
+      training: c.training ?? (
+        c.production?.current_item
+          ? {
+            id: `${c.id}-training`,
+            type: c.production.current_item,
+            name: c.production.current_item,
+            turnsLeft: c.production.turns_remaining,
+          }
+          : null
+      ),
     })),
   ];
+
+  const visibleObjects = fakeGameState.game_state.map.visible_objects.map((obj: any) => ({
+    type: obj.type,
+    position: obj.position
+  }));
 
   const resources = fakeGameState.game_state.player.resources;
   const unlockedTechs = fakeGameState.game_state.player.technologies;
   const playerEra = fakeGameState.game_state.player.era;
   const turn = fakeGameState.game_state.turn;
   const currentPlayer = fakeGameState.game_state.current_player;
+  const civilization = fakeGameState.game_state.player.civilization;
 
   return {
     map,
@@ -266,13 +328,15 @@ export const loadMap = async (): Promise<{
     turn,
     currentPlayer,
     playerEra,
-    resources
+    civilization,
+    resources,
+    visibleObjects
   };
 };
 
 export const saveGame = async (gameState: any): Promise<void> => {
   return new Promise((resolve) => {
-      resolve();
+    resolve();
   });
 };
 

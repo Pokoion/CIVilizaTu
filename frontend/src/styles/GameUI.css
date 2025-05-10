@@ -55,8 +55,20 @@
     display: flex;
     min-height: 0;
   }
+
+  .ui-left {
+    width: 220px;
+    background: rgba(40,40,40,0.95);
+    color: #fff;
+    display: flex;
+    flex-direction: column; /* <-- Añade esto */
+    align-items: center;    /* <-- Centra los hijos horizontalmente */
+    justify-content: flex-start;
+    padding: 1rem 0;
+    z-index: 5;
+  }
   
-  .ui-left, .ui-right {
+  .ui-right {
     width: 220px;
     background: rgba(40,40,40,0.95);
     color: #fff;
@@ -139,4 +151,21 @@
 .resource-value {
   color: #ffd700; /* Color del número del recurso */
   font-weight: bold;
+}
+
+.player-info-block {
+    margin-top: 16px;
+    background: #f7f7f7;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 2px 8px #0001;
+    text-align: center;
+    width: 180px;
+    margin-left: auto;
+    margin-right: auto;
+    color: #222;
+    font-size: 1em;
+}
+.player-info-block img {
+    background: #fff;
 }

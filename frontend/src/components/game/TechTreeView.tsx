@@ -5,7 +5,7 @@ import { useGame } from '../../context/GameContext';
 
 const TechTreeView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [selectedTech, setSelectedTech] = useState<typeof TECHS[0] | null>(null);
-  const { unlockedTechs, playerEra, resources } = useGame(); // Obtener tecnologías desbloqueadas, era y recursos
+  const { unlockedTechs, playerEra, resources } = useGame();
 
   // Calcular el tamaño dinámico del canvas
   const CANVAS_WIDTH = Math.max(...TECHS.map(tech => tech.x)) + 300;
@@ -26,9 +26,9 @@ const TechTreeView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             {/* Dibujar conexiones entre tecnologías */}
             {TECHS.map(tech =>
               tech.parents.map((parentId: string) => {
-                const parent = TECHS.find((t) => t.id === parentId); // Buscar el objeto del padre
-                if (!parent) return null; // Manejar el caso en que no se encuentre el padre
-                const isUnlocked = unlockedTechs.includes(parentId); // Verificar si está desbloqueado
+                const parent = TECHS.find((t) => t.id === parentId);
+                if (!parent) return null;
+                const isUnlocked = unlockedTechs.includes(parentId);
                 return (
                   <line
                     key={`${tech.id}-${parentId}`}
@@ -36,19 +36,17 @@ const TechTreeView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     y1={parent.y + 40}
                     x2={tech.x}
                     y2={tech.y + 40}
-                    stroke={isUnlocked ? "#3182ce" : "#ccc"} // Línea desbloqueada o bloqueada
+                    stroke={isUnlocked ? "#3182ce" : "#ccc"}
                     strokeWidth={3}
-                    markerEnd={`url(#${isUnlocked ? "arrowhead-unlocked" : "arrowhead-locked"})`} // Marcador dinámico
+                    markerEnd={`url(#${isUnlocked ? "arrowhead-unlocked" : "arrowhead-locked"})`}
                   />
                 );
               })
             )}
             <defs>
-              {/* Marcador para tecnologías desbloqueadas */}
               <marker id="arrowhead-unlocked" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
                 <polygon points="0 0, 10 3.5, 0 7" fill="#3182ce" />
               </marker>
-              {/* Marcador para tecnologías bloqueadas */}
               <marker id="arrowhead-locked" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
                 <polygon points="0 0, 10 3.5, 0 7" fill="#ccc" />
               </marker>
@@ -58,12 +56,12 @@ const TechTreeView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           {TECHS.map(tech => (
             <div
               key={tech.id}
-              className={`tech-node ${unlockedTechs.includes(tech.id) ? 'unlocked' : 'locked'}`} // Clase según estado
+              className={`tech-node ${unlockedTechs.includes(tech.id) ? 'unlocked' : 'locked'}`}
               style={{
                 left: tech.x,
                 top: tech.y,
               }}
-              onClick={() => setSelectedTech(tech)} // Evento para abrir el detalle
+              onClick={() => setSelectedTech(tech)}
             >
               <img
                 src={`/images/techs/${tech.id}.png`}
@@ -86,11 +84,18 @@ const TechTreeView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   );
 };
 
+// Helper para comparar eras
+const ERA_ORDER = ['Antzinaroa', 'Erdi Aroa', 'Aro Modernoa'] as const;
+type EraType = typeof ERA_ORDER[number];
+function eraIndex(era: string): number {
+  return ERA_ORDER.indexOf(era as EraType);
+}
+
 const TechDetailView: React.FC<{
   tech: typeof TECHS[0];
   onClose: () => void;
 }> = ({ tech, onClose }) => {
-  const { unlockedTechs, setUnlockedTechs, playerEra, resources, setResources } = useGame(); // Obtener tecnologías desbloqueadas, era y recursos
+  const { unlockedTechs, setUnlockedTechs, playerEra, resources, setResources, setPlayerEra } = useGame();
   const parentTechs = tech.parents.map((pid: string) => TECHS.find(t => t.id === pid)).filter(Boolean);
 
   // Verificar si la tecnología está desbloqueada
@@ -99,24 +104,32 @@ const TechDetailView: React.FC<{
   // Verificar si todas las tecnologías padres están desbloqueadas
   const canUnlock = parentTechs.every(parent => unlockedTechs.includes(parent!.id));
 
-  // Verificar si la tecnología pertenece a la misma era que el jugador
-  const isSameEra = tech.era === playerEra;
+  // Permitir aprender tecnologías de la era actual o anteriores
+  const isEraAllowed = eraIndex(tech.era) <= eraIndex(playerEra);
 
   // Verificar si el jugador tiene suficientes puntos de ciencia
   const hasEnoughScience = resources.science >= tech.cost.science;
 
   const handleUnlock = () => {
-    if (canUnlock && isSameEra && hasEnoughScience) {
-      // Restar los puntos de ciencia necesarios
+    if (canUnlock && isEraAllowed && hasEnoughScience && !isUnlocked) {
       setResources(prev => ({
         ...prev,
         science: prev.science - tech.cost.science,
       }));
-
-      // Desbloquear la tecnología
-      setUnlockedTechs(prev => [...prev, tech.id]);
+      setUnlockedTechs(prev => {
+        const newUnlocked = [...prev, tech.id];
+        // Cambiar de era según el número de tecnologías desbloqueadas
+        if (newUnlocked.length === 5) {
+          setPlayerEra('Erdi Aroa');
+        } else if (newUnlocked.length === 10) {
+          setPlayerEra('Aro Modernoa');
+        }
+        return newUnlocked;
+      });
     }
   };
+
+  console.log('playerEra:', playerEra, 'tech.era:', tech.era, 'isEraAllowed:', isEraAllowed);
 
   return (
     <div className="tech-detail-overlay">
@@ -146,20 +159,20 @@ const TechDetailView: React.FC<{
             </ul>
           </div>
         )}
-        {/* Mostrar el botón de desbloquear solo si no está desbloqueada, se cumplen las condiciones y es de la misma era */}
-        {!isUnlocked && canUnlock && isSameEra && hasEnoughScience && (
+        {/* Mostrar el botón de desbloquear solo si no está desbloqueada, se cumplen las condiciones y es de la era actual o anterior */}
+        {!isUnlocked && canUnlock && isEraAllowed && hasEnoughScience && (
           <button className="tech-detail-learn-btn" onClick={handleUnlock}>
             Ikasi Teknologia
           </button>
         )}
-        {/* Mostrar un mensaje si no está en la misma era */}
-        {!isUnlocked && canUnlock && !isSameEra && (
+        {/* Mostrar un mensaje si la tecnología es de una era futura */}
+        {!isUnlocked && canUnlock && !isEraAllowed && (
           <div className="tech-detail-era-warning">
-            <b>Ezinezkoa:</b> Aldatu {tech.era} erara teknologia hau ikasteko.
+            <b>Ezinezkoa:</b> Ezin duzu etorkizuneko aro bateko teknologia ikasi.
           </div>
         )}
         {/* Mostrar un mensaje si no hay suficientes puntos de ciencia */}
-        {!isUnlocked && canUnlock && isSameEra && !hasEnoughScience && (
+        {!isUnlocked && canUnlock && isEraAllowed && !hasEnoughScience && (
           <div className="tech-detail-era-warning">
             <b>Ezinezkoa:</b> Ez duzu nahikoa zientzia puntu teknologia hau ikasteko.
           </div>

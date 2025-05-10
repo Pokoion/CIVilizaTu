@@ -3,6 +3,7 @@ import GameManager from '../../managers/GameManager';
 import Tile2 from './Tile2';
 import Unit from './Unit';
 import City from './City';
+import VisibleObject from './VisibleObject';
 import '../../styles/Map2.css';
 import { TerrainType, UnitProps, CityProps } from '../../types';
 import { useUnitMovement } from './hooks/useUnitMovement';
@@ -16,13 +17,19 @@ type Map2Props = {
   setSelectedUnit: (unit: UnitProps | null) => void;
   setSelectedTile: (tile: { row: number; col: number; type: TerrainType; isDiscovered?: boolean } | null) => void;
   setSelectedEnemyUnit: (unit: UnitProps | null) => void;
+  setSelectedVisibleObject: (obj: { type: string; position: { x: number; y: number } } | null) => void;
 };
 
-const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile, setSelectedEnemyUnit }) => {
+const Map2: React.FC<Map2Props> = ({
+  setSelectedUnit,
+  setSelectedTile,
+  setSelectedEnemyUnit,
+  setSelectedVisibleObject,
+}) => {
   const {
     mapState, setMapState, units, setUnits, cities, setCities,
     setSelectedCity, selectedUnitId, setSelectedUnitId, setMessage, setCamera,
-    setInitialCameraOffset
+    setInitialCameraOffset, visibleObjects, setVisibleObjects,
   } = useGame();
 
   const gridRef = useRef<HTMLDivElement>(null);
@@ -67,9 +74,9 @@ const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile, setSelect
     });
     setSelectedUnit(null);
     setSelectedCity(null);
-    setSelectedEnemyUnit(null); // Limpia enemigo seleccionado al hacer click en tile
+    setSelectedEnemyUnit(null);
+    setSelectedVisibleObject(null);
 
-    // Solo intenta mover si hay unidad seleccionada
     if (!selectedUnitId) {
       return;
     }
@@ -81,37 +88,39 @@ const Map2: React.FC<Map2Props> = ({ setSelectedUnit, setSelectedTile, setSelect
     }
   };
 
-const handleUnitClick = (unitId: string) => {
-  const unit = units.find(u => u.id === unitId) || null;
-  console.log('Unidad seleccionada:', unit);
-  console.log('ID de unidad seleccionada:', unitId);
-  console.log('ID de unidad seleccionada en el contexto:', selectedUnitId);
-
-  // Si tienes una unidad seleccionada y haces clic en una enemiga
-  if (selectedUnitId && unit && unit.owner === 'ai') {
-    console.log('Unidad enemiga seleccionada:', unit);
-    setSelectedEnemyUnit(unit);
-    setSelectedTile(null);
-    setSelectedCity(null);
-    return;
-  }
-
-  // Si es una unidad propia, selecciónala normalmente
-  if (unit && unit.owner === 'player') {
-    console.log('Unidad aliada seleccionada:', unit);
-    setSelectedUnit(unit);
-    setSelectedEnemyUnit(null);
-    setSelectedTile(null);
-    setSelectedUnitId(prev => prev === unitId ? null : unitId);
-    setSelectedCity(null);
-  }
-};
+  const handleUnitClick = (unitId: string) => {
+    const unit = units.find(u => u.id === unitId) || null;
+    if (selectedUnitId && unit && unit.owner === 'ai') {
+      setSelectedEnemyUnit(unit);
+      setSelectedTile(null);
+      setSelectedCity(null);
+      setSelectedVisibleObject(null);
+      return;
+    }
+    if (unit && unit.owner === 'player') {
+      setSelectedUnit(unit);
+      setSelectedEnemyUnit(null);
+      setSelectedTile(null);
+      setSelectedUnitId(prev => prev === unitId ? null : unitId);
+      setSelectedCity(null);
+      setSelectedVisibleObject(null);
+    }
+  };
 
   const handleCityClick = (city: CityProps) => {
     setSelectedCity(city);
     setSelectedUnit(null);
     setSelectedTile(null);
-    setSelectedEnemyUnit(null); // Limpia enemigo seleccionado al hacer click en ciudad
+    setSelectedEnemyUnit(null);
+    setSelectedVisibleObject(null);
+  };
+
+  const handleVisibleObjectClick = (obj: { type: string; position: { x: number; y: number } }) => {
+    console.log('Seleccionando visibleObject:', obj);
+    setSelectedVisibleObject(obj);
+    setSelectedTile(null);
+    setSelectedCity(null);
+    setSelectedEnemyUnit(null);
   };
 
   return (
@@ -127,7 +136,7 @@ const handleUnitClick = (unitId: string) => {
           transform: `translate(${cameraOffset.x}px, ${cameraOffset.y}px) rotateX(60deg) rotateZ(45deg)`,
         }}
       >
-         {mapState.tiles.map((row, rowIndex) =>
+        {mapState.tiles.map((row, rowIndex) =>
           row.map((tileType, colIndex) => {
             const unit = units.find(
               (u) => u.position.x === colIndex && u.position.y === rowIndex
@@ -154,6 +163,18 @@ const handleUnitClick = (unitId: string) => {
                 fogStatus={fogStatus}
                 onClick={() => handleTileClick(rowIndex, colIndex, selectedUnitId)}
               >
+                {isDiscovered && visibleObjects &&
+                  visibleObjects
+                    .filter(obj => obj.position.x === colIndex && obj.position.y === rowIndex)
+                    .map(obj => (
+                      <VisibleObject
+                        key={`${obj.type}-${obj.position.x}-${obj.position.y}`}
+                        type={obj.type}
+                        position={obj.position}
+                        onClick={() => handleVisibleObjectClick(obj)}
+                      />
+                    ))
+                }
                 {city && isDiscovered && (
                   <City
                     id={city.id}
@@ -164,22 +185,24 @@ const handleUnitClick = (unitId: string) => {
                     onClick={() => handleCityClick(city)}
                     buildings={city.buildings}
                     production={city.production}
+                    era={city.era}
+                    training={city.training}
                   />
                 )}
                 {unit && isDiscovered && (
                   <Unit
-                  id={unit.id}
-                  type={unit.type}
-                  position={unit.position}
-                  movement_points={unit.movement_points}
-                  movement_points_left={unit.movement_points_left}
-                  health={unit.health}
-                  strength={unit.strength}
-                  owner={unit.owner}
-                  selected={selectedUnitId === unit.id}
-                  onClick={() => handleUnitClick(unit.id)}
-                  disabled={unit.owner !== 'player'}
-                />
+                    id={unit.id}
+                    type={unit.type}
+                    position={unit.position}
+                    movement_points={unit.movement_points}
+                    movement_points_left={unit.movement_points_left}
+                    health={unit.health}
+                    strength={unit.strength}
+                    owner={unit.owner}
+                    selected={selectedUnitId === unit.id}
+                    onClick={() => handleUnitClick(unit.id)}
+                    disabled={unit.owner !== 'player'}
+                  />
                 )}
               </Tile2>
             );

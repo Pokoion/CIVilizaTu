@@ -2,7 +2,7 @@
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-80%, -70%) rotateZ(-45deg);
+    transform: translate(-60%, -60%) rotateZ(-45deg);
     width: 180px;      /* Más ancho */
     height: 220px;     /* Más alto */
     z-index: 2;

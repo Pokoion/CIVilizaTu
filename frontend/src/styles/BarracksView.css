@@ -2,23 +2,31 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
+  overflow: hidden;
 }
 
 .barracks-view-content {
   position: relative;
-  width: 600px;
-  background: #ffffff;
+  width: 900px;         /* Estático */
+  height: 650px;        /* Estático */
+  background: rgba(255,255,255,0.95);
   border-radius: 16px;
-  padding: 24px;
+  padding: 32px 32px 24px 32px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  text-align: center;
+  color: #1a202c;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;     /* Scroll SIEMPRE si overflow */
+  max-width: 98vw;
+  max-height: 98vh;
 }
 
 .barracks-view-close-btn {
@@ -29,62 +37,163 @@
   color: #fff;
   border: none;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 1.2rem;
+  width: 36px;
+  height: 36px;
+  font-size: 1.2em;
   cursor: pointer;
   transition: background 0.2s;
+  z-index: 10;
 }
-
 .barracks-view-close-btn:hover {
   background: #22577a;
 }
 
 .barracks-title {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: bold;
   color: #2d3748;
-  margin-bottom: 16px;
+  text-align: center;
+  margin-bottom: 8px;
 }
 
-.unit-list {
+.barracks-units-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+  margin: 24px 0 16px 0;
+  width: 100%;
+}
+
+.barracks-unit-card {
+  background: #f7fafc;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 18px 16px 16px 16px;
+  min-width: 180px;
+  max-width: 210px;
+  text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 24px;
+  align-items: center;
+  transition: box-shadow 0.2s;
+}
+.barracks-unit-card:hover {
+  box-shadow: 0 8px 24px rgba(49,130,206,0.15);
 }
 
-.unit-item {
-  background: #f7fafc;
-  padding: 16px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  text-align: left;
+.barracks-unit-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  margin-bottom: 0px; /* Más cerca de la info */
 }
 
-.unit-item strong {
-  font-size: 1.2rem;
-  color: #2d3748;
+.barracks-unit-card > strong,
+.barracks-unit-card > .barracks-unit-desc,
+.barracks-unit-card > .barracks-unit-stats {
+  margin-top: 0px;
+  margin-bottom: 0px;
 }
 
-.unit-item p {
+.barracks-unit-stats {
+  font-size: 0.97em;
+  color: #444;
+  margin: 2px 0 0 0 !important; /* Casi sin margen superior/inferior */
+  display: flex;
+  flex-direction: column;
+  gap: 0px; /* Sin espacio entre stats */
+}
+
+.barracks-unit-desc {
   font-size: 1rem;
-  color: #4a5568;
-  margin: 4px 0;
+  color: #555;
+  margin: 8px 0 4px 0;
+  min-height: 36px;
+}
+
+.barracks-unit-turns {
+  font-size: 0.95em;
+  color: #888;
+  margin-bottom: 8px;
 }
 
 .train-unit-btn {
   margin-top: 8px;
-  padding: 8px 16px;
+  padding: 8px 18px;
   background: #3182ce;
   color: #fff;
   border: none;
   border-radius: 8px;
-  font-size: 1rem;
   cursor: pointer;
+  font-size: 1em;
   transition: background 0.2s;
 }
-
-.train-unit-btn:hover {
+.train-unit-btn:disabled {
+  background: #b5b5b5;
+  cursor: not-allowed;
+}
+.train-unit-btn:hover:not(:disabled) {
   background: #22577a;
+}
+
+.barracks-queue-title {
+  margin-top: 32px;
+  margin-bottom: 8px;
+  font-size: 1.3rem;
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.barracks-queue-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px 0;
+  width: 100%;
+  max-width: 700px;
+}
+
+.barracks-queue-item {
+  background: #e2e8f0;
+  border-radius: 8px;
+  margin: 8px 0;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px #0001;
+}
+
+.barracks-queue-info {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.barracks-queue-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.barracks-ready {
+  color: #38a169;
+  font-weight: bold;
+  margin-left: 12px;
+}
+
+@media (max-width: 1100px) {
+  .barracks-view-content {
+    width: 98vw;
+    min-width: 0;
+    padding: 16px 4vw;
+  }
+  .barracks-units-list {
+    gap: 12px;
+  }
+  .barracks-unit-card {
+    min-width: 140px;
+    max-width: 180px;
+    padding: 10px 6px 10px 6px;
+  }
 }

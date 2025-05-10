@@ -231,3 +231,32 @@
   height: 64px;
   object-fit: contain;
 }
+
+.city-message.city-message-warning {
+  background: #ffe0e0;
+  color: #b71c1c;
+  border: 1.5px solid #e53935;
+  border-radius: 8px;
+  padding: 10px 18px;
+  margin: 12px 0 18px 0;
+  font-weight: bold;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.barracks-enter-btn {
+  background: #e0e0e0;
+  color: #333;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.92em;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 12px;
+}
+.barracks-enter-btn:hover {
+  background: #ffd54f;
+  color: #222;
+}

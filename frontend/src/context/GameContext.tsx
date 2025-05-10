@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { MapState, UnitProps, CityProps } from '../types';
 import TurnManager from '../managers/TurnManager';
 import GameManager from '../managers/GameManager';
-import { loadMap } from '../services/api'; // Importar la función para cargar datos desde la API
+import { loadMap } from '../services/api';
 
 type GameContextType = {
   mapState: MapState;
@@ -13,7 +13,7 @@ type GameContextType = {
   setSelectedUnitId: React.Dispatch<React.SetStateAction<string | null>>;
   cities: CityProps[];
   setCities: React.Dispatch<React.SetStateAction<CityProps[]>>;
-  selectedCity: CityProps | null; 
+  selectedCity: CityProps | null;
   setSelectedCity: React.Dispatch<React.SetStateAction<CityProps | null>>;
   turn: number;
   endTurn: () => void;
@@ -22,6 +22,8 @@ type GameContextType = {
   setMessage: (msg: string | null) => void;
   unlockedTechs: string[];
   setUnlockedTechs: React.Dispatch<React.SetStateAction<string[]>>;
+  civilization: string;
+  setCivilization: React.Dispatch<React.SetStateAction<string>>;
   playerEra: string;
   setPlayerEra: React.Dispatch<React.SetStateAction<string>>;
   resources: {
@@ -42,6 +44,11 @@ type GameContextType = {
   setCamera: React.Dispatch<React.SetStateAction<{ offset: { x: number, y: number } }>>;
   initialCameraOffset: { x: number; y: number };
   setInitialCameraOffset: (offset: { x: number; y: number }) => void;
+  updateCity: (cityId: string, changes: Partial<CityProps>) => void;
+  visibleObjects: { type: string; position: { x: number; y: number } }[];
+  setVisibleObjects: React.Dispatch<React.SetStateAction<{ type: string; position: { x: number; y: number } }[]>>;
+  selectedVisibleObject: { type: string; position: { x: number; y: number } } | null;
+  setSelectedVisibleObject: React.Dispatch<React.SetStateAction<{ type: string; position: { x: number; y: number } } | null>>;
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -69,7 +76,7 @@ function buildGameSave({
   cheatsUsed: string[];
   turn: number;
   currentPlayer: string;
-  unlockedTechs: string[]; // Cambiado a string[]
+  unlockedTechs: string[];
   units: UnitProps[];
   cities: CityProps[];
   mapState: MapState;
@@ -98,6 +105,11 @@ function buildGameSave({
           name: city.name,
           position: city.position,
           population: city.population,
+          buildings: city.buildings,
+          production: city.production,
+          owner: city.owner,
+          era: city.era,
+          training: city.training,
         })),
         units: units.map(unit => ({
           id: unit.id,
@@ -109,7 +121,7 @@ function buildGameSave({
         technologies: unlockedTechs.map(techId => ({
           id: techId,
           completed: true,
-        })), // Ahora mapea solo los IDs
+        })),
       },
       ai: {
         resources: {},
@@ -152,19 +164,43 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     science: 0,
     natural_resources: 0,
   });
+  const [civilization, setCivilization] = useState<string>("");
+  const [visibleObjects, setVisibleObjects] = useState<{ type: string; position: { x: number; y: number } }[]>([]);
+  const [selectedVisibleObject, setSelectedVisibleObject] = useState<{ type: string; position: { x: number; y: number } } | null>(null);
+
+  // Nueva función para actualizar una ciudad por id
+  const updateCity = (cityId: string, changes: Partial<CityProps>) => {
+    setCities(prevCities =>
+      prevCities.map(city =>
+        city.id === cityId ? { ...city, ...changes } : city
+      )
+    );
+  };
 
   // Cargar datos desde la API al inicializar el contexto
   useEffect(() => {
     const loadGameState = async () => {
       try {
-        const { map, units, cities, unlockedTechs, turn, currentPlayer, playerEra, resources } = await loadMap();
+        const { map, units, cities, unlockedTechs, turn, currentPlayer, playerEra, civilization, resources, visibleObjects } = await loadMap();
         setMapState(map);
         setUnits(units);
-        setCities(cities);
+        // Asegura que training siempre es array
+        setCities(
+          cities.map(city => ({
+            ...city,
+            training: Array.isArray(city.training)
+              ? city.training
+              : city.training
+                ? [city.training]
+                : [],
+          }))
+        );
         setUnlockedTechs(unlockedTechs);
         setTurn(turn);
         setPlayerEra(playerEra);
-        setResources(resources); // Actualizar los recursos con los datos de la API
+        setCivilization(civilization);
+        setResources(resources);
+        setVisibleObjects(visibleObjects);
       } catch (error) {
         console.error("Error al cargar el estado del juego:", error);
       }
@@ -178,6 +214,38 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTurn(prev => prev + 1);
 
     setUnits(prevUnits => gameManager.reloadUnitsMovement(prevUnits));
+
+    // Actualiza ciudades y recursos en un solo paso para evitar estados desfasados
+    setCities(prevCities => {
+      // Primero, actualiza los turnsLeft de training
+      const updatedCities = prevCities.map(city => ({
+        ...city,
+        training: Array.isArray(city.training)
+          ? city.training.map(unit => ({
+              ...unit,
+              turnsLeft: unit.turnsLeft > 0 ? unit.turnsLeft - 1 : 0,
+            }))
+          : [],
+      }));
+
+      // Suma la producción de todas las ciudades actualizadas
+      setResources(prevResources => {
+        const totalProduction = updatedCities.reduce(
+          (acc, city) => {
+            acc.food += city.production.food || 0;
+            acc.gold += city.production.gold || 0;
+            acc.culture += city.production.culture || 0;
+            acc.science += city.production.science || 0;
+            acc.natural_resources += city.production.natural_resources || 0;
+            return acc;
+          },
+          { ...prevResources }
+        );
+        return totalProduction;
+      });
+
+      return updatedCities;
+    });
 
     const saveJson = buildGameSave({
       userId: "665f1a2b3c4d5e6f7a8b9c0d",
@@ -201,8 +269,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       mapState, setMapState, units, setUnits, selectedUnitId, setSelectedUnitId,
       cities, setCities, selectedCity, setSelectedCity,
       turn, endTurn, currentPlayer, message, setMessage,
-      unlockedTechs, setUnlockedTechs, playerEra, setPlayerEra, resources, setResources,
+      unlockedTechs, setUnlockedTechs, civilization, setCivilization, playerEra, setPlayerEra, resources, setResources,
       camera, setCamera, initialCameraOffset, setInitialCameraOffset,
+      updateCity, visibleObjects, setVisibleObjects,
+      selectedVisibleObject, setSelectedVisibleObject
     }}>
       {children}
     </GameContext.Provider>
