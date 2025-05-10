@@ -69,7 +69,7 @@ export const loadMap = async (): Promise<{
       cheats_used: ["mapa_agertu", "maila_igo"],
       player: {
         civilization: "euskaldunak",
-        era: "Antzinaroa",
+        era: "Erdi Aroa",
         leader_name: "Iker",
         resources: {
           food: 35,
@@ -93,6 +93,8 @@ export const loadMap = async (): Promise<{
               natural_resources: 1
             },
             owner: "player",
+            defense: 100,
+            health: 100,
             era: "Antzinaroa",
             training: [
               {
@@ -110,8 +112,8 @@ export const loadMap = async (): Promise<{
         ],
         units: [
           {
-            id: "militar1",
-            type: "militar",
+            id: "langile1",
+            type: "langile",
             position: { x: 12, y: 18 },
             movement_points: 2,
             movement_points_left: 1,
@@ -138,6 +140,16 @@ export const loadMap = async (): Promise<{
             strength: 30,
             health: 100,
             visible: true
+          },
+          {
+            id: "gudaria1",
+            type: "gudaria",
+            position: { x: 15, y: 19 },
+            movement_points: 1000,
+            movement_points_left: 1000,
+            strength: 30,
+            health: 100,
+            visible: true
           }
         ],
         technologies: ["nekazaritza", "idazketa", "burdina"]
@@ -155,15 +167,34 @@ export const loadMap = async (): Promise<{
         },
         cities: [
           {
-            id: "ai_city1",
-            name: "Erroma",
-            position: { x: 42, y: 35 },
-            population: 4,
-            buildings: [],
+            id: "city2",
+            name: "EnemyCity",
+            position: { x: 13, y: 17 },
+            population: 5,
+            buildings: ["aletegia", "unibertsitatea", "kuartela"],
             production: {
-              current_item: "",
-              turns_remaining: 0
-            }
+              food: 10,
+              gold: 5,
+              culture: 2,
+              science: 3,
+              natural_resources: 1
+            },
+            owner: "ai",
+            defense: 0,
+            health: 50,
+            era: "Antzinaroa",
+            training: [
+              {
+                id: "city1-training",
+                type: "kolono",
+                turnsLeft: 3
+              },
+              {
+                id: "city1-training2",
+                type: "militar",
+                turnsLeft: 5
+              }
+            ]
           }
         ],
         units: [
@@ -270,6 +301,8 @@ export const loadMap = async (): Promise<{
       buildings: c.buildings,
       production: c.production,
       owner: 'player' as 'player',
+      defense: c.defense,
+      health: c.health,
       era: c.era ?? fakeGameState.game_state.player.era, // Usa la era de la ciudad o la del jugador
       training: Array.isArray(c.training)
         ? c.training
@@ -294,6 +327,8 @@ export const loadMap = async (): Promise<{
       buildings: c.buildings,
       production: c.production,
       owner: 'ai' as 'ai',
+      defense: c.defense,
+      health: c.health,
       era: c.era ?? fakeGameState.game_state.ai.era,
       training: c.training ?? (
         c.production?.current_item

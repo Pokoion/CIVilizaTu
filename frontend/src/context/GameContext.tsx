@@ -213,7 +213,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     turnManager.nextTurn(gameManager);
     setTurn(prev => prev + 1);
 
-    setUnits(prevUnits => gameManager.reloadUnitsMovement(prevUnits));
+    setUnits(prev =>
+      prev.map(u => ({ ...u, hasAttackedCityThisTurn: false }))
+    );
 
     // Actualiza ciudades y recursos en un solo paso para evitar estados desfasados
     setCities(prevCities => {
@@ -222,9 +224,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...city,
         training: Array.isArray(city.training)
           ? city.training.map(unit => ({
-              ...unit,
-              turnsLeft: unit.turnsLeft > 0 ? unit.turnsLeft - 1 : 0,
-            }))
+            ...unit,
+            turnsLeft: unit.turnsLeft > 0 ? unit.turnsLeft - 1 : 0,
+          }))
           : [],
       }));
 

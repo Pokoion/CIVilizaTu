@@ -104,10 +104,9 @@
             "type": "Militar",
             "health": 75,
             "strength": 15,
-            "movement_points": 2,
+            "movement_points": 3,
             "range": 1,
             "civilization": null,
-            "image": "/images/units/militar.png",
             "cost": {
                 "food": 10,
                 "gold": 5
@@ -117,11 +116,10 @@
             "id": "kolono",
             "type": "Kolono",
             "health": 50,
-            "strength": 0,
-            "movement_points": 2,
+            "strength": 5,
+            "movement_points": 4,
             "range": 1,
             "civilization": null,
-            "image": "/images/units/kolono.png",
             "cost": {
                 "food": 20,
                 "gold": 15
@@ -131,11 +129,10 @@
             "id": "langile",
             "type": "Langile",
             "health": 50,
-            "strength": 0,
-            "movement_points": 2,
+            "strength": 5,
+            "movement_points": 3,
             "range": 1,
             "civilization": null,
-            "image": "/images/units/langile.png",
             "cost": {
                 "food": 15,
                 "gold": 8
@@ -146,13 +143,77 @@
             "type": "Gudaria",
             "health": 150,
             "strength": 20,
-            "movement_points": 2,
+            "movement_points": 3,
             "range": 1,
             "civilization": "euskaldunak",
-            "image": "/images/units/gudaria.png",
             "cost": {
                 "food": 25,
                 "gold": 20
+            }
+        },
+        {
+            "id": "arkari_zalduna",
+            "type": "Arkari zalduna",
+            "health": 125,
+            "strength": 15,
+            "movement_points": 4,
+            "range": 1,
+            "civilization": "mongolak",
+            "cost": {
+                "food": 30,
+                "gold": 20
+            }
+        },
+        {
+            "id": "atlatl_erabiltzailea",
+            "type": "Atlatl erabiltzailea",
+            "health": 100,
+            "strength": 20,
+            "movement_points": 2,
+            "range": 3,
+            "civilization": "mayak",
+            "cost": {
+                "food": 18,
+                "gold": 12
+            }
+        },
+        {
+            "id": "piromanoa",
+            "type": "Piromanoa",
+            "health": 80,
+            "strength": 40,
+            "movement_points": 2,
+            "range": 1,
+            "civilization": "bizantziarrak",
+            "cost": {
+                "food": 22,
+                "gold": 25
+            }
+        },
+        {
+            "id": "arkeroa",
+            "type": "Arkeroa",
+            "health": 60,
+            "strength": 15,
+            "movement_points": 2,
+            "range": 4,
+            "civilization": null,
+            "cost": {
+                "food": 12,
+                "gold": 10
+            }
+        },
+        {
+            "id": "tankea",
+            "type": "Tankea",
+            "health": 200,
+            "strength": 50,
+            "movement_points": 3,
+            "range": 3,
+            "civilization": null,
+            "cost": {
+                "natural_resources": 50,
+                "gold": 60
             }
         }
     ],

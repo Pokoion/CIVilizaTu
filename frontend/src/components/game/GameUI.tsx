@@ -87,6 +87,8 @@ const GameUI: React.FC = () => {
             owner: 'player',
             buildings: [],
             production,
+            defense: 50,
+            health: 100,
             era,
             training: []
         };

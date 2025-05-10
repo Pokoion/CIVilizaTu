@@ -1,0 +1,182 @@
+.city-battle-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: linear-gradient(135deg, #2d2d44 0%, #7e5c2e 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: city-battle-fadein 0.7s;
+}
+
+@keyframes city-battle-fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.city-battle-container {
+  background: linear-gradient(120deg, #f8e7c0 60%, #e7cfa0 100%);
+  border-radius: 22px;
+  box-shadow: 0 8px 40px #0008;
+  padding: 38px 54px 36px 54px;
+  min-width: 480px;
+  max-width: 98vw;
+  min-height: 340px;
+  border: 4px solid #bfa14a;
+  position: relative;
+  overflow: hidden;
+}
+
+.city-battle-title {
+  font-size: 2.1rem;
+  font-weight: bold;
+  color: #a67c00;
+  text-align: center;
+  margin-bottom: 18px;
+  letter-spacing: 1.5px;
+  text-shadow: 0 2px 12px #fff7e0;
+}
+
+.city-battle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 18px;
+  gap: 40px;
+  position: relative;
+}
+
+.city-battle-attacker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 160px;
+  z-index: 2;
+}
+
+.city-battle-attacker-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 2px 8px #bfa14a33);
+  transition: transform 0.3s;
+}
+
+.city-battle-attacker-img.attacking {
+  animation: city-battle-attack-anim 0.7s;
+}
+
+@keyframes city-battle-attack-anim {
+  0% { transform: translateX(0); }
+  30% { transform: translateX(30px) scale(1.1); }
+  60% { transform: translateX(60px) scale(1.15); }
+  100% { transform: translateX(0); }
+}
+
+.city-battle-city {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 200px;
+  z-index: 2;
+}
+
+.city-battle-city-img-wrapper {
+  position: relative;
+  background: #f7e7b6;
+  border-radius: 16px;
+  padding: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 12px #bfa14a33;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.city-battle-city-img-wrapper.hit {
+  animation: city-battle-city-hit 0.7s;
+}
+
+@keyframes city-battle-city-hit {
+  0% { box-shadow: 0 0 0 0 #ffb30055; transform: scale(1);}
+  30% { box-shadow: 0 0 32px 12px #ffb300aa; transform: scale(1.08);}
+  60% { box-shadow: 0 0 0 0 #ffb30000; transform: scale(1);}
+  100% { box-shadow: 0 0 0 0 #ffb30000; }
+}
+
+.city-battle-city-img {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+}
+
+.city-battle-city-fire {
+  position: absolute;
+  left: 18px;
+  bottom: 0;
+  width: 40px;
+  height: 40px;
+  pointer-events: none;
+  opacity: 0.95;
+  font-size: 2.2rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: city-battle-fire 1.2s infinite alternate;
+  background: none;
+}
+
+@keyframes city-battle-fire {
+  0% { opacity: 0.7; transform: scale(1);}
+  100% { opacity: 1; transform: scale(1.08);}
+}
+
+.city-battle-projectile {
+  position: absolute;
+  left: 90px;
+  top: 60px;
+  width: 48px;
+  height: 48px;
+  z-index: 3;
+  pointer-events: none;
+  font-size: 2.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: city-battle-projectile-move 0.7s cubic-bezier(.7,-0.2,.7,1.2);
+  background: none;
+}
+
+@keyframes city-battle-projectile-move {
+  0% { left: 90px; top: 60px; opacity: 1;}
+  80% { left: 320px; top: 40px; opacity: 1;}
+  100% { left: 320px; top: 40px; opacity: 0;}
+}
+
+/* Elimina las murallas */
+.city-battle-murallas {
+  display: none !important;
+}
+
+.city-battle-stats {
+  font-size: 1.18rem;
+  color: #a67c00;
+  font-weight: 600;
+  display: flex;
+  gap: 18px;
+  margin-top: 4px;
+  justify-content: center;
+}
+
+.city-battle-flavor {
+  text-align: center;
+  font-size: 1.22rem;
+  color: #7c5e1a;
+  margin-top: 22px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background: #fffbe7;
+  border-radius: 10px;
+  padding: 10px 0 8px 0;
+  border: 1.5px solid #e0c097;
+  box-shadow: 0 1px 4px #bfa14a22;
+}

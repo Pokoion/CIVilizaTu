@@ -215,6 +215,12 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
         <h2 className="city-title">{city.name}</h2>
         <p className="city-population">Biztanleria: {city.population}</p>
         <p className="city-era">Era: <b>{city.era}</b></p>
+        <p className="city-defense">
+          🛡️ Defentsa: <b>{city.defense ?? 20}</b>
+        </p>
+        <p className="city-health">
+          ❤️ Osasuna: <b>{city.health ?? 100}</b>
+        </p>
 
         {buildingLimitMsg && (
           <div

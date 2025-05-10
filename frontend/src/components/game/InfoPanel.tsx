@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { UnitProps, TerrainType, CityProps } from '../../types';
 import { TILE_TYPES, VISIBLE_OBJECTS_BY_ID } from '../../utils/Constants';
 import { useGame } from '../../context/GameContext';
+import BattleView from './BattleView';
+import CityBattleView from './CityBattleView';
 
 export interface InfoPanelProps {
   selectedUnit?: UnitProps | null;
@@ -26,25 +28,25 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   selectedVisibleObject,
   setSelectedVisibleObject,
 }) => {
-  const { setResources, setVisibleObjects, setUnits, units } = useGame();
+  const { setResources, setVisibleObjects, setUnits, units, setCities } = useGame();
+  const [showCityBattle, setShowCityBattle] = useState(false);
 
   // PRIORIDAD: Mostrar información del objeto visible seleccionado
   if (selectedVisibleObject) {
-    console.log('InfoPanel: mostrando info de visibleObject', selectedVisibleObject);
     const objInfo = VISIBLE_OBJECTS_BY_ID[selectedVisibleObject.type];
-  if (!objInfo) {
-    console.log('InfoPanel: objInfo no encontrado para', selectedVisibleObject.type);
-    return null;
-  }
+    if (!objInfo) return null;
 
-    // Solo mostrar botón si hay unidad seleccionada y está adyacente
+    // Solo mostrar botón si hay unidad seleccionada y está adyacente y es langile
     const isAdjacent = (unit: UnitProps, obj: { position: { x: number; y: number } }) => {
       const dx = Math.abs(unit.position.x - obj.position.x);
       const dy = Math.abs(unit.position.y - obj.position.y);
       return (dx <= 1 && dy <= 1) && !(dx === 0 && dy === 0);
     };
-    const puedeRecolectar = selectedUnit && isAdjacent(selectedUnit, selectedVisibleObject);
-console.log('Puede recolectar?', !!puedeRecolectar, 'selectedUnit:', selectedUnit, 'selectedVisibleObject:', selectedVisibleObject);
+    const puedeRecolectar =
+      selectedUnit &&
+      selectedUnit.type === 'langile' &&
+      isAdjacent(selectedUnit, selectedVisibleObject);
+
     return (
       <div className="visible-object-info-panel">
         <h3>{objInfo.name}</h3>
@@ -73,8 +75,8 @@ console.log('Puede recolectar?', !!puedeRecolectar, 'selectedUnit:', selectedUni
               // Quita el recurso del mapa
               setVisibleObjects(prev => prev.filter(
                 obj => !(obj.type === selectedVisibleObject.type &&
-                         obj.position.x === selectedVisibleObject.position.x &&
-                         obj.position.y === selectedVisibleObject.position.y)
+                  obj.position.x === selectedVisibleObject.position.x &&
+                  obj.position.y === selectedVisibleObject.position.y)
               ));
               // Pone los movimientos de la unidad seleccionada a 0
               if (selectedUnit) {
@@ -112,6 +114,92 @@ console.log('Puede recolectar?', !!puedeRecolectar, 'selectedUnit:', selectedUni
     );
   }
 
+  // Mostrar información de la ciudad seleccionada
+  if (selectedCity) {
+    const isEnemyCity = selectedCity.owner === 'ai';
+
+    // Detectar si hay una unidad militar adyacente a la ciudad enemiga
+    const isAdjacent = (unit: UnitProps, city: CityProps) => {
+      const dx = Math.abs(unit.position.x - city.position.x);
+      const dy = Math.abs(unit.position.y - city.position.y);
+      return (dx <= 1 && dy <= 1) && !(dx === 0 && dy === 0);
+    };
+
+    // Solo puede atacar si no ha atacado ya este turno
+    const puedeAtacarCiudad =
+      selectedUnit &&
+      selectedUnit.owner === 'player' &&
+      isEnemyCity &&
+      isAdjacent(selectedUnit, selectedCity) &&
+      !selectedUnit?.hasAttackedCityThisTurn;
+
+    // Lógica de ataque: primero defensa, luego vida y elimina ciudad si health <= 0
+    const handleAtacarCiudad = () => {
+      setShowCityBattle(true);
+    };
+
+    // Nuevo onCityBattleEnd que recibe la defensa y vida final de la ciudad
+    const onCityBattleEnd = (finalDefense: number, finalHealth: number) => {
+      setShowCityBattle(false);
+
+      setCities &&
+        setCities(prev =>
+          prev
+            .map(city =>
+              city.id === selectedCity.id
+                ? { ...city, defense: finalDefense, health: finalHealth }
+                : city
+            )
+            .filter(city =>
+              // Si la ciudad atacada tiene vida 0, la eliminamos
+              !(city.id === selectedCity.id && finalHealth <= 0)
+            )
+        );
+
+      // Marca la unidad como que ya ha atacado a ciudad este turno
+      setUnits &&
+        setUnits(prev =>
+          prev.map(u =>
+            u.id === selectedUnit?.id
+              ? { ...u, hasAttackedCityThisTurn: true }
+              : u
+          )
+        );
+    };
+
+    return (
+      <div>
+        <h3>Hiria</h3>
+        <p>Izena: {selectedCity.name}</p>
+        <p>Populazioa: {selectedCity.population} </p>
+        <p>Defentsa: {selectedCity.defense}</p>
+        <p>Osasuna: {selectedCity.health}</p>
+        <div style={{ textAlign: 'right' }}>
+          {puedeAtacarCiudad ? (
+            <>
+              <button onClick={handleAtacarCiudad}>
+                Hiria erasotu
+              </button>
+              {showCityBattle && (
+                <CityBattleView
+                  attacker={selectedUnit}
+                  city={selectedCity}
+                  onClose={onCityBattleEnd}
+                />
+              )}
+            </>
+          ) : (
+            !isEnemyCity && (
+              <button onClick={() => onEnterCity && onEnterCity(selectedCity)}>
+                Sartu hirian
+              </button>
+            )
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Mostrar información de la unidad seleccionada
   if (selectedUnit) {
     return (
@@ -122,26 +210,10 @@ console.log('Puede recolectar?', !!puedeRecolectar, 'selectedUnit:', selectedUni
         {selectedUnit.type === 'kolono' && (
           <div style={{ textAlign: 'right' }}>
             <button onClick={() => onFoundCity && onFoundCity(selectedUnit)}>
-              Fundar Ciudad
+              Hiria sortu
             </button>
           </div>
         )}
-      </div>
-    );
-  }
-
-  // Mostrar información de la ciudad seleccionada
-  if (selectedCity) {
-    return (
-      <div>
-        <h3>Hiria</h3>
-        <p>Izena: {selectedCity.name}</p>
-        <p>Populazioa: {selectedCity.population} </p>
-        <div style={{ textAlign: 'right' }}>
-          <button onClick={() => onEnterCity && onEnterCity(selectedCity)}>
-            Sartu hirian
-          </button>
-        </div>
       </div>
     );
   }

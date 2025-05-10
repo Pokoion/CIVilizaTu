@@ -38,9 +38,13 @@ const BarracksView: React.FC<BarracksViewProps> = ({
   if (!city) return null;
 
   const availableUnits = UNITS.filter(
-    (unit: any) =>
-      unit.civilization === null ||
-      unit.civilization === civilization
+    (unit: any) => {
+      // Unidades exclusivas por tecnología
+      if (unit.id === "arkeroa" && !unlockedTechs.includes("arku_tiroa")) return false;
+      if (unit.id === "tankea" && !unlockedTechs.includes("artilleria")) return false;
+      // Unidades normales
+      return unit.civilization === null || unit.civilization === civilization;
+    }
   );
 
   const trainingQueue = city.training;
@@ -71,17 +75,17 @@ const BarracksView: React.FC<BarracksViewProps> = ({
       prev.map(c =>
         c.id === cityId
           ? {
-              ...c,
-              training: [
-                ...c.training,
-                {
-                  id: `${unit.id}-${Date.now()}`,
-                  type: unit.id,
-                  name: unit.name,
-                  turnsLeft: DEFAULT_TRAIN_TURNS,
-                },
-              ],
-            }
+            ...c,
+            training: [
+              ...c.training,
+              {
+                id: `${unit.id}-${Date.now()}`,
+                type: unit.id,
+                name: unit.name,
+                turnsLeft: DEFAULT_TRAIN_TURNS,
+              },
+            ],
+          }
           : c
       )
     );
@@ -107,9 +111,9 @@ const BarracksView: React.FC<BarracksViewProps> = ({
       prev.map(city =>
         city.id === cityId
           ? {
-              ...city,
-              training: city.training.filter((item: TrainingUnit) => item.id !== unitId),
-            }
+            ...city,
+            training: city.training.filter((item: TrainingUnit) => item.id !== unitId),
+          }
           : city
       )
     );
@@ -143,7 +147,7 @@ const BarracksView: React.FC<BarracksViewProps> = ({
           </button>
           {visibleUnits.map((unit) => (
             <div key={unit.id} className="barracks-unit-card">
-              <img src={unit.image} alt={unit.type} className="barracks-unit-img" />
+              <img src={`/images/units/${unit.type}/${unit.type}-default.png`} alt={unit.type} className="barracks-unit-img" />
               <div className="barracks-unit-stats" style={{ fontSize: '0.97em', color: '#444', margin: '8px 0 4px 0' }}>
                 <div>⚔️ <strong>{unit.type}</strong></div>
                 <div>❤️ <strong>{unit.health}</strong></div>
@@ -207,7 +211,7 @@ const BarracksView: React.FC<BarracksViewProps> = ({
             return (
               <li key={item.id} className="barracks-queue-item">
                 <div className="barracks-queue-info">
-                  <img src={unit.image} alt={unit.id} className="barracks-queue-img" />
+                  <img src={`/images/units/${unit.type}/${unit.type}-default.png`} alt={unit.id} className="barracks-queue-img" />
                   <span><strong>{unit.id}</strong></span>
                   <span>
                     {item.turnsLeft > 0 ? (

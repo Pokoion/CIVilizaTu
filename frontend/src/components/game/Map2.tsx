@@ -49,6 +49,13 @@ const Map2: React.FC<Map2Props> = ({
     console.log('Cámara actualizada:', cameraOffset);
   }, [cameraOffset]);
 
+  useEffect(() => {
+  if (selectedUnitId) {
+    const updatedUnit = units.find(u => u.id === selectedUnitId) || null;
+    setSelectedUnit(updatedUnit);
+  }
+}, [units, selectedUnitId, setSelectedUnit]);
+
   // Camera drag handlers
   useCameraDrag(setCameraOffset);
 
@@ -60,31 +67,41 @@ const Map2: React.FC<Map2Props> = ({
     mapState,
     units,
     cities,
+    visibleObjects,
     setUnits,
     setMapState,
     setSelectedUnitId
   );
 
   const handleTileClick = async (rowIndex: number, colIndex: number, selectedUnitId: string | null) => {
-    setSelectedTile({
-      row: rowIndex,
-      col: colIndex,
-      type: mapState.tiles[rowIndex][colIndex],
-      isDiscovered: !!mapState.fog_of_war[rowIndex]?.[colIndex],
-    });
-    setSelectedUnit(null);
-    setSelectedCity(null);
-    setSelectedEnemyUnit(null);
-    setSelectedVisibleObject(null);
-
-    if (!selectedUnitId) {
-      return;
-    }
-
-    const result = await moveUnit(rowIndex, colIndex, selectedUnitId);
-    if (result !== true) {
-      setMessage(result);
-      setTimeout(() => setMessage(null), 2000);
+    // Si hay unidad seleccionada, intenta mover
+    if (selectedUnitId) {
+      const result = await moveUnit(rowIndex, colIndex, selectedUnitId);
+      if (result !== true) {
+        setMessage(result);
+        setTimeout(() => setMessage(null), 2000);
+      } else {
+        // Mantén la unidad seleccionada tras mover si quieres
+        // O vuelve a seleccionarla por su id si su posición ha cambiado
+        const movedUnit = units.find(u => u.id === selectedUnitId);
+        if (movedUnit) setSelectedUnit(movedUnit);
+      }
+      setSelectedTile(null); // No muestres info del tile al mover
+      setSelectedCity(null);
+      setSelectedEnemyUnit(null);
+      setSelectedVisibleObject(null);
+    } else {
+      // Si no hay unidad seleccionada, muestra info del tile
+      setSelectedTile({
+        row: rowIndex,
+        col: colIndex,
+        type: mapState.tiles[rowIndex][colIndex],
+        isDiscovered: !!mapState.fog_of_war[rowIndex]?.[colIndex],
+      });
+      setSelectedUnit(null);
+      setSelectedCity(null);
+      setSelectedEnemyUnit(null);
+      setSelectedVisibleObject(null);
     }
   };
 
@@ -109,7 +126,6 @@ const Map2: React.FC<Map2Props> = ({
 
   const handleCityClick = (city: CityProps) => {
     setSelectedCity(city);
-    setSelectedUnit(null);
     setSelectedTile(null);
     setSelectedEnemyUnit(null);
     setSelectedVisibleObject(null);
@@ -185,6 +201,8 @@ const Map2: React.FC<Map2Props> = ({
                     onClick={() => handleCityClick(city)}
                     buildings={city.buildings}
                     production={city.production}
+                    defense={city.defense}
+                    health={city.health}
                     era={city.era}
                     training={city.training}
                   />
@@ -202,6 +220,7 @@ const Map2: React.FC<Map2Props> = ({
                     selected={selectedUnitId === unit.id}
                     onClick={() => handleUnitClick(unit.id)}
                     disabled={unit.owner !== 'player'}
+                    direction={unit.direction || 'default'} // <-- AÑADE ESTA LÍNEA
                   />
                 )}
               </Tile2>

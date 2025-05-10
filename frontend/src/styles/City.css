@@ -1,27 +1,39 @@
 .city-container {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-60%, -60%) rotateZ(-45deg);
-    width: 180px;      /* Más ancho */
-    height: 220px;     /* Más alto */
-    z-index: 2;
-    pointer-events: auto;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-  }
-  
-  .city-person {
-    width: 170px;      /* Más ancho */
-    height: 210px;     /* Más alto */
-    z-index: 2;
-    object-fit: fill;
-    image-rendering: pixelated;
-    filter: drop-shadow(0 6px 6px rgba(0,0,0,0.25));
-    display: block;
-    margin: 0 auto;
-    pointer-events: none;
-    user-select: none;
-    transition: box-shadow 0.2s;
-  }
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-60%, -60%) rotateZ(-45deg);
+  width: 180px;
+  /* Más ancho */
+  height: 220px;
+  /* Más alto */
+  z-index: 2;
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.city-person {
+  width: 170px;
+  /* Más ancho */
+  height: 210px;
+  /* Más alto */
+  z-index: 2;
+  object-fit: fill;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.25));
+  display: block;
+  margin: 0 auto;
+  pointer-events: none;
+  user-select: none;
+  transition: box-shadow 0.2s;
+}
+
+.city-container.enemy-city .city-person {
+  filter:
+    drop-shadow(0 6px 6px rgba(0, 0, 0, 0.25))
+    hue-rotate(-20deg) /* Ligero tono rojizo */
+    saturate(1.15)
+    brightness(0.98);
+}

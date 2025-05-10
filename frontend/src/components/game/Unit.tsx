@@ -2,7 +2,7 @@ import React from 'react';
 import { UnitProps } from '../../types';
 import '../../styles/Unit.css';
 
-const Unit: React.FC<UnitProps> = ({ id, type, selected, onClick, owner }) => {
+const Unit: React.FC<UnitProps> = ({ id, type, selected, onClick, owner, direction }) => {
   return (
     <div
       className={
@@ -17,7 +17,7 @@ const Unit: React.FC<UnitProps> = ({ id, type, selected, onClick, owner }) => {
         if (onClick) onClick();
       }}
     >
-      <img src={`/images/units/${type}.png`} alt={type} className="unit-person" />
+      <img src={`/images/units/${type}/${type}-${direction || 'default'}.png`} alt={type} className="unit-person" />
     </div>
   );
 };

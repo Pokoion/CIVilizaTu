@@ -8,12 +8,13 @@ const eraToImage: Record<string, string> = {
   "Aro Modernoa": "city_aro_modernoa.png",
 };
 
-const City: React.FC<CityProps> = ({ id, name, position, onClick, era }) => {
+const City: React.FC<CityProps> = ({ id, name, position, onClick, era, owner }) => {
   const imageFile = eraToImage[era ?? "Antzinaroa"] || "city_antzinaroa.png";
+  const isEnemy = owner === 'ai';
 
   return (
     <div
-      className="city-container"
+      className={`city-container${isEnemy ? ' enemy-city' : ''}`}
       data-city-id={id}
       title={name}
       style={{}}

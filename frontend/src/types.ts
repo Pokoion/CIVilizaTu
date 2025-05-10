@@ -24,6 +24,8 @@ export interface Unit {
   health: number;
   strength: number;
   owner: 'player' | 'ai';
+  direction?: string;
+  hasAttackedCityThisTurn?: boolean;
 }
 
 export interface UnitProps extends Unit {
@@ -61,6 +63,8 @@ export interface City {
     science: number;
     natural_resources: number;
   };
+  defense: number;
+  health: number;
   era: string;
   training: TrainingUnit[];
 }

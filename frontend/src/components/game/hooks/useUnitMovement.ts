@@ -23,11 +23,21 @@ export function getVisibleTiles(units: Unit[], mapRows: number, mapCols: number,
   return visible;
 }
 
+// --- NUEVO: función para calcular la dirección ---
+const getDirection = (from: { x: number, y: number }, to: { x: number, y: number }) => {
+  if (to.x > from.x) return 'default';
+  if (to.x < from.x) return 'atzera';
+  if (to.y > from.y) return 'eskubi';
+  if (to.y < from.y) return 'ezkerra';
+  return 'default';
+};
+
 export function useUnitMovement(
   gameManager: GameManager,
   mapState: MapState,
   units: Unit[],
   cities: City[],
+  visibleObjects: { type: string; position: { x: number; y: number } }[], // <-- añade esto
   setUnits: React.Dispatch<React.SetStateAction<Unit[]>>,
   setMapState: (map: MapState) => void,
   setSelectedUnitId: (id: string | null) => void,
@@ -40,11 +50,12 @@ export function useUnitMovement(
         return "Ezin zara lurralde ezkutatura mugitu";
       }
 
-      // Comprobar si hay unidad o ciudad en el destino
+      // Comprobar si hay unidad, ciudad o visibleObject en el destino
       const unitOnTile = units.some(u => u.position.x === col && u.position.y === row);
       const cityOnTile = cities.some(c => c.position.x === col && c.position.y === row);
-      if (unitOnTile || cityOnTile) {
-        return "Ezin zara beste unitate edo hirira mugitu";
+      const visibleObjectOnTile = visibleObjects?.some(obj => obj.position.x === col && obj.position.y === row);
+      if (unitOnTile || cityOnTile || visibleObjectOnTile) {
+        return "Ezin zara beste unitate, hiri edo baliabide batera mugitu";
       }
 
       if (selectedUnitId) {
@@ -58,7 +69,6 @@ export function useUnitMovement(
         const destTerrain = mapState.tiles[row][col];
         const destTile = TILE_TYPES[destTerrain];
 
-        // Comprobar si el tile requiere barco y si la unidad es del tipo adecuado
         if (destTile.requiresBoat && unit.type !== 'boat') {
           return "Ezin zara lurralde honetara mugitu, beharrezkoa da itsasontzi bat";
         }
@@ -71,7 +81,6 @@ export function useUnitMovement(
           mapState.fog_of_war
         );
 
-        // Nueva comprobación: no pasar por encima de otras unidades o ciudades
         if (path) {
           for (let i = 1; i < path.length; i++) {
             const step = path[i];
@@ -82,6 +91,10 @@ export function useUnitMovement(
             // ¿Hay ciudad en este paso?
             if (cities.some(c => c.position.x === step.col && c.position.y === step.row)) {
               return "Ezin zara hiri baten gainetik pasa";
+            }
+            // ¿Hay visibleObject en este paso?
+            if (visibleObjects?.some(obj => obj.position.x === step.col && obj.position.y === step.row)) {
+              return "Ezin zara baliabide baten gainetik pasa";
             }
           }
         }
@@ -117,6 +130,13 @@ export function useUnitMovement(
               return "Unitateak ez ditu beharrezko mugimendu puntuak";
             }
 
+            // --- NUEVO: calcula dirección respecto al paso anterior ---
+            const prevStep = path[i - 1];
+            const direction = getDirection(
+              { x: prevStep.col, y: prevStep.row },
+              { x: step.col, y: step.row }
+            );
+
             movementLeft -= moveCost;
             currentUnit.position = { x: step.col, y: step.row };
             currentUnit.movement_points_left = movementLeft;
@@ -128,7 +148,7 @@ export function useUnitMovement(
             }
             setUnits((prevUnits: Unit[]) =>
               prevUnits.map(u =>
-                u.id === selectedUnitId ? { ...u, ...currentUnit } : u
+                u.id === selectedUnitId ? { ...u, ...currentUnit, direction } : u
               )
             );
             setMapState({ ...gameManager.getMapManager().getMap() });
@@ -140,13 +160,14 @@ export function useUnitMovement(
               setVisibleTiles(visibles);
             }
 
-            await new Promise(res => setTimeout(res, 120));
+            await new Promise(res => setTimeout(res, 750));
           }
+
           return true;
         }
       }
       return "Mugimendua ez da baliozkoa";
     },
-    [gameManager, mapState, units, cities, setUnits, setMapState, setSelectedUnitId, setVisibleTiles]
+    [gameManager, mapState, units, cities, visibleObjects, setUnits, setMapState, setSelectedUnitId, setVisibleTiles]
   );
 }
