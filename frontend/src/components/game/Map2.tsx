@@ -123,7 +123,6 @@ const Map2: React.FC<Map2Props> = ({
         const unitDef = UNITS.find(u => u.id === deployingUnit.unit.type);
         if (!unitDef) {
           setMessage('Errorea: unitate mota ez da aurkitu.');
-          setTimeout(() => setMessage(null), 2000);
           return;
         }
         setUnits(prev => {
@@ -180,11 +179,8 @@ const Map2: React.FC<Map2Props> = ({
         );
         setDeployingUnit(null);
         setMessage('Unitatea mapan kokatu da!');
-        setTimeout(() => setMessage(null), 2000);
         return;
       } else {
-        setMessage('Tile ez da egokia unitatea kokatzeko.');
-        setTimeout(() => setMessage(null), 2000);
         return;
       }
     }
@@ -194,7 +190,6 @@ const Map2: React.FC<Map2Props> = ({
       const result = await moveUnit(rowIndex, colIndex, selectedUnitId);
       if (result !== true) {
         setMessage(result);
-        setTimeout(() => setMessage(null), 2000);
       } else {
         const movedUnit = units.find(u => u.id === selectedUnitId);
         if (movedUnit) setSelectedUnit(movedUnit);
@@ -230,7 +225,6 @@ const Map2: React.FC<Map2Props> = ({
         return;
       } else {
         setMessage('Unitatea ez dago zure eremuan (rango barne)!');
-        setTimeout(() => setMessage(null), 2000);
         return;
       }
     }

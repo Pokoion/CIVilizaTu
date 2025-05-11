@@ -37,7 +37,8 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     unlockedTechs,
     gameManager,
     setSelectedUnitId,
-    selectedUnitId
+    selectedUnitId,
+    checkVictoryOrDefeat
   } = useGame();
 
   // Usar la unidad del estado global en lugar de las props
@@ -238,7 +239,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     };
 
     const onCityBattleEnd = (finalDefense: number, finalHealth: number) => {
-      console.log('CityBattleView cerrado', { finalDefense, finalHealth });
       setShowCityBattle(false);
       showCityBattleRef.current = false;
 
@@ -254,6 +254,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
               !(city.id === selectedCity.id && finalHealth <= 0)
             )
         );
+      checkVictoryOrDefeat(); // <-- Añade esto aquí
     };
 
     // FORZAR el render de CityBattleView si showCityBattleRef o showCityBattle es true

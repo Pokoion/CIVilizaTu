@@ -1,0 +1,302 @@
+import React, { useState, useEffect, useRef } from "react";
+import { useGame } from "../../context/GameContext";
+import { BUILDINGS, TECHS } from "../../utils/Constants";
+
+const CHEAT_CODES = [
+    {
+        code: "eraiki_guztiak",
+        action: (ctx: any) => {
+            if (!ctx.selectedCity) {
+                ctx.setMessage("❌ Aukeratu hiri bat lehenik!");
+                return false;
+            }
+            ctx.setCities((prev: any) =>
+                prev.map((city: any) =>
+                    city.id === ctx.selectedCity.id
+                        ? { ...city, buildings: BUILDINGS.map((b: any) => b.id) }
+                        : city
+                )
+            );
+            ctx.setMessage("🏛️ Eraikin guztiak eraiki dira aukeratutako hirian!");
+            return true;
+        }
+    },
+    {
+        code: "berehalako_porrota",
+        action: (ctx: any) => {
+            ctx.setGameStatus("defeat");
+            ctx.setVictoryType(null);
+            ctx.setMessage("💀 Berehalako porrota!");
+            return true;
+        }
+    },
+    {
+        code: "berehalako_garaipena",
+        action: (ctx: any, arg?: string) => {
+            let type: "science" | "culture" | "conquest" = "conquest";
+            if (arg === "1") type = "science";
+            if (arg === "2") type = "culture";
+            ctx.setGameStatus("victory");
+            ctx.setVictoryType(type);
+            ctx.setMessage(`🏆 Berehalako garaipena (${type})!`);
+            return true;
+        }
+    },
+    {
+        code: "tanke_eskuadroia",
+        action: (ctx: any) => {
+            if (!ctx.selectedCity) {
+                ctx.setMessage("❌ Aukeratu hiri bat lehenik!");
+                return false;
+            }
+            ctx.setCities((prev: any) =>
+                prev.map((city: any) =>
+                    city.id === ctx.selectedCity.id
+                        ? {
+                            ...city,
+                            training: [
+                                ...(Array.isArray(city.training) ? city.training : []),
+                                ...Array.from({ length: 5 }).map((_, i) => ({
+                                    id: `cheat-tank-training-${city.id}-${Date.now()}-${i}`,
+                                    type: "tankea",
+                                    turnsLeft: 0
+                                }))
+                            ]
+                        }
+                        : city
+                )
+            );
+            ctx.setMessage("🛡️ 5 tanke gehitu dira hiriko kuartelean (produkzioan)!");
+            return true;
+        }
+    },
+    {
+        code: "teknologia_aurreratua",
+        action: (ctx: any, arg?: string) => {
+            let target = "player";
+            if (arg === "1") target = "ai";
+            const unlockedTechs = target === "player" ? ctx.unlockedTechs : ctx.aiUnlockedTechs;
+            const setUnlockedTechs = target === "player" ? ctx.setUnlockedTechs : ctx.setAiUnlockedTechs;
+
+            const techsToUnlock = TECHS
+                .map(t => t.id)
+                .filter(id => id !== "espaziontzia" && !unlockedTechs.includes(id));
+            if (techsToUnlock.length === 0) {
+                ctx.setMessage(
+                    target === "player"
+                        ? "Teknologia guztiak badituzu jada (espaziontzia izan ezik)!"
+                        : "AI-ak teknologia guztiak baditu jada (espaziontzia izan ezik)!"
+                );
+                return false;
+            }
+            setUnlockedTechs((prev: any) => [...prev, ...techsToUnlock]);
+            ctx.setMessage(
+                target === "player"
+                    ? "🔬 Zure zibilizazioak teknologia guztiak ikasi ditu (espaziontzia izan ezik)!"
+                    : "🤖 AI-ak teknologia guztiak ikasi ditu (espaziontzia izan ezik)!"
+            );
+            return true;
+        }
+    },
+    {
+        code: "maila_igo",
+        action: (ctx: any) => {
+            if (!ctx.selectedCity) {
+                ctx.setMessage("❌ Aukeratu hiri bat lehenik!");
+                return false;
+            }
+            ctx.setCities((prev: any) =>
+                prev.map((city: any) => {
+                    if (city.id !== ctx.selectedCity.id) return city;
+                    let nextEra = city.era;
+                    if (city.era === "Antzinaroa") nextEra = "Erdi Aroa";
+                    else if (city.era === "Erdi Aroa") nextEra = "Aro Modernoa";
+                    else if (city.era === "Aro Modernoa") nextEra = "Aro Modernoa";
+                    return { ...city, era: nextEra };
+                })
+            );
+            ctx.setMessage("🏰 Hiriko aroa igo da!");
+            return true;
+        }
+    },
+    {
+        code: "baliabide_maximoak",
+        action: (ctx: any) => {
+            ctx.setResources((r: any) => ({
+                ...r,
+                food: 9999,
+                gold: 9999,
+                culture: 9999,
+                science: 9999,
+                natural_resources: 9999
+            }));
+            ctx.setMessage("💰 Baliabide guztiak maximoan!");
+            return true;
+        }
+    },
+    {
+        code: "mugimendu_infinitua",
+        action: (ctx: any) => {
+            ctx.setUnits((prev: any) =>
+                prev.map((u: any) => ({
+                    ...u,
+                    movement_points: Infinity,
+                    movement_points_left: Infinity
+                }))
+            );
+            ctx.setMessage("🏃‍♂️ Unitate guztiek mugimendu infinitua dute!");
+            return true;
+        }
+    },
+    {
+        code: "mapa_agertu",
+        action: (ctx: any) => {
+            ctx.setMapState((prev: any) => {
+                if (!prev.tiles) return prev;
+                const height = prev.tiles.length;
+                const width = prev.tiles[0]?.length || 0;
+                const fog_of_war = Array.from({ length: height }, () =>
+                    Array.from({ length: width }, () => true)
+                );
+                return { ...prev, fog_of_war };
+            });
+            ctx.setMessage("🌍 Mapa osoa agerrarazi da!");
+            return true;
+        }
+    },
+];
+
+interface CheatConsoleModalProps {
+    open: boolean;
+    onClose: () => void;
+}
+
+const CheatConsoleModal: React.FC<CheatConsoleModalProps> = ({ open, onClose }) => {
+    const [cheatInput, setCheatInput] = useState("");
+    const ctx = useGame();
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (open && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [open]);
+
+    const handleCheatInput = (e: React.FormEvent) => {
+        e.preventDefault();
+        const [cmd, arg] = cheatInput.trim().toLowerCase().split(" ");
+        const cheat = CHEAT_CODES.find(c => c.code === cmd);
+        if (cheat) {
+            cheat.action(ctx, arg);
+        } else {
+            ctx.setMessage("Cheat ezezaguna.");
+        }
+        setCheatInput("");
+        onClose();
+    };
+
+    if (!open) return null;
+
+    return (
+        <div
+            style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 99999,
+                background: "rgba(0,0,0,0.65)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+            }}
+            onClick={onClose}
+        >
+            <form
+                className="cheat-console-modal"
+                onSubmit={handleCheatInput}
+                style={{
+                    minWidth: 340,
+                    background: "#232526",
+                    borderRadius: 16,
+                    boxShadow: "0 4px 32px #000a",
+                    padding: "32px 32px 24px 32px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    position: "relative"
+                }}
+                onClick={e => e.stopPropagation()}
+            >
+                <button
+                    type="button"
+                    onClick={onClose}
+                    style={{
+                        position: "absolute",
+                        top: 12,
+                        right: 12,
+                        background: "none",
+                        border: "none",
+                        color: "#ffe066",
+                        fontSize: 28,
+                        fontWeight: 900,
+                        cursor: "pointer",
+                        lineHeight: 1,
+                        padding: 0,
+                        width: 36,
+                        height: 36,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                    }}
+                    aria-label="Cerrar"
+                    tabIndex={0}
+                >
+                    ×
+                </button>
+                <span style={{ color: "#ffe066", fontWeight: 700, fontSize: 22, marginBottom: 16 }}>
+                    CHEAT CONSOLE
+                </span>
+                <input
+                    ref={inputRef}
+                    type="text"
+                    value={cheatInput}
+                    onChange={e => setCheatInput(e.target.value)}
+                    placeholder="Escribe un cheat code..."
+                    style={{
+                        background: "#111",
+                        color: "#ffe066",
+                        border: "none",
+                        borderRadius: 6,
+                        padding: "10px 16px",
+                        fontFamily: "monospace",
+                        fontSize: 18,
+                        width: 220,
+                        marginBottom: 18,
+                        outline: "none",
+                        textAlign: "center"
+                    }}
+                />
+                <button
+                    type="submit"
+                    style={{
+                        background: "#ffe066",
+                        color: "#222",
+                        border: "none",
+                        borderRadius: 6,
+                        padding: "8px 28px",
+                        fontWeight: 700,
+                        fontSize: 18,
+                        cursor: "pointer",
+                        marginBottom: 8
+                    }}
+                >
+                    OK
+                </button>
+                <span style={{ color: "#aaa", fontSize: 13, marginTop: 8 }}>
+                    (Pulsa ESC o haz click fuera para cerrar)
+                </span>
+            </form>
+        </div>
+    );
+};
+
+export default CheatConsoleModal;

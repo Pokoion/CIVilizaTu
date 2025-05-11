@@ -18,8 +18,8 @@ type GameContextType = {
   turn: number;
   endTurn: () => void;
   currentPlayer: string;
-  message: string | null;
-  setMessage: (msg: string | null) => void;
+  message: string;
+  setMessage: (msg: string ) => void;
   unlockedTechs: string[];
   setUnlockedTechs: React.Dispatch<React.SetStateAction<string[]>>;
   civilization: string;
@@ -68,6 +68,11 @@ type GameContextType = {
   setDeployingUnit: React.Dispatch<
     React.SetStateAction<{ unit: TrainingUnit; city: CityProps } | null>
   >;
+  checkVictoryOrDefeat: () => void;
+  gameStatus: "playing" | "victory" | "defeat" | null;
+  setGameStatus: React.Dispatch<React.SetStateAction<"playing" | "victory" | "defeat" | null>>;
+  victoryType: "science" | "culture" | "conquest" | null;
+  setVictoryType: React.Dispatch<React.SetStateAction<"science" | "culture" | "conquest" | null>>;
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -162,6 +167,7 @@ function buildGameSave({
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
   const [mapState, setMapState] = useState<MapState>({
     size: { width: 0, height: 0 },
     tiles: [],
@@ -172,7 +178,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<CityProps | null>(null);
   const [turn, setTurn] = useState(1);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string>("");
   const [unlockedTechs, setUnlockedTechs] = useState<string[]>([]);
   const [camera, setCamera] = useState<{ offset: { x: number; y: number } }>({
     offset: { x: 0, y: 0 },
@@ -199,6 +205,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     position: { x: number; y: number };
   } | null>(null);
   const [deployingUnit, setDeployingUnit] = useState<null | { unit: TrainingUnit, city: CityProps }>(null);
+  const [gameStatus, setGameStatus] = useState<"playing" | "victory" | "defeat" | null>("playing");
+  const [victoryType, setVictoryType] = useState<null | "science" | "culture" | "conquest">(null);
 
   // Nueva función para actualizar una ciudad por id
   const updateCity = (cityId: string, changes: Partial<CityProps>) => {
@@ -207,6 +215,42 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         city.id === cityId ? { ...city, ...changes } : city
       )
     );
+  };
+
+  useEffect(() => {
+    if (isLoaded) {
+      checkVictoryOrDefeat();
+    }
+  }, [isLoaded, unlockedTechs, resources.culture, cities, units]);
+
+  const checkVictoryOrDefeat = () => {
+    if (unlockedTechs.includes("espaziontzia")) {
+      setGameStatus("victory");
+      setVictoryType("science");
+      return;
+    }
+    if (resources.culture >= 10000) {
+      setGameStatus("victory");
+      setVictoryType("culture");
+      return;
+    }
+    const enemyCities = cities.filter(c => c.owner !== "player");
+    const enemyUnits = units.filter(u => u.owner !== "player");
+    const playerCities = cities.filter(c => c.owner === "player");
+    const playerUnits = units.filter(u => u.owner === "player");
+    if (
+      (playerCities.length > 0 || playerUnits.length > 0) &&
+      enemyCities.length === 0 && enemyUnits.length === 0
+    ) {
+      setGameStatus("victory");
+      setVictoryType("conquest");
+      return;
+    }
+    if (playerCities.length === 0 && playerUnits.length === 0) {
+      setGameStatus("defeat");
+      setVictoryType(null);
+      return;
+    }
   };
 
   // Cargar datos desde la API al inicializar el contexto
@@ -244,6 +288,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         setCivilization(civilization);
         setResources(resources);
         setVisibleObjects(visibleObjects);
+        setIsLoaded(true);
       } catch (error) {
         console.error("Error al cargar el estado del juego:", error);
       }
@@ -342,6 +387,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         natural_resources: newNaturalResources,
       });
 
+      checkVictoryOrDefeat();
+
       return updatedCities;
     });
 
@@ -400,6 +447,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         gameManager,
         deployingUnit,
         setDeployingUnit,
+        checkVictoryOrDefeat,
+        gameStatus,
+        setGameStatus,
+        victoryType,
+        setVictoryType,
       }}
     >
       {children}

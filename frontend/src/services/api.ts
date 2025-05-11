@@ -73,7 +73,7 @@ export const loadMap = async (): Promise<{
         leader_name: "Iker",
         resources: {
           food: 35,
-          culture: 28,
+          culture: 9999,
           science: 100000,
           gold: 420,
           natural_resources: 200
@@ -216,7 +216,7 @@ export const loadMap = async (): Promise<{
             visible: true
           }
         ],
-        technologies: ["nabigazioa", "merkataritza"],
+        technologies: [],
       },
       ai: {
         civilization: "Romans",

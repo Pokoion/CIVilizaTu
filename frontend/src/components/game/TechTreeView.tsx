@@ -124,6 +124,7 @@ const TechDetailView: React.FC<{
     setResources,
     setPlayerEra,
     setUnits,
+    checkVictoryOrDefeat
   } = useGame();
   const parentTechs = tech.parents
     .map((pid: string) => TECHS.find((t) => t.id === pid))
@@ -211,6 +212,7 @@ const TechDetailView: React.FC<{
 
         return newUnlocked;
       });
+
     }
   };
 

@@ -6,10 +6,12 @@ import TechTreeView from './TechTreeView';
 import MiniMap from './MiniMap';
 import BattleView from './BattleView';
 import FoundCityView from './FoundCityView';
+import CheatConsoleModal from './CheatConsoleModal';
 import { UnitProps, TerrainType, CityProps } from '../../types';
 import '../../styles/GameUI.css';
 import { BUILDINGS, CITY_ERAS_BY_ID, TECHS } from '../../utils/Constants';
 import { useGame } from '../../context/GameContext';
+import { useNavigate } from "react-router-dom";
 
 const GameUI: React.FC = () => {
     const [selectedUnit, setSelectedUnit] = useState<UnitProps | null>(null);
@@ -23,13 +25,15 @@ const GameUI: React.FC = () => {
     const [showFoundCityView, setShowFoundCityView] = useState(false);
     const [kolonoToFoundCity, setKolonoToFoundCity] = useState<UnitProps | null>(null);
     const [battleMode, setBattleMode] = useState<'full' | 'single'>('full');
+    const [cheatOpen, setCheatOpen] = useState(false);
+    const navigate = useNavigate();
 
     // Usa el contexto global para selectedVisibleObject
     const {
         message, setMessage,
         turn, endTurn, currentPlayer,
         selectedCity, cities, setCities, units, setUnits, resources, playerEra, civilization, unlockedTechs,
-        selectedVisibleObject, setSelectedVisibleObject
+        selectedVisibleObject, setSelectedVisibleObject, checkVictoryOrDefeat, gameStatus, victoryType
     } = useGame();
 
     const handleAttackEnemy = (attacker: UnitProps, defender: UnitProps, mode: 'full' | 'single') => {
@@ -43,6 +47,27 @@ const GameUI: React.FC = () => {
         setShowFoundCityView(true);
         setKolonoToFoundCity(kolono);
     };
+
+    React.useEffect(() => {
+        if (message) {
+            const timeout = setTimeout(() => setMessage(""), 2500);
+            return () => clearTimeout(timeout);
+        }
+    }, [message, setMessage]);
+
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "F1") {
+                e.preventDefault();
+                setCheatOpen(open => !open);
+            }
+            if (e.key === "Escape") {
+                setCheatOpen(false);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, []);
 
     const handleCloseBattle = () => {
         // Refresca selectedUnit y selectedEnemyUnit desde el array actualizado
@@ -117,6 +142,7 @@ const GameUI: React.FC = () => {
 
     const handleUnitDeath = (unitId: string) => {
         setUnits(prev => prev.filter(u => u.id !== unitId));
+        checkVictoryOrDefeat();
     };
 
     const handleUnitHealthChange = (unitId: string, newHealth: number) => {
@@ -127,8 +153,8 @@ const GameUI: React.FC = () => {
 
     return (
         <>
-            {message && (
-                <div className="game-message" onClick={() => setMessage(null)}>
+            {typeof message === "string" && message.length > 0 && (
+                <div className="game-message" onClick={() => setMessage("")}>
                     {message}
                 </div>
             )}
@@ -239,6 +265,60 @@ const GameUI: React.FC = () => {
                     onCancel={cancelFoundCity}
                 />
             )}
+
+            {/* MODAL DE VICTORIA/DERROTA */}
+            {gameStatus === "victory" && victoryType === "science" && (
+                <div className="victory-modal">
+                    <div className="victory-content science-victory animate-pop">
+                        <h1>🚀 VICTORIA CIENTÍFICA</h1>
+                        <p className="victory-desc">
+                            ¡Has lanzado el <b>Espaziontzia</b> y tu civilización viaja a las estrellas!<br />
+                            <span style={{ fontSize: "2.5em" }}>🌌🛰️✨</span>
+                        </p>
+                        <div className="science-rocket"></div>
+                        <button onClick={() => window.location.reload()}>Volver al menú</button>
+                    </div>
+                </div>
+            )}
+            {gameStatus === "victory" && victoryType === "culture" && (
+                <div className="victory-modal">
+                    <div className="victory-content culture-victory animate-pop">
+                        <h1>🎨 VICTORIA CULTURAL</h1>
+                        <p className="victory-desc">
+                            ¡Tu civilización ha alcanzado <b>10000 kultura</b> y es admirada en todo el mundo!<br />
+                            <span style={{ fontSize: "2.5em" }}>🎭📚🎶</span>
+                        </p>
+                        <div className="culture-fireworks"></div>
+                        <button onClick={() => navigate("/main-menu")}>Volver al menú</button>
+                    </div>
+                </div>
+            )}
+            {gameStatus === "victory" && victoryType === "conquest" && (
+                <div className="victory-modal">
+                    <div className="victory-content conquest-victory animate-pop">
+                        <h1>⚔️ VICTORIA MILITAR</h1>
+                        <p className="victory-desc">
+                            ¡Has derrotado a todos tus enemigos!<br />
+                            <span style={{ fontSize: "2.5em" }}>🏰🔥🏹</span>
+                        </p>
+                        <div className="conquest-swords"></div>
+                        <button onClick={() => navigate("/main-menu")}>Volver al menú</button>
+                    </div>
+                </div>
+            )}
+            {gameStatus === "defeat" && (
+                <div className="victory-modal">
+                    <div className="defeat-content animate-pop">
+                        <h1>💀 DERROTA</h1>
+                        <p className="victory-desc">
+                            Tu civilización ha caído.<br />
+                            <span style={{ fontSize: "2.5em" }}>☠️</span>
+                        </p>
+                        <button onClick={() => navigate("/main-menu")}>Volver al menú</button>
+                    </div>
+                </div>
+            )}
+            <CheatConsoleModal open={cheatOpen} onClose={() => setCheatOpen(false)} />
         </>
     );
 };

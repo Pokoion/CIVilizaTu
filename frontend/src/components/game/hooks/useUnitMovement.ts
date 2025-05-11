@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { TILE_TYPES } from '../../../utils/Constants';
 import Pathfinding2 from '../../../utils/Pathfinding2';
 import GameManager from '../../../managers/GameManager';
@@ -42,8 +42,15 @@ export function useUnitMovement(
   setSelectedUnitId: (id: string | null) => void,
   setVisibleTiles?: (tiles: boolean[][]) => void
 ) {
+  // Añade un ref para bloquear el movimiento mientras se anima
+  const isMovingRef = useRef(false);
+
   return useCallback(
     async (row: number, col: number, selectedUnitId: string | null) => {
+      if (isMovingRef.current) {
+        return "Unitatea mugimenduan dago!";
+      }
+
       if (!mapState.fog_of_war[row]?.[col]) {
         return "Ezin zara lurralde ezkutatura mugitu";
       }
@@ -79,7 +86,8 @@ export function useUnitMovement(
         );
 
         if (path) {
-          // Inicializa el fog acumulado con el actual
+          isMovingRef.current = true; // Bloquea nuevos movimientos
+
           let fogAcumulado = mapState.fog_of_war.map(row => [...row]);
           let currentUnit = { ...unit };
           let movementLeft = currentUnit.movement_points_left;
@@ -90,18 +98,22 @@ export function useUnitMovement(
             const tile = TILE_TYPES[terrain];
 
             if (unit.type === 'itsasontzia' && !tile.requiresBoat) {
+              isMovingRef.current = false;
               return "Itsasontzia ezin da lurrean mugitu";
             }
             if (tile.requiresBoat && unit.type !== 'itsasontzia') {
+              isMovingRef.current = false;
               return "Ezin zara lurralde honetara mugitu, beharrezkoa da itsasontzi bat";
             }
 
             const moveCost = tile.movementCost;
             if (moveCost === Infinity) {
+              isMovingRef.current = false;
               return "Ezin zara lurralde iritsezin batera mugitu";
             }
 
             if (movementLeft < moveCost) {
+              isMovingRef.current = false;
               return "Unitateak ez ditu beharrezko mugimendu puntuak";
             }
 
@@ -127,7 +139,6 @@ export function useUnitMovement(
                   : u
               );
 
-              // Calcula la visibilidad con las unidades actualizadas del contexto
               const mapRows = mapState.tiles.length;
               const mapCols = mapState.tiles[0].length;
               const nuevosVisibles = getVisibleTiles(
@@ -137,7 +148,6 @@ export function useUnitMovement(
                 1
               );
 
-              // Acumula el fog en todo el recorrido
               fogAcumulado = fogAcumulado.map((row, y) =>
                 row.map((cell, x) => cell || nuevosVisibles[y][x])
               );
@@ -145,7 +155,6 @@ export function useUnitMovement(
               return updatedUnits;
             });
 
-            // ACTUALIZA EL MAPA EN CADA PASO PARA DESCUBRIMIENTO INSTANTÁNEO
             setMapState({
               ...mapState,
               fog_of_war: fogAcumulado,
@@ -161,6 +170,7 @@ export function useUnitMovement(
             await new Promise(res => setTimeout(res, 750));
           }
 
+          isMovingRef.current = false; // Libera el bloqueo al terminar
           return true;
         }
 
