@@ -86,7 +86,7 @@
   width: 64px;
   height: 64px;
   object-fit: contain;
-  margin-bottom: 0px; /* Más cerca de la info */
+  margin-bottom: 0px;
 }
 
 .barracks-unit-card > strong,

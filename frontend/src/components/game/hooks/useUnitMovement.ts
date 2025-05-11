@@ -137,20 +137,27 @@ export function useUnitMovement(
               { x: step.col, y: step.row }
             );
 
+            // Actualizar puntos de movimiento
             movementLeft -= moveCost;
-            currentUnit.position = { x: step.col, y: step.row };
-            currentUnit.movement_points_left = movementLeft;
-
-            gameManager.getMapManager().moveUnit(selectedUnitId, currentUnit.position);
-            const updatedUnit = gameManager.getMapManager().getUnits().find(u => u.id === selectedUnitId);
-            if (updatedUnit) {
-              updatedUnit.movement_points_left = currentUnit.movement_points_left;
-            }
+            
+            // Actualiza la posición en el GameManager para propósitos de pathfinding
+            gameManager.getMapManager().moveUnit(selectedUnitId, { x: step.col, y: step.row });
+            
+            // SOLUCIÓN: Actualiza SOLO el estado de React para los puntos de movimiento
             setUnits((prevUnits: Unit[]) =>
               prevUnits.map(u =>
-                u.id === selectedUnitId ? { ...u, ...currentUnit, direction } : u
+                u.id === selectedUnitId 
+                  ? { 
+                      ...u, 
+                      position: { x: step.col, y: step.row },
+                      movement_points_left: movementLeft,
+                      direction
+                    } 
+                  : u
               )
             );
+            
+            // Actualiza el mapa si es necesario
             setMapState({ ...gameManager.getMapManager().getMap() });
 
             if (setVisibleTiles) {

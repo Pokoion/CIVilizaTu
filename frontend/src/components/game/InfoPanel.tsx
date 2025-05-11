@@ -18,7 +18,7 @@ export interface InfoPanelProps {
 }
 
 const InfoPanel: React.FC<InfoPanelProps> = ({
-  selectedUnit,
+  selectedUnit: selectedUnitProp,
   selectedTile,
   selectedCity,
   selectedEnemyUnit,
@@ -28,7 +28,23 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   selectedVisibleObject,
   setSelectedVisibleObject,
 }) => {
-  const { setResources, setVisibleObjects, setUnits, units, setCities } = useGame();
+  // Obtener gameManager del contexto de juego
+  const { 
+    setResources, 
+    setVisibleObjects, 
+    setUnits, 
+    units, 
+    setCities, 
+    unlockedTechs,
+    gameManager,
+    setSelectedUnitId, 
+    selectedUnitId // Asegúrate de obtener esto del contexto
+  } = useGame();
+  
+  // IMPORTANTE: Usar la unidad del estado global en lugar de las props
+  // Esto asegura que siempre tengamos la información más actualizada
+  const selectedUnit = selectedUnitId ? units.find(u => u.id === selectedUnitId) || selectedUnitProp : selectedUnitProp;
+  
   const [showCityBattle, setShowCityBattle] = useState(false);
 
   // PRIORIDAD: Mostrar información del objeto visible seleccionado
@@ -42,9 +58,11 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       const dy = Math.abs(unit.position.y - obj.position.y);
       return (dx <= 1 && dy <= 1) && !(dx === 0 && dy === 0);
     };
+    const hasNekazaritza = unlockedTechs?.includes('nekazaritza') || false;
+
     const puedeRecolectar =
       selectedUnit &&
-      selectedUnit.type === 'langile' &&
+      selectedUnit.type === 'langile' && hasNekazaritza &&
       isAdjacent(selectedUnit, selectedVisibleObject);
 
     return (
@@ -72,22 +90,42 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                 });
                 return updated;
               });
+              
               // Quita el recurso del mapa
               setVisibleObjects(prev => prev.filter(
                 obj => !(obj.type === selectedVisibleObject.type &&
                   obj.position.x === selectedVisibleObject.position.x &&
                   obj.position.y === selectedVisibleObject.position.y)
               ));
+              
               // Pone los movimientos de la unidad seleccionada a 0
               if (selectedUnit) {
+                const unitId = selectedUnit.id;
+                
+                // 1. Actualizar en el estado de React
                 setUnits(prev =>
                   prev.map(u =>
-                    u.id === selectedUnit.id
+                    u.id === unitId
                       ? { ...u, movement_points_left: 0 }
                       : u
                   )
                 );
+                
+                // 2. Actualizar en el GameManager
+                const unitInGameManager = gameManager.getMapManager().getUnits().find(u => u.id === unitId);
+                if (unitInGameManager) {
+                  unitInGameManager.movement_points_left = 0;
+                }
+                
+                // 3. Deseleccionar la unidad para forzar una actualización completa
+                setSelectedUnitId(null);
+                
+                // Opcional: Re-seleccionar después de un breve tiempo
+                setTimeout(() => {
+                  setSelectedUnitId(unitId);
+                }, 50);
               }
+              
               setSelectedVisibleObject && setSelectedVisibleObject(null);
             }}
           >

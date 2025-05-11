@@ -69,12 +69,12 @@ export const loadMap = async (): Promise<{
       cheats_used: ["mapa_agertu", "maila_igo"],
       player: {
         civilization: "euskaldunak",
-        era: "Erdi Aroa",
+        era: "Aro Modernoa",
         leader_name: "Iker",
         resources: {
           food: 35,
           culture: 28,
-          science: 15,
+          science: 100000,
           gold: 420,
           natural_resources: 200
         },
@@ -152,7 +152,7 @@ export const loadMap = async (): Promise<{
             visible: true
           }
         ],
-        technologies: ["nekazaritza", "idazketa", "burdina"]
+        technologies: []
       },
       ai: {
         civilization: "Romans",
