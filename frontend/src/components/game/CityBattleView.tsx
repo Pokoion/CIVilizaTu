@@ -3,9 +3,9 @@ import { UnitProps, CityProps } from '../../types';
 import '../../styles/CityBattleView.css';
 
 interface CityBattleViewProps {
-  attacker: UnitProps;
-  city: CityProps;
-  onClose: (finalDefense: number, finalHealth: number) => void;
+    attacker: UnitProps;
+    city: CityProps;
+    onClose: (finalDefense: number, finalHealth: number) => void;
 }
 
 type Phase = 'idle' | 'projectile' | 'cityHit' | 'end';
@@ -17,12 +17,30 @@ const getCityImg = (era: string) => {
     return '/images/city/city_antzinaroa.png';
 };
 
+const isRanged = (unit: UnitProps) => (unit.range ?? 1) > 1;
+
+const getProjectileImage = (unit: UnitProps) => {
+    if (unit.type === 'tanke') return '/images/projectiles/bala.png';
+    if (unit.type === 'itsasontzia') return '/images/projectiles/canonball.png';
+    if (isRanged(unit)) return '/images/projectiles/flecha.png';
+    return '/images/projectiles/harria.png';
+};
+
+const getProjectileSize = (unit: UnitProps) => {
+    if (unit.type === 'tanke') return { width: 24, height: 24 };
+    if (unit.type === 'itsasontzi') return { width: 32, height: 32 };
+    if (isRanged(unit)) return { width: 40, height: 10 };
+    return { width: 40, height: 40 };
+};
+
 const CityBattleView: React.FC<CityBattleViewProps> = ({ attacker, city, onClose }) => {
     const [cityDefense, setCityDefense] = useState(city.defense ?? 20);
     const [cityHealth, setCityHealth] = useState(city.health ?? 100);
     const [phase, setPhase] = useState<Phase>('idle');
     const [showProjectile, setShowProjectile] = useState(false);
 
+    // Al principio del componente
+    console.log('CityBattleView MONTADO', { attacker, city });
     // Animación de fases
     useEffect(() => {
         let timeout: NodeJS.Timeout;
@@ -84,7 +102,15 @@ const CityBattleView: React.FC<CityBattleViewProps> = ({ attacker, city, onClose
 
                     {/* Proyectil animado */}
                     {showProjectile && (
-                        <span className="city-battle-projectile" role="img" aria-label="rock">🔥</span>
+                        <img
+                            className="city-battle-projectile"
+                            src={getProjectileImage(attacker)}
+                            alt="proyectil"
+                            style={{
+                                width: getProjectileSize(attacker).width,
+                                height: getProjectileSize(attacker).height
+                            }}
+                        />
                     )}
 
                     {/* Ciudad */}

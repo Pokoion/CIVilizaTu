@@ -157,7 +157,7 @@
       "health": 125,
       "strength": 15,
       "movement_points": 4,
-      "range": 1,
+      "range": 3,
       "civilization": "mongolak",
       "cost": {
         "food": 30,
@@ -214,6 +214,19 @@
       "cost": {
         "natural_resources": 50,
         "gold": 60
+      }
+    },
+    {
+      "id": "itsasontzia",
+      "type": "Itsasontzia",
+      "health": 200,
+      "strength": 50,
+      "movement_points": 3,
+      "range": 3,
+      "civilization": null,
+      "cost": {
+        "natural_resources": 30,
+        "gold": 50
       }
     }
   ],
@@ -292,7 +305,7 @@
     {
       "id": "harresia",
       "name": "Harresia",
-      "bonus": "Hiriaren defentsan laguntzen du",
+      "bonus": "Hiriaren defentsa + 50",
       "requirement": null,
       "cost": {
         "gold": 6,
@@ -326,30 +339,36 @@
     {
       "id": "idazketa",
       "name": "Idazketa",
-      "bonus": "Eskolak desblokeatu eta biztanle bakoitzeko kultura puntuak +1",
+      "bonus": "Eskolak desblokeatu",
       "cost": 8,
       "era": "Antzinaroa",
-      "dependencies": ["nekazaritza"],
+      "dependencies": [
+        "nekazaritza"
+      ],
       "x": 300,
       "y": 100
     },
     {
       "id": "penizilina",
       "name": "Penizilina",
-      "bonus": "Osasuna +20Unitate guztien bizitza +30",
+      "bonus": "Unitate guztien bizitza +30",
       "cost": 15,
       "era": "Aro Modernoa",
-      "dependencies": ["idazketa"],
+      "dependencies": [
+        "idazketa"
+      ],
       "x": 500,
       "y": 50
     },
     {
       "id": "ekonomia",
       "name": "Ekonomia",
-      "bonus": "Txanda bakoitzeko hirietatik lortzen en gold kopurua +1",
+      "bonus": "Txanda bakoitzeko hirietatik lortzen en urre kopurua +5",
       "cost": 14,
       "era": "Erdi Aroa",
-      "dependencies": ["idazketa"],
+      "dependencies": [
+        "idazketa"
+      ],
       "x": 500,
       "y": 170
     },
@@ -359,17 +378,21 @@
       "bonus": "Merkatuak desblokeatu",
       "cost": 12,
       "era": "Aro Modernoa",
-      "dependencies": ["ekonomia"],
+      "dependencies": [
+        "ekonomia"
+      ],
       "x": 700,
       "y": 130
     },
     {
       "id": "burdina",
       "name": "Burdina",
-      "bonus": "Unitate militar hobeak, +1 eraso zibilizazioaren unitate bakoitzeko eta kuartelak desblokeatu",
+      "bonus": "+5 eraso zibilizazioaren unitate bakoitzeko eta kuartelak desblokeatu",
       "cost": 8,
       "era": "Antzinaroa",
-      "dependencies": ["nekazaritza"],
+      "dependencies": [
+        "nekazaritza"
+      ],
       "x": 300,
       "y": 300
     },
@@ -379,27 +402,33 @@
       "bonus": "Mapatik natural_resources eskuratzea desblokeatzen du",
       "cost": 4,
       "era": "Antzinaroa",
-      "dependencies": ["burdina"],
+      "dependencies": [
+        "burdina"
+      ],
       "x": 500,
       "y": 300
     },
     {
       "id": "ingeniaritza",
       "name": "Ingeniaritza",
-      "bonus": "Unibertsitateak desblokeatzen ditu eta biztanle bakoitzeko kultura puntuak +2",
+      "bonus": "Unibertsitateak desblokeatzen ditu",
       "cost": 12,
       "era": "Erdi Aroa",
-      "dependencies": ["meatzaritza"],
+      "dependencies": [
+        "meatzaritza"
+      ],
       "x": 700,
       "y": 250
     },
     {
       "id": "artilleria",
       "name": "Artilleria",
-      "bonus": "Unitate militar hobeak (+1 eraso zibilizazioaren unitate bakoitzeko) eta tankeak desblokeatu",
+      "bonus": "Unitate militar hobeak (+10 eraso zibilizazioaren unitate bakoitzeko) eta tankeak desblokeatu",
       "cost": 16,
       "era": "Aro Modernoa",
-      "dependencies": ["ingeniaritza"],
+      "dependencies": [
+        "ingeniaritza"
+      ],
       "x": 900,
       "y": 250
     },
@@ -419,7 +448,9 @@
       "bonus": "Produkzio guztien txanda kopurua murriztu",
       "cost": 14,
       "era": "Erdi Aroa",
-      "dependencies": ["meatzaritza"],
+      "dependencies": [
+        "meatzaritza"
+      ],
       "x": 700,
       "y": 370
     },
@@ -439,7 +470,9 @@
       "bonus": "Produkzio guztien txanda kopurua murriztu",
       "cost": 14,
       "era": "Aro Modernoa",
-      "dependencies": ["buztingintza"],
+      "dependencies": [
+        "buztingintza"
+      ],
       "x": 300,
       "y": 420
     },
@@ -456,7 +489,7 @@
     {
       "id": "gurpila",
       "name": "Gurpila",
-      "bonus": "Unitate guztien mugimendu kostua -1",
+      "bonus": "Unitate guztien mugimenduak +3",
       "cost": 10,
       "era": "Antzinaroa",
       "dependencies": [],
@@ -466,7 +499,7 @@
     {
       "id": "nabigazioa",
       "name": "Nabigazioa",
-      "bonus": "Ura zeharkatzea ahalbidetzen duen ontzia desblokeatzen du",
+      "bonus": "Ura zeharkatzea ahalbidetzen duen itsasontzia desblokeatzen du",
       "cost": 6,
       "era": "Erdi Aroa",
       "dependencies": [],

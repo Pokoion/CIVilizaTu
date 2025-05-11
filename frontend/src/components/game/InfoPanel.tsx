@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UnitProps, TerrainType, CityProps } from '../../types';
 import { TILE_TYPES, VISIBLE_OBJECTS_BY_ID } from '../../utils/Constants';
 import { useGame } from '../../context/GameContext';
@@ -11,7 +11,7 @@ export interface InfoPanelProps {
   selectedTile?: { row: number; col: number; type: TerrainType; isDiscovered?: boolean } | null;
   selectedCity?: CityProps | null;
   onEnterCity?: (city: any) => void;
-  onAttackEnemy?: (attacker: any, defender: any) => void;
+  onAttackEnemy?: (attacker: any, defender: any, mode: 'full' | 'single') => void;
   onFoundCity?: (kolono: any) => void;
   selectedVisibleObject?: { type: string; position: { x: number; y: number } } | null;
   setSelectedVisibleObject?: (obj: { type: string; position: { x: number; y: number } } | null) => void;
@@ -28,31 +28,38 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   selectedVisibleObject,
   setSelectedVisibleObject,
 }) => {
-  // Obtener gameManager del contexto de juego
-  const { 
-    setResources, 
-    setVisibleObjects, 
-    setUnits, 
-    units, 
-    setCities, 
+  const {
+    setResources,
+    setVisibleObjects,
+    setUnits,
+    units,
+    setCities,
     unlockedTechs,
     gameManager,
-    setSelectedUnitId, 
-    selectedUnitId // Asegúrate de obtener esto del contexto
+    setSelectedUnitId,
+    selectedUnitId
   } = useGame();
-  
-  // IMPORTANTE: Usar la unidad del estado global en lugar de las props
-  // Esto asegura que siempre tengamos la información más actualizada
+
+  // Usar la unidad del estado global en lugar de las props
   const selectedUnit = selectedUnitId ? units.find(u => u.id === selectedUnitId) || selectedUnitProp : selectedUnitProp;
-  
+
+  // Usar useRef para mantener el estado aunque cambie la referencia de selectedUnit
+  const showCityBattleRef = useRef(false);
   const [showCityBattle, setShowCityBattle] = useState(false);
 
-  // PRIORIDAD: Mostrar información del objeto visible seleccionado
+  // Mantener showCityBattle aunque cambie la referencia de selectedUnit/selectedCity
+  useEffect(() => {
+    if (!selectedUnit || !selectedCity) {
+      setShowCityBattle(false);
+      showCityBattleRef.current = false;
+    }
+  }, [selectedUnit, selectedCity]);
+
+  // Mostrar información de objeto visible seleccionado
   if (selectedVisibleObject) {
     const objInfo = VISIBLE_OBJECTS_BY_ID[selectedVisibleObject.type];
     if (!objInfo) return null;
 
-    // Solo mostrar botón si hay unidad seleccionada y está adyacente y es langile
     const isAdjacent = (unit: UnitProps, obj: { position: { x: number; y: number } }) => {
       const dx = Math.abs(unit.position.x - obj.position.x);
       const dy = Math.abs(unit.position.y - obj.position.y);
@@ -82,7 +89,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
           <button
             style={{ marginTop: 12 }}
             onClick={() => {
-              // Suma bonus
               setResources(prev => {
                 const updated = { ...prev };
                 (Object.entries(objInfo.bonus || {}) as [keyof typeof updated, number][]).forEach(([k, v]) => {
@@ -90,19 +96,15 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                 });
                 return updated;
               });
-              
-              // Quita el recurso del mapa
+
               setVisibleObjects(prev => prev.filter(
                 obj => !(obj.type === selectedVisibleObject.type &&
                   obj.position.x === selectedVisibleObject.position.x &&
                   obj.position.y === selectedVisibleObject.position.y)
               ));
-              
-              // Pone los movimientos de la unidad seleccionada a 0
+
               if (selectedUnit) {
                 const unitId = selectedUnit.id;
-                
-                // 1. Actualizar en el estado de React
                 setUnits(prev =>
                   prev.map(u =>
                     u.id === unitId
@@ -110,22 +112,16 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                       : u
                   )
                 );
-                
-                // 2. Actualizar en el GameManager
                 const unitInGameManager = gameManager.getMapManager().getUnits().find(u => u.id === unitId);
                 if (unitInGameManager) {
                   unitInGameManager.movement_points_left = 0;
                 }
-                
-                // 3. Deseleccionar la unidad para forzar una actualización completa
                 setSelectedUnitId(null);
-                
-                // Opcional: Re-seleccionar después de un breve tiempo
                 setTimeout(() => {
                   setSelectedUnitId(unitId);
                 }, 50);
               }
-              
+
               setSelectedVisibleObject && setSelectedVisibleObject(null);
             }}
           >
@@ -136,17 +132,63 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     );
   }
 
-  // Priorizar el caso de ataque enemigo
+  // Prioridad: ataque a unidad enemiga
   if (selectedUnit && selectedEnemyUnit) {
+    const dx = Math.abs(selectedUnit.position.x - selectedEnemyUnit.position.x);
+    const dy = Math.abs(selectedUnit.position.y - selectedEnemyUnit.position.y);
+    const distance = Math.max(dx, dy); // Chebyshev distance
+
+    const attackerRange = selectedUnit.range ?? 1;
+    const defenderRange = selectedEnemyUnit.range ?? 1;
+
+    const inAttackerRange = distance <= attackerRange;
+    const inDefenderRange = distance <= defenderRange;
+
+    const puedeAtacarUnidad =
+      inAttackerRange &&
+      !selectedUnit.hasAttackedThisTurn &&
+      selectedUnit.movement_points_left > 0;
+
     return (
       <div>
         <h3>Atakar enemigo</h3>
         <p>Atacante: {selectedUnit.type} - {selectedUnit.id}</p>
         <p>Enemigo: {selectedEnemyUnit.type} - {selectedEnemyUnit.id}</p>
         <div style={{ textAlign: 'right' }}>
-          <button onClick={() => onAttackEnemy && onAttackEnemy(selectedUnit, selectedEnemyUnit)}>
-            Atakar enemigo
-          </button>
+          {puedeAtacarUnidad ? (
+            <button
+              onClick={() => {
+                if (onAttackEnemy) {
+                  // Marcar la unidad como que ha atacado y sin movimientos
+                  setUnits &&
+                    setUnits(prev =>
+                      prev.map(u =>
+                        u.id === selectedUnit.id
+                          ? {
+                            ...u,
+                            hasAttackedThisTurn: true,
+                            movement_points_left: 0,
+                          }
+                          : u
+                      )
+                    );
+                  onAttackEnemy(
+                    selectedUnit,
+                    selectedEnemyUnit,
+                    inDefenderRange ? 'full' : 'single'
+                  );
+                }
+              }}
+            >
+              Atakar enemigo
+            </button>
+          ) : (
+            <span>
+              {selectedUnit.hasAttackedThisTurn || selectedUnit.movement_points_left === 0
+                ? 'Ezin du gehiago eraso egin edo mugitu'
+                : 'Ez dago eraso distantzian'}
+            </span>
+          )}
         </div>
       </div>
     );
@@ -156,29 +198,49 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   if (selectedCity) {
     const isEnemyCity = selectedCity.owner === 'ai';
 
-    // Detectar si hay una unidad militar adyacente a la ciudad enemiga
-    const isAdjacent = (unit: UnitProps, city: CityProps) => {
+    const isInRange = (unit: UnitProps, city: CityProps) => {
       const dx = Math.abs(unit.position.x - city.position.x);
       const dy = Math.abs(unit.position.y - city.position.y);
-      return (dx <= 1 && dy <= 1) && !(dx === 0 && dy === 0);
+      const distance = Math.max(dx, dy); // Chebyshev distance
+      return distance <= (unit.range ?? 1);
     };
 
-    // Solo puede atacar si no ha atacado ya este turno
     const puedeAtacarCiudad =
       selectedUnit &&
       selectedUnit.owner === 'player' &&
       isEnemyCity &&
-      isAdjacent(selectedUnit, selectedCity) &&
-      !selectedUnit?.hasAttackedCityThisTurn;
+      isInRange(selectedUnit, selectedCity) &&
+      !selectedUnit?.hasAttackedCityThisTurn &&
+      selectedUnit.movement_points_left > 0;
 
-    // Lógica de ataque: primero defensa, luego vida y elimina ciudad si health <= 0
     const handleAtacarCiudad = () => {
+      console.log('Botón Hiria erasotu pulsado', {
+        selectedUnit,
+        selectedCity
+      });
+      // Marcar la unidad como que ha atacado a ciudad y sin movimientos
+      setUnits &&
+        setUnits(prev =>
+          prev.map(u =>
+            u.id === selectedUnit?.id
+              ? {
+                ...u,
+                hasAttackedCityThisTurn: true,
+                hasAttackedThisTurn: true,
+                movement_points_left: 0,
+              }
+              : u
+          )
+        );
       setShowCityBattle(true);
+      showCityBattleRef.current = true;
+      console.log('setShowCityBattle(true) ejecutado');
     };
 
-    // Nuevo onCityBattleEnd que recibe la defensa y vida final de la ciudad
     const onCityBattleEnd = (finalDefense: number, finalHealth: number) => {
+      console.log('CityBattleView cerrado', { finalDefense, finalHealth });
       setShowCityBattle(false);
+      showCityBattleRef.current = false;
 
       setCities &&
         setCities(prev =>
@@ -189,21 +251,22 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                 : city
             )
             .filter(city =>
-              // Si la ciudad atacada tiene vida 0, la eliminamos
               !(city.id === selectedCity.id && finalHealth <= 0)
             )
         );
-
-      // Marca la unidad como que ya ha atacado a ciudad este turno
-      setUnits &&
-        setUnits(prev =>
-          prev.map(u =>
-            u.id === selectedUnit?.id
-              ? { ...u, hasAttackedCityThisTurn: true }
-              : u
-          )
-        );
     };
+
+    // FORZAR el render de CityBattleView si showCityBattleRef o showCityBattle es true
+    if ((showCityBattleRef.current || showCityBattle) && selectedUnit && selectedCity) {
+      console.log('FORZANDO CityBattleView', { selectedUnit, selectedCity, showCityBattle, ref: showCityBattleRef.current });
+      return (
+        <CityBattleView
+          attacker={selectedUnit}
+          city={selectedCity}
+          onClose={onCityBattleEnd}
+        />
+      );
+    }
 
     return (
       <div>
@@ -218,13 +281,8 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
               <button onClick={handleAtacarCiudad}>
                 Hiria erasotu
               </button>
-              {showCityBattle && (
-                <CityBattleView
-                  attacker={selectedUnit}
-                  city={selectedCity}
-                  onClose={onCityBattleEnd}
-                />
-              )}
+              {console.log('¿Renderizar CityBattleView?', { showCityBattle, selectedUnit, selectedCity })}
+              {/* El render forzado está arriba */}
             </>
           ) : (
             !isEnemyCity && (
@@ -245,6 +303,9 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         <h3>Unitatea</h3>
         <p>Nombre: {selectedUnit.type} - {selectedUnit.id}</p>
         <p>Movimiento: {selectedUnit.movement_points_left}/{selectedUnit.movement_points}</p>
+        <p>Osasuna: {selectedUnit.health}</p>
+        <p>Indarra: {selectedUnit.strength}</p>
+        <p>Rangoa: {selectedUnit.range ?? 1}</p>
         {selectedUnit.type === 'kolono' && (
           <div style={{ textAlign: 'right' }}>
             <button onClick={() => onFoundCity && onFoundCity(selectedUnit)}>
@@ -275,7 +336,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     );
   }
 
-  // Mensaje por defecto
   return <div>Egin ezazu klik unitate edo lurralde batean informazioa ikusteko.</div>;
 };
 

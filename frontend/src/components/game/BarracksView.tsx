@@ -28,7 +28,7 @@ const BarracksView: React.FC<BarracksViewProps> = ({
   unlockedTechs,
   cityId,
 }) => {
-  const { resources, setResources, cities, setCities } = useGame();
+  const { resources, setResources, cities, setCities, setSelectedCity, setDeployingUnit } = useGame();
 
   // Hooks siempre al principio
   const [selectedUnitIndex, setSelectedUnitIndex] = useState(0);
@@ -42,6 +42,7 @@ const BarracksView: React.FC<BarracksViewProps> = ({
       // Unidades exclusivas por tecnología
       if (unit.id === "arkeroa" && !unlockedTechs.includes("arku_tiroa")) return false;
       if (unit.id === "tankea" && !unlockedTechs.includes("artilleria")) return false;
+      if (unit.id === "itsasontzia" && !unlockedTechs.includes("nabigazioa")) return false;
       // Unidades normales
       return unit.civilization === null || unit.civilization === civilization;
     }
@@ -70,6 +71,11 @@ const BarracksView: React.FC<BarracksViewProps> = ({
       gold: prev.gold - (unit.cost?.gold || 0),
     }));
 
+    // Bonus de arkitektura
+    const hasArkitektura = unlockedTechs.includes("arkitektura");
+    const baseTrainTurns = unit.trainTurns ?? DEFAULT_TRAIN_TURNS;
+    const trainTurns = Math.max(1, baseTrainTurns - (hasArkitektura ? 1 : 0));
+
     // Añadir a la cola de entrenamiento de la ciudad correspondiente en el contexto
     setCities(prev =>
       prev.map(c =>
@@ -82,7 +88,7 @@ const BarracksView: React.FC<BarracksViewProps> = ({
                 id: `${unit.id}-${Date.now()}`,
                 type: unit.id,
                 name: unit.name,
-                turnsLeft: DEFAULT_TRAIN_TURNS,
+                turnsLeft: trainTurns,
               },
             ],
           }
@@ -107,6 +113,15 @@ const BarracksView: React.FC<BarracksViewProps> = ({
 
   // Eliminar de la cola y marcar como lista para desplegar (simulado)
   const handleDeployUnit = (unitId: string) => {
+    const city = cities.find(c => c.id === cityId);
+    if (!city) return;
+    const trainingUnit = city.training.find((item: TrainingUnit) => item.id === unitId);
+    if (!trainingUnit) return;
+
+    // Marca la unidad para desplegar
+    setDeployingUnit({ unit: trainingUnit, city });
+
+    // Elimina de la cola de entrenamiento
     setCities(prev =>
       prev.map(city =>
         city.id === cityId
@@ -117,7 +132,10 @@ const BarracksView: React.FC<BarracksViewProps> = ({
           : city
       )
     );
-    alert(`Selecciona una posición en el mapa para desplegar la unidad`);
+
+    // Cierra BarracksView y CityView
+    onClose();
+    setSelectedCity(null); // Esto cierra CityView también
   };
 
   // Mostrar varias unidades a la vez (ventana deslizante)
@@ -128,6 +146,11 @@ const BarracksView: React.FC<BarracksViewProps> = ({
       visibleUnits.push(availableUnits[idx]);
     }
   }
+
+  const hasPenizilina = unlockedTechs.includes("penizilina");
+  const hasBurdina = unlockedTechs.includes("burdina");
+  const hasArtilleria = unlockedTechs.includes("artilleria");
+  const hasArkitektura = unlockedTechs.includes("arkitektura");
 
   return (
     <div className="barracks-view-overlay">
@@ -145,54 +168,67 @@ const BarracksView: React.FC<BarracksViewProps> = ({
           >
             ◀
           </button>
-          {visibleUnits.map((unit) => (
-            <div key={unit.id} className="barracks-unit-card">
-              <img src={`/images/units/${unit.type}/${unit.type}-default.png`} alt={unit.type} className="barracks-unit-img" />
-              <div className="barracks-unit-stats" style={{ fontSize: '0.97em', color: '#444', margin: '8px 0 4px 0' }}>
-                <div>⚔️ <strong>{unit.type}</strong></div>
-                <div>❤️ <strong>{unit.health}</strong></div>
-                <div>🛡️ <strong>{unit.strength}</strong></div>
-                <div>🏃 <strong>{unit.movementPoints}</strong></div>
-                <div>🎯 <strong>{unit.range}</strong></div>
+          {visibleUnits.map((unit) => {
+            const health = (unit.health ?? 100) + (hasPenizilina ? 30 : 0);
+            const strength = (unit.strength ?? 0) + (hasBurdina ? 5 : 0) + (hasArtilleria ? 10 : 0);
+            const hasGurpila = unlockedTechs.includes("gurpila");
+            const movementPoints = (unit.movementPoints ?? 1) + (hasGurpila ? 3 : 0);
+            const hasArkitektura = unlockedTechs.includes("arkitektura");
+            const hasIndustria = unlockedTechs.includes("industria");
+            const baseTrainTurns = "trainTurns" in unit && typeof unit.trainTurns === "number"
+              ? unit.trainTurns
+              : DEFAULT_TRAIN_TURNS;
+            const trainTurns = Math.max(1, baseTrainTurns - (hasArkitektura ? 1 : 0) - (hasIndustria ? 1 : 0));
+
+            return (
+              <div key={unit.id} className="barracks-unit-card">
+                <img src={`/images/units/${unit.type}/${unit.type}-default.png`} alt={unit.type} className="barracks-unit-img" />
+                <div className="barracks-unit-stats" style={{ fontSize: '0.97em', color: '#444', margin: '8px 0 4px 0' }}>
+                  <div>⚔️ <strong>{unit.type}</strong></div>
+                  <div>❤️ <strong>{health}</strong></div>
+                  <div>🗡️ <strong>{strength}</strong></div>
+                  <div>🏃 <strong>{movementPoints}</strong></div>
+                  <div>🎯 <strong>{unit.range}</strong></div>
+                </div>
+                <div className="barracks-unit-cost" style={{ fontSize: '0.95em', color: '#666', margin: '4px 0 2px 0' }}>
+                  <strong>
+                    {unit.cost && (
+                      <>
+                        {unit.cost.food !== undefined && (
+                          <>
+                            <img
+                              src={`/images/resources/${RESOURCE_IMAGE_MAP.food}`}
+                              alt="Janaria"
+                              style={{ width: 20, height: 20, verticalAlign: 'middle', marginRight: 2 }}
+                            />{" "}
+                            {unit.cost.food}{" "}
+                          </>
+                        )}
+                        {unit.cost.gold !== undefined && (
+                          <>
+                            <img
+                              src={`/images/resources/${RESOURCE_IMAGE_MAP.gold}`}
+                              alt="Urrea"
+                              style={{ width: 20, height: 20, verticalAlign: 'middle', marginRight: 2 }}
+                            />{" "}
+                            {unit.cost.gold}
+                          </>
+                        )}
+                      </>
+                    )}
+                  </strong>
+                </div>
+                <div className="barracks-unit-turns">Entrenatzeko txandak: {trainTurns}</div>
+                <button
+                  className="train-unit-btn"
+                  disabled={trainingQueue.length >= barracksCount}
+                  onClick={() => handleTrainUnit(unit)}
+                >
+                  Entrenatu
+                </button>
               </div>
-              <div className="barracks-unit-cost" style={{ fontSize: '0.95em', color: '#666', margin: '4px 0 2px 0' }}>
-                <strong>
-                  {unit.cost && (
-                    <>
-                      {unit.cost.food !== undefined && (
-                        <>
-                          <img
-                            src={`/images/resources/${RESOURCE_IMAGE_MAP.food}`}
-                            alt="Janaria"
-                            style={{ width: 20, height: 20, verticalAlign: 'middle', marginRight: 2 }}
-                          />{" "}
-                          {unit.cost.food}{" "}
-                        </>
-                      )}
-                      {unit.cost.gold !== undefined && (
-                        <>
-                          <img
-                            src={`/images/resources/${RESOURCE_IMAGE_MAP.gold}`}
-                            alt="Urrea"
-                            style={{ width: 20, height: 20, verticalAlign: 'middle', marginRight: 2 }}
-                          />{" "}
-                          {unit.cost.gold}
-                        </>
-                      )}
-                    </>
-                  )}
-                </strong>
-              </div>
-              <div className="barracks-unit-turns">Entrenatzeko txandak: {DEFAULT_TRAIN_TURNS}</div>
-              <button
-                className="train-unit-btn"
-                disabled={trainingQueue.length >= barracksCount}
-                onClick={() => handleTrainUnit(unit)}
-              >
-                Entrenatu
-              </button>
-            </div>
-          ))}
+            );
+          })}
           <button
             className="nav-btn-circle"
             onClick={handleNextUnit}

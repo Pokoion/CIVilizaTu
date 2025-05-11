@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { MapState, UnitProps, CityProps } from "../types";
+import { MapState, UnitProps, CityProps, TrainingUnit } from "../types";
 import TurnManager from "../managers/TurnManager";
 import GameManager from "../managers/GameManager";
 import { loadMap } from "../services/api";
@@ -63,7 +63,11 @@ type GameContextType = {
       position: { x: number; y: number };
     } | null>
   >;
-  gameManager: GameManager; 
+  gameManager: GameManager;
+  deployingUnit: { unit: TrainingUnit; city: CityProps } | null;
+  setDeployingUnit: React.Dispatch<
+    React.SetStateAction<{ unit: TrainingUnit; city: CityProps } | null>
+  >;
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -194,6 +198,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     type: string;
     position: { x: number; y: number };
   } | null>(null);
+  const [deployingUnit, setDeployingUnit] = useState<null | { unit: TrainingUnit, city: CityProps }>(null);
 
   // Nueva función para actualizar una ciudad por id
   const updateCity = (cityId: string, changes: Partial<CityProps>) => {
@@ -229,8 +234,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
             training: Array.isArray(city.training)
               ? city.training
               : city.training
-              ? [city.training]
-              : [],
+                ? [city.training]
+                : [],
           }))
         );
         setUnlockedTechs(unlockedTechs);
@@ -255,37 +260,86 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       prev.map((u) => ({
         ...u,
         hasAttackedCityThisTurn: false,
-        movement_points_left: u.movement_points, // Restaurar puntos de movimiento
+        hasAttackedThisTurn: false,
+        movement_points_left: u.movement_points,
       }))
     );
 
-    // Actualiza ciudades y recursos en un solo paso para evitar estados desfasados
+    // --- LÓGICA DE PRODUCCIÓN Y CONSUMO EN UN SOLO PASO ---
     setCities((prevCities) => {
-      // Primero, actualiza los turnsLeft de training
-      const updatedCities = prevCities.map((city) => ({
-        ...city,
-        training: Array.isArray(city.training)
-          ? city.training.map((unit) => ({
-              ...unit,
-              turnsLeft: unit.turnsLeft > 0 ? unit.turnsLeft - 1 : 0,
-            }))
-          : [],
-      }));
+      const playerCities = prevCities.filter(city => city.owner === 'player');
+      const hasEkonomia = unlockedTechs.includes("ekonomia");
 
-      // Suma la producción de todas las ciudades actualizadas
-      setResources((prevResources) => {
-        const totalProduction = updatedCities.reduce(
-          (acc, city) => {
-            acc.food += city.production.food || 0;
-            acc.gold += city.production.gold || 0;
-            acc.culture += city.production.culture || 0;
-            acc.science += city.production.science || 0;
-            acc.natural_resources += city.production.natural_resources || 0;
-            return acc;
-          },
-          { ...prevResources }
+      const totalProduction = playerCities.reduce(
+        (acc, city) => {
+          // Bonus de cultura por escuelas
+          const schoolCount = city.buildings.filter(b => b === 'eskola').length;
+          const schoolCultureBonus = schoolCount * city.population;
+
+          // Bonus de cultura por unibertsitateak: +2 por habitante por cada una
+          const uniCount = city.buildings.filter(b => b === 'unibertsitatea').length;
+          const uniCultureBonus = uniCount * city.population * 2;
+
+          // Bonus de oro por merkatua: +2 gold por cada mercado construido
+          const marketCount = city.buildings.filter(b => b === 'merkatua').length;
+          const marketGoldBonus = marketCount * 2;
+
+          // Bonus de oro por ekonomia: +5 oro por ciudad si tienes la tecnología
+          const ekonomiaGoldBonus = hasEkonomia ? 5 : 0;
+
+          // Bonus de defensa por harresia: +50 por cada una
+          const wallCount = city.buildings.filter(b => b === 'harresia').length;
+          city.defense = (city.defense ?? 20) + wallCount * 50;
+
+          acc.food += city.production.food || 0;
+          acc.gold += (city.production.gold || 0) + marketGoldBonus + ekonomiaGoldBonus;
+          acc.culture += (city.production.culture || 0) + schoolCultureBonus + uniCultureBonus;
+          acc.science += city.production.science || 0;
+          acc.natural_resources += city.production.natural_resources || 0;
+          return acc;
+        },
+        { food: 0, gold: 0, culture: 0, science: 0, natural_resources: 0 }
+      );
+
+      const totalFoodNeeded = playerCities.reduce((sum, city) => sum + city.population, 0);
+      console.log('[PRODUCCIÓN] +food:', totalProduction.food, '+gold:', totalProduction.gold, '+culture:', totalProduction.culture, '+science:', totalProduction.science, '+natural_resources:', totalProduction.natural_resources);
+
+      // 2. Calcular consumo
+      let newFood = resources.food + totalProduction.food;
+      let newGold = resources.gold + totalProduction.gold;
+      let newCulture = resources.culture + totalProduction.culture;
+      let newScience = resources.science + totalProduction.science;
+      let newNaturalResources = resources.natural_resources + totalProduction.natural_resources;
+
+      console.log('[CONSUMO] -food:', totalFoodNeeded, 'food antes:', newFood);
+
+      let updatedCities;
+      if (newFood >= totalFoodNeeded) {
+        updatedCities = prevCities.map(city =>
+          city.allowPopulationGrowth
+            ? { ...city, population: city.population + 1 }
+            : city
         );
-        return totalProduction;
+        newFood -= totalFoodNeeded;
+        console.log('[RESULTADO] Crecen ciudades. Food después:', newFood);
+      } else {
+        // Quita 1 habitante a cada ciudad (mínimo 1)
+        updatedCities = prevCities.map(city =>
+          city.owner === 'player'
+            ? { ...city, population: Math.max(1, city.population - 1) }
+            : city
+        );
+        newFood = 0;
+        console.log('[RESULTADO] No hay comida suficiente. Food después: 0');
+      }
+
+      // 3. Actualizar recursos solo una vez
+      setResources({
+        food: newFood,
+        gold: newGold,
+        culture: newCulture,
+        science: newScience,
+        natural_resources: newNaturalResources,
       });
 
       return updatedCities;
@@ -344,6 +398,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         selectedVisibleObject,
         setSelectedVisibleObject,
         gameManager,
+        deployingUnit,
+        setDeployingUnit,
       }}
     >
       {children}

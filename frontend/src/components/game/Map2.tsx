@@ -10,6 +10,8 @@ import { useUnitMovement } from './hooks/useUnitMovement';
 import { useGameInit } from './hooks/useGameInit';
 import { useCameraDrag } from './hooks/useCameraDrag';
 import { useGame } from '../../context/GameContext';
+import { UNITS, TILE_TYPES } from '../../utils/Constants';
+import { getVisibleTiles } from './hooks/useUnitMovement';
 
 const gameManager = new GameManager();
 
@@ -29,14 +31,13 @@ const Map2: React.FC<Map2Props> = ({
   const {
     mapState, setMapState, units, setUnits, cities, setCities,
     setSelectedCity, selectedUnitId, setSelectedUnitId, setMessage, setCamera,
-    setInitialCameraOffset, visibleObjects, setVisibleObjects,
+    setInitialCameraOffset, visibleObjects, setVisibleObjects, deployingUnit, setDeployingUnit, unlockedTechs
   } = useGame();
 
   const gridRef = useRef<HTMLDivElement>(null);
 
   // Camera offset state
   const [cameraOffset, setCameraOffset] = useState(() => {
-    console.log('Estado inicial cámara:', { x: 0, y: 0 });
     return { x: 0, y: 0 };
   });
 
@@ -46,15 +47,11 @@ const Map2: React.FC<Map2Props> = ({
   }, [cameraOffset, setCamera]);
 
   useEffect(() => {
-    console.log('Cámara actualizada:', cameraOffset);
-  }, [cameraOffset]);
-
-  useEffect(() => {
-  if (selectedUnitId) {
-    const updatedUnit = units.find(u => u.id === selectedUnitId) || null;
-    setSelectedUnit(updatedUnit);
-  }
-}, [units, selectedUnitId, setSelectedUnit]);
+    if (selectedUnitId) {
+      const updatedUnit = units.find(u => u.id === selectedUnitId) || null;
+      setSelectedUnit(updatedUnit);
+    }
+  }, [units, selectedUnitId, setSelectedUnit]);
 
   // Camera drag handlers
   useCameraDrag(setCameraOffset);
@@ -73,7 +70,125 @@ const Map2: React.FC<Map2Props> = ({
     setSelectedUnitId
   );
 
+  // --- NUEVO: Tiles válidos para desplegar unidad ---
+  let deployableTiles: { x: number; y: number }[] = [];
+  if (deployingUnit) {
+    const { city } = deployingUnit;
+    const isBoat = deployingUnit.unit.type === "itsasontzia";
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        if (dx === 0 && dy === 0) continue;
+        const x = city.position.x + dx;
+        const y = city.position.y + dy;
+        if (
+          x >= 0 && x < mapState.size.width &&
+          y >= 0 && y < mapState.size.height
+        ) {
+          const isDiscovered = !!mapState.fog_of_war[y]?.[x];
+          const isEmpty =
+            !units.some(u => u.position.x === x && u.position.y === y) &&
+            !cities.some(c => c.position.x === x && c.position.y === y);
+
+          const tileType = mapState.tiles[y][x];
+          const requiresBoat = TILE_TYPES[tileType]?.requiresBoat;
+
+          if (
+            isEmpty &&
+            isDiscovered &&
+            (
+              (isBoat && requiresBoat) ||
+              (!isBoat && !requiresBoat)
+            )
+          ) {
+            deployableTiles.push({ x, y });
+          }
+        }
+      }
+    }
+  }
+
+  // --- NUEVO: Permitir ataque según rango ---
+  const canAttack = (attacker: UnitProps, target: UnitProps) => {
+    const dx = Math.abs(attacker.position.x - target.position.x);
+    const dy = Math.abs(attacker.position.y - target.position.y);
+    const distance = dx + dy;
+    return distance <= (attacker.range ?? 1);
+  };
+
   const handleTileClick = async (rowIndex: number, colIndex: number, selectedUnitId: string | null) => {
+    // --- NUEVO: Despliegue de unidad ---
+    if (deployingUnit) {
+      const isDeployable = deployableTiles.some(t => t.x === colIndex && t.y === rowIndex);
+      if (isDeployable) {
+        const unitDef = UNITS.find(u => u.id === deployingUnit.unit.type);
+        if (!unitDef) {
+          setMessage('Errorea: unitate mota ez da aurkitu.');
+          setTimeout(() => setMessage(null), 2000);
+          return;
+        }
+        setUnits(prev => {
+          const penizilinaBonus = unlockedTechs.includes("penizilina") ? 30 : 0;
+
+          const hasBurdina = unlockedTechs.includes("burdina");
+          const hasArtilleria = unlockedTechs.includes("artilleria");
+          const baseStrength = unitDef.strength ?? 0;
+          const strength = baseStrength + (hasBurdina ? 5 : 0) + (hasArtilleria ? 10 : 0);
+
+          const hasGurpila = unlockedTechs.includes("gurpila");
+          const baseMovement = unitDef.movementPoints ?? 1;
+          const movement_points = baseMovement + (hasGurpila ? 3 : 0);
+
+          const newUnits: UnitProps[] = [
+            ...prev,
+            {
+              id: `unit_${Date.now()}`,
+              type: deployingUnit.unit.type,
+              position: { x: colIndex, y: rowIndex },
+              owner: "player",
+              movement_points: movement_points,
+              movement_points_left: movement_points,
+              health: unitDef.health + penizilinaBonus,
+              range: unitDef.range,
+              strength: strength,
+              direction: "default",
+            }
+          ];
+          const mapRows = mapState.tiles.length;
+          const mapCols = mapState.tiles[0].length;
+          const nuevosVisibles = getVisibleTiles(
+            newUnits.filter(u => u.owner === "player"),
+            mapRows,
+            mapCols,
+            1
+          );
+          const fogAcumulado = mapState.fog_of_war.map((row, y) =>
+            row.map((cell, x) => cell || nuevosVisibles[y][x])
+          );
+
+          setMapState(prevMap => ({
+            ...prevMap,
+            fog_of_war: fogAcumulado,
+          }));
+          return newUnits;
+        });
+        setCities(prev =>
+          prev.map(c =>
+            c.id === deployingUnit.city.id
+              ? { ...c, training: c.training.filter(u => u.id !== deployingUnit.unit.id) }
+              : c
+          )
+        );
+        setDeployingUnit(null);
+        setMessage('Unitatea mapan kokatu da!');
+        setTimeout(() => setMessage(null), 2000);
+        return;
+      } else {
+        setMessage('Tile ez da egokia unitatea kokatzeko.');
+        setTimeout(() => setMessage(null), 2000);
+        return;
+      }
+    }
+
     // Si hay unidad seleccionada, intenta mover
     if (selectedUnitId) {
       const result = await moveUnit(rowIndex, colIndex, selectedUnitId);
@@ -81,17 +196,14 @@ const Map2: React.FC<Map2Props> = ({
         setMessage(result);
         setTimeout(() => setMessage(null), 2000);
       } else {
-        // Mantén la unidad seleccionada tras mover si quieres
-        // O vuelve a seleccionarla por su id si su posición ha cambiado
         const movedUnit = units.find(u => u.id === selectedUnitId);
         if (movedUnit) setSelectedUnit(movedUnit);
       }
-      setSelectedTile(null); // No muestres info del tile al mover
+      setSelectedTile(null);
       setSelectedCity(null);
       setSelectedEnemyUnit(null);
       setSelectedVisibleObject(null);
     } else {
-      // Si no hay unidad seleccionada, muestra info del tile
       setSelectedTile({
         row: rowIndex,
         col: colIndex,
@@ -107,13 +219,22 @@ const Map2: React.FC<Map2Props> = ({
 
   const handleUnitClick = (unitId: string) => {
     const unit = units.find(u => u.id === unitId) || null;
+    // Si tienes una unidad seleccionada y haces click en una enemiga
     if (selectedUnitId && unit && unit.owner === 'ai') {
-      setSelectedEnemyUnit(unit);
-      setSelectedTile(null);
-      setSelectedCity(null);
-      setSelectedVisibleObject(null);
-      return;
+      const selectedUnit = units.find(u => u.id === selectedUnitId);
+      if (selectedUnit && canAttack(selectedUnit, unit)) {
+        setSelectedEnemyUnit(unit);
+        setSelectedTile(null);
+        setSelectedCity(null);
+        setSelectedVisibleObject(null);
+        return;
+      } else {
+        setMessage('Unitatea ez dago zure eremuan (rango barne)!');
+        setTimeout(() => setMessage(null), 2000);
+        return;
+      }
     }
+    // Si haces click en una unidad tuya
     if (unit && unit.owner === 'player') {
       setSelectedUnit(unit);
       setSelectedEnemyUnit(null);
@@ -132,7 +253,6 @@ const Map2: React.FC<Map2Props> = ({
   };
 
   const handleVisibleObjectClick = (obj: { type: string; position: { x: number; y: number } }) => {
-    console.log('Seleccionando visibleObject:', obj);
     setSelectedVisibleObject(obj);
     setSelectedTile(null);
     setSelectedCity(null);
@@ -169,6 +289,10 @@ const Map2: React.FC<Map2Props> = ({
               fogStatus = 'visible';
             }
 
+            const isDeployableTile = deployingUnit
+              ? deployableTiles.some(t => t.x === colIndex && t.y === rowIndex)
+              : false;
+
             return (
               <Tile2
                 key={`${rowIndex}-${colIndex}`}
@@ -178,6 +302,7 @@ const Map2: React.FC<Map2Props> = ({
                 isDiscovered={isDiscovered}
                 fogStatus={fogStatus}
                 onClick={() => handleTileClick(rowIndex, colIndex, selectedUnitId)}
+                className={isDeployableTile ? 'deployable-tile' : ''}
               >
                 {isDiscovered && visibleObjects &&
                   visibleObjects
@@ -215,12 +340,13 @@ const Map2: React.FC<Map2Props> = ({
                     movement_points={unit.movement_points}
                     movement_points_left={unit.movement_points_left}
                     health={unit.health}
+                    range={unit.range}
                     strength={unit.strength}
                     owner={unit.owner}
                     selected={selectedUnitId === unit.id}
                     onClick={() => handleUnitClick(unit.id)}
                     disabled={unit.owner !== 'player'}
-                    direction={unit.direction || 'default'} // <-- AÑADE ESTA LÍNEA
+                    direction={unit.direction || 'default'}
                   />
                 )}
               </Tile2>

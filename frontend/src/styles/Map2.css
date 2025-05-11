@@ -32,3 +32,9 @@ html, body {
   position: relative;
   overflow: visible;
 }
+
+.deployable-tile {
+  outline: 4px solid #335ada !important;
+  box-shadow: 0 0 16px 4px #4caf50aa;
+  z-index: 2;
+}

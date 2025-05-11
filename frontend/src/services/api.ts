@@ -82,7 +82,7 @@ export const loadMap = async (): Promise<{
           {
             id: "city1",
             name: "Bilbo",
-            position: { x: 13, y: 18 },
+            position: { x: 12, y: 13 },
             population: 5,
             buildings: ["aletegia", "unibertsitatea", "kuartela"],
             production: {
@@ -100,12 +100,17 @@ export const loadMap = async (): Promise<{
               {
                 id: "city1-training",
                 type: "kolono",
-                turnsLeft: 3
+                turnsLeft: 0
               },
               {
                 id: "city1-training2",
                 type: "militar",
-                turnsLeft: 5
+                turnsLeft: 0
+              },
+              {
+                id: "itsasontzi2",
+                type: "itsasontzia",
+                turnsLeft: 0
               }
             ]
           }
@@ -114,11 +119,12 @@ export const loadMap = async (): Promise<{
           {
             id: "langile1",
             type: "langile",
-            position: { x: 12, y: 18 },
+            position: { x: 12, y: 12 },
             movement_points: 2,
             movement_points_left: 1,
             strength: 30,
             health: 100,
+            range: 1,
             visible: true
           },
           {
@@ -129,6 +135,7 @@ export const loadMap = async (): Promise<{
             movement_points_left: 1000,
             strength: 30,
             health: 100,
+            range: 1,
             visible: true
           },
           {
@@ -139,6 +146,7 @@ export const loadMap = async (): Promise<{
             movement_points_left: 1000,
             strength: 30,
             health: 100,
+            range: 1,
             visible: true
           },
           {
@@ -149,10 +157,66 @@ export const loadMap = async (): Promise<{
             movement_points_left: 1000,
             strength: 30,
             health: 100,
+            range: 1,
+            visible: true
+          },
+          {
+            id: "arkeroa1",
+            type: "arkeroa",
+            position: { x: 15, y: 20 },
+            movement_points: 1000,
+            movement_points_left: 1000,
+            strength: 30,
+            health: 100,
+            range: 4,
+            visible: true
+          },
+          {
+            id: "tankea1",
+            type: "tankea",
+            position: { x: 15, y: 21 },
+            movement_points: 1000,
+            movement_points_left: 1000,
+            strength: 30,
+            health: 100,
+            range: 4,
+            visible: true
+          },
+          {
+            id: "arkari_zalduna1",
+            type: "arkari_zalduna",
+            position: { x: 15, y: 22 },
+            movement_points: 1000,
+            movement_points_left: 1000,
+            strength: 30,
+            health: 100,
+            range: 4,
+            visible: true
+          },
+          {
+            id: "atlatl_erabiltzailea1",
+            type: "atlatl_erabiltzailea",
+            position: { x: 15, y: 23 },
+            movement_points: 1000,
+            movement_points_left: 1000,
+            strength: 30,
+            health: 100,
+            range: 3,
+            visible: true
+          },
+          {
+            id: "piromanoa1",
+            type: "piromanoa",
+            position: { x: 15, y: 24 },
+            movement_points: 1000,
+            movement_points_left: 1000,
+            strength: 30,
+            health: 100,
+            range: 1,
             visible: true
           }
         ],
-        technologies: []
+        technologies: ["nabigazioa", "merkataritza"],
       },
       ai: {
         civilization: "Romans",
@@ -187,12 +251,12 @@ export const loadMap = async (): Promise<{
               {
                 id: "city1-training",
                 type: "kolono",
-                turnsLeft: 3
+                turnsLeft: 0
               },
               {
                 id: "city1-training2",
                 type: "militar",
-                turnsLeft: 5
+                turnsLeft: 0
               }
             ]
           }
@@ -206,6 +270,18 @@ export const loadMap = async (): Promise<{
             movement_points_left: 2,
             strength: 5,
             health: 100,
+            range: 1,
+            visible: false
+          },
+          {
+            id: "militar9",
+            type: "militar",
+            position: { x: 11, y: 13 },
+            movement_points: 2,
+            movement_points_left: 2,
+            strength: 5,
+            health: 100,
+            range: 1,
             visible: false
           }
         ],
@@ -276,6 +352,7 @@ export const loadMap = async (): Promise<{
       movement_points_left: u.movement_points_left,
       strength: u.strength,
       health: u.health,
+      range: u.range,
       visible: u.visible,
       owner: 'player' as 'player', // <-- type assertion
     })),
@@ -287,6 +364,7 @@ export const loadMap = async (): Promise<{
       movement_points_left: u.movement_points_left,
       strength: u.strength,
       health: u.health,
+      range: u.range,
       visible: u.visible,
       owner: 'ai' as 'ai', // <-- type assertion
     })),

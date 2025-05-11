@@ -2,7 +2,12 @@ import React from 'react';
 import { TileProps } from '../../types';
 import { TILE_TYPES } from '../../utils/Constants';
 
-const Tile2: React.FC<TileProps> = ({
+// Cambia la definición para aceptar className extra
+interface Tile2Props extends TileProps {
+  className?: string;
+}
+
+const Tile2: React.FC<Tile2Props> = ({
   row,
   col,
   tileType,
@@ -10,6 +15,7 @@ const Tile2: React.FC<TileProps> = ({
   fogStatus,
   onClick,
   children,
+  className: extraClassName, // <-- aquí
 }) => {
   const tile = TILE_TYPES[tileType];
   let className = `map-tile ${tileType}`;
@@ -17,7 +23,7 @@ const Tile2: React.FC<TileProps> = ({
   let style: React.CSSProperties = { position: 'relative' };
 
   if (fogStatus === 'undiscovered') {
-    style.background = '#222'; // Fondo negro, sin imagen
+    style.background = '#222';
     className += ' fog-undiscovered';
   } else {
     style.backgroundImage = `url(${tile.image})`;
@@ -25,12 +31,16 @@ const Tile2: React.FC<TileProps> = ({
     style.backgroundPosition = 'center';
     className += ' fog-visible';
 
-    // Añadir clase para tiles que requieren barco
     if (tile.requiresBoat) {
       className += ' requires-boat';
     }
 
     showCost = true;
+  }
+
+  // Añade la clase extra si existe
+  if (extraClassName) {
+    className += ` ${extraClassName}`;
   }
 
   return (

@@ -174,7 +174,10 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
     const barracksCount = constructedBuildings.filter(b => b === 'kuartela').length;
     return (
       <BarracksView
-        onClose={() => setActiveBarracks(null)}
+        onClose={() => {
+          setActiveBarracks(null); // Cierra BarracksView
+          onClose();               // Cierra CityView
+        }}
         barracksCount={barracksCount}
         civilization={civilization}
         unlockedTechs={unlockedTechs}
@@ -204,7 +207,11 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
 
   const currentEra = city.era as Era;
   const nextEra = getNextEra(currentEra);
-  const canUpgradeEra = playerEra === nextEra && nextEra !== currentEra;
+
+  const playerEraIndex = ERAS.indexOf(playerEra as Era);
+  const cityEraIndex = ERAS.indexOf(currentEra);
+  // Permite mejorar si el jugador está en una era superior y la ciudad aún no está en la última era
+  const canUpgradeEra = playerEraIndex > cityEraIndex && cityEraIndex < ERAS.length - 1;
   const currentEraInfo = CITY_ERAS_BY_ID[currentEra];
   const upgradeCost = currentEraInfo?.upgrade_cost || { gold: 0, natural_resources: 0 };
 
@@ -213,10 +220,33 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
       <div className="city-view-content">
         <button className="city-view-close-btn" onClick={onClose}>X</button>
         <h2 className="city-title">{city.name}</h2>
-        <p className="city-population">Biztanleria: {city.population}</p>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            marginBottom: 8,
+            justifyContent: 'center'
+          }}
+        >
+          <p className="city-population" style={{ margin: 0 }}>
+            Biztanleria: {city.population}
+          </p>
+          <button
+            className={`city-growth-btn ${city.allowPopulationGrowth ? 'grow-on' : 'grow-off'}`}
+            onClick={() => updateCity(city.id, { allowPopulationGrowth: !city.allowPopulationGrowth })}
+            aria-pressed={city.allowPopulationGrowth}
+          >
+            {city.allowPopulationGrowth
+              ? '✔️ Biztanleria hazkundea AKTIBATUTA'
+              : '⏸️ Biztanleria hazkundea DESAKTIBATUTA'}
+          </button>
+        </div>
         <p className="city-era">Era: <b>{city.era}</b></p>
         <p className="city-defense">
-          🛡️ Defentsa: <b>{city.defense ?? 20}</b>
+          🛡️ Defentsa: <b>
+            {(city.defense ?? 20) + city.buildings.filter(b => b === 'harresia').length * 50}
+          </b>
         </p>
         <p className="city-health">
           ❤️ Osasuna: <b>{city.health ?? 100}</b>
@@ -312,12 +342,27 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
         <div className="city-production">
           <h3>Produkzioa</h3>
           <div className="resource-list">
-            {PRODUCTION_KEYS.map((res) => (
-              <div className="resource-item" key={res}>
-                <img src={`/images/resources/${RESOURCE_IMAGE_MAP[res]}`} alt={res} />
-                <span>{city.production[res]}</span>
-              </div>
-            ))}
+            {PRODUCTION_KEYS.map((res) => {
+              let value = city.production[res];
+              if (res === "culture") {
+                const schoolCount = city.buildings.filter(b => b === 'eskola').length;
+                const uniCount = city.buildings.filter(b => b === 'unibertsitatea').length;
+                value = (city.production.culture || 0)
+                  + (schoolCount * city.population)
+                  + (uniCount * city.population * 2);
+              }
+              if (res === "gold") {
+                const marketCount = city.buildings.filter(b => b === 'merkatua').length;
+                const hasEkonomia = unlockedTechs.includes("ekonomia");
+                value = (city.production.gold || 0) + (marketCount * 2) + (hasEkonomia ? 5 : 0);
+              }
+              return (
+                <div className="resource-item" key={res}>
+                  <img src={`/images/resources/${RESOURCE_IMAGE_MAP[res]}`} alt={res} />
+                  <span>{value}</span>
+                </div>
+              );
+            })}
           </div>
         </div>
 

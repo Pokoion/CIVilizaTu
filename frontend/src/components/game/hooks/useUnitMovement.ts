@@ -23,7 +23,6 @@ export function getVisibleTiles(units: Unit[], mapRows: number, mapCols: number,
   return visible;
 }
 
-// --- NUEVO: función para calcular la dirección ---
 const getDirection = (from: { x: number, y: number }, to: { x: number, y: number }) => {
   if (to.x > from.x) return 'default';
   if (to.x < from.x) return 'atzera';
@@ -37,7 +36,7 @@ export function useUnitMovement(
   mapState: MapState,
   units: Unit[],
   cities: City[],
-  visibleObjects: { type: string; position: { x: number; y: number } }[], // <-- añade esto
+  visibleObjects: { type: string; position: { x: number; y: number } }[],
   setUnits: React.Dispatch<React.SetStateAction<Unit[]>>,
   setMapState: (map: MapState) => void,
   setSelectedUnitId: (id: string | null) => void,
@@ -45,12 +44,10 @@ export function useUnitMovement(
 ) {
   return useCallback(
     async (row: number, col: number, selectedUnitId: string | null) => {
-      // Comprobar si el tile está descubierto
       if (!mapState.fog_of_war[row]?.[col]) {
         return "Ezin zara lurralde ezkutatura mugitu";
       }
 
-      // Comprobar si hay unidad, ciudad o visibleObject en el destino
       const unitOnTile = units.some(u => u.position.x === col && u.position.y === row);
       const cityOnTile = cities.some(c => c.position.x === col && c.position.y === row);
       const visibleObjectOnTile = visibleObjects?.some(obj => obj.position.x === col && obj.position.y === row);
@@ -69,7 +66,7 @@ export function useUnitMovement(
         const destTerrain = mapState.tiles[row][col];
         const destTile = TILE_TYPES[destTerrain];
 
-        if (destTile.requiresBoat && unit.type !== 'boat') {
+        if (destTile.requiresBoat && unit.type !== 'itsasontzia') {
           return "Ezin zara lurralde honetara mugitu, beharrezkoa da itsasontzi bat";
         }
 
@@ -82,32 +79,8 @@ export function useUnitMovement(
         );
 
         if (path) {
-          for (let i = 1; i < path.length; i++) {
-            const step = path[i];
-            // ¿Hay unidad en este paso?
-            if (units.some(u => u.position.x === step.col && u.position.y === step.row)) {
-              return "Ezin zara beste unitate baten gainetik pasa";
-            }
-            // ¿Hay ciudad en este paso?
-            if (cities.some(c => c.position.x === step.col && c.position.y === step.row)) {
-              return "Ezin zara hiri baten gainetik pasa";
-            }
-            // ¿Hay visibleObject en este paso?
-            if (visibleObjects?.some(obj => obj.position.x === step.col && obj.position.y === step.row)) {
-              return "Ezin zara baliabide baten gainetik pasa";
-            }
-          }
-        }
-
-        // Si el path no llega al destino, probablemente es por falta de puntos
-        if (
-          !path ||
-          path.length <= 1 ||
-          path[path.length - 1].row !== row ||
-          path[path.length - 1].col !== col
-        ) {
-          return "Unitateak ez ditu beharrezko mugimendu puntuak";
-        } else {
+          // Inicializa el fog acumulado con el actual
+          let fogAcumulado = mapState.fog_of_war.map(row => [...row]);
           let currentUnit = { ...unit };
           let movementLeft = currentUnit.movement_points_left;
 
@@ -116,8 +89,10 @@ export function useUnitMovement(
             const terrain = mapState.tiles[step.row][step.col];
             const tile = TILE_TYPES[terrain];
 
-            // Comprobar si el tile requiere barco
-            if (tile.requiresBoat && unit.type !== 'boat') {
+            if (unit.type === 'itsasontzia' && !tile.requiresBoat) {
+              return "Itsasontzia ezin da lurrean mugitu";
+            }
+            if (tile.requiresBoat && unit.type !== 'itsasontzia') {
               return "Ezin zara lurralde honetara mugitu, beharrezkoa da itsasontzi bat";
             }
 
@@ -130,35 +105,51 @@ export function useUnitMovement(
               return "Unitateak ez ditu beharrezko mugimendu puntuak";
             }
 
-            // --- NUEVO: calcula dirección respecto al paso anterior ---
             const prevStep = path[i - 1];
             const direction = getDirection(
               { x: prevStep.col, y: prevStep.row },
               { x: step.col, y: step.row }
             );
 
-            // Actualizar puntos de movimiento
             movementLeft -= moveCost;
-            
-            // Actualiza la posición en el GameManager para propósitos de pathfinding
+
             gameManager.getMapManager().moveUnit(selectedUnitId, { x: step.col, y: step.row });
-            
-            // SOLUCIÓN: Actualiza SOLO el estado de React para los puntos de movimiento
-            setUnits((prevUnits: Unit[]) =>
-              prevUnits.map(u =>
-                u.id === selectedUnitId 
-                  ? { 
-                      ...u, 
-                      position: { x: step.col, y: step.row },
-                      movement_points_left: movementLeft,
-                      direction
-                    } 
+
+            setUnits((prevUnits: Unit[]) => {
+              const updatedUnits = prevUnits.map(u =>
+                u.id === selectedUnitId
+                  ? {
+                    ...u,
+                    position: { x: step.col, y: step.row },
+                    movement_points_left: movementLeft,
+                    direction
+                  }
                   : u
-              )
-            );
-            
-            // Actualiza el mapa si es necesario
-            setMapState({ ...gameManager.getMapManager().getMap() });
+              );
+
+              // Calcula la visibilidad con las unidades actualizadas del contexto
+              const mapRows = mapState.tiles.length;
+              const mapCols = mapState.tiles[0].length;
+              const nuevosVisibles = getVisibleTiles(
+                updatedUnits.filter(u => u.owner === 'player'),
+                mapRows,
+                mapCols,
+                1
+              );
+
+              // Acumula el fog en todo el recorrido
+              fogAcumulado = fogAcumulado.map((row, y) =>
+                row.map((cell, x) => cell || nuevosVisibles[y][x])
+              );
+
+              return updatedUnits;
+            });
+
+            // ACTUALIZA EL MAPA EN CADA PASO PARA DESCUBRIMIENTO INSTANTÁNEO
+            setMapState({
+              ...mapState,
+              fog_of_war: fogAcumulado,
+            });
 
             if (setVisibleTiles) {
               const mapRows = mapState.tiles.length;
@@ -172,6 +163,8 @@ export function useUnitMovement(
 
           return true;
         }
+
+        return "Unitateak ez ditu beharrezko mugimendu puntuak";
       }
       return "Mugimendua ez da baliozkoa";
     },

@@ -7,7 +7,7 @@ const TechTreeView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [selectedTech, setSelectedTech] = useState<(typeof TECHS)[0] | null>(
     null
   );
-  const { unlockedTechs, playerEra, resources } = useGame();
+  const { unlockedTechs } = useGame();
 
   // Calcular el tamaño dinámico del canvas
   const CANVAS_WIDTH = Math.max(...TECHS.map((tech) => tech.x)) + 300;
@@ -40,9 +40,8 @@ const TechTreeView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     y2={tech.y + 40}
                     stroke={isUnlocked ? "#3182ce" : "#ccc"}
                     strokeWidth={3}
-                    markerEnd={`url(#${
-                      isUnlocked ? "arrowhead-unlocked" : "arrowhead-locked"
-                    })`}
+                    markerEnd={`url(#${isUnlocked ? "arrowhead-unlocked" : "arrowhead-locked"
+                      })`}
                   />
                 );
               })
@@ -74,9 +73,8 @@ const TechTreeView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           {TECHS.map((tech) => (
             <div
               key={tech.id}
-              className={`tech-node ${
-                unlockedTechs.includes(tech.id) ? "unlocked" : "locked"
-              }`}
+              className={`tech-node ${unlockedTechs.includes(tech.id) ? "unlocked" : "locked"
+                }`}
               style={{
                 left: tech.x,
                 top: tech.y,
@@ -125,6 +123,7 @@ const TechDetailView: React.FC<{
     resources,
     setResources,
     setPlayerEra,
+    setUnits,
   } = useGame();
   const parentTechs = tech.parents
     .map((pid: string) => TECHS.find((t) => t.id === pid))
@@ -135,7 +134,7 @@ const TechDetailView: React.FC<{
 
   // NUEVO: Verificación especial para espaziontzia
   const isSpaceship = tech.id === "espaziontzia";
-  
+
   // NUEVO: Comprobar si todas las demás tecnologías están desbloqueadas
   const otherTechs = TECHS.filter(t => t.id !== "espaziontzia");
   const allOtherTechsUnlocked = otherTechs.every(t => unlockedTechs.includes(t.id));
@@ -161,6 +160,44 @@ const TechDetailView: React.FC<{
         // Si la tecnología es nekazaritza, sumamos 100 de comida
         ...(tech.id === "nekazaritza" ? { food: prev.food + 100 } : {}),
       }));
+
+      // Si la tecnología es penizilina, +30 vida a todas las unidades existentes
+      if (tech.id === "penizilina") {
+        setUnits((prev) =>
+          prev.map((u) => ({
+            ...u,
+            health: (u.health ?? 100) + 30,
+          }))
+        );
+      }
+
+      if (tech.id === "artilleria") {
+        setUnits(prev =>
+          prev.map(u => ({
+            ...u,
+            strength: (u.strength ?? 0) + 10,
+          }))
+        );
+      }
+
+      if (tech.id === "burdina") {
+        setUnits(prev =>
+          prev.map(u => ({
+            ...u,
+            strength: (u.strength ?? 0) + 5,
+          }))
+        );
+      }
+
+      if (tech.id === "gurpila") {
+        setUnits(prev =>
+          prev.map(u => ({
+            ...u,
+            movement_points: (u.movement_points ?? 1) + 3,
+            movement_points_left: (u.movement_points_left ?? u.movement_points ?? 1) + 3,
+          }))
+        );
+      }
 
       setUnlockedTechs((prev) => {
         const newUnlocked = [...prev, tech.id];
@@ -207,28 +244,28 @@ const TechDetailView: React.FC<{
             </ul>
           </div>
         )}
-        
+
         {/* NUEVO: Mostrar requisito especial para Espaziontzia */}
         {isSpaceship && (
           <div className="tech-detail-special-req">
             <b>Baldintza berezia:</b> Teknologia guztiak desblokeatuta behar dira
           </div>
         )}
-        
+
         {/* Mostrar el botón de desbloquear solo si no está desbloqueada, se cumplen las condiciones y es de la era actual o anterior */}
         {!isUnlocked && canUnlock && isEraAllowed && hasEnoughScience && (
           <button className="tech-detail-learn-btn" onClick={handleUnlock}>
             Ikasi Teknologia
           </button>
         )}
-        
+
         {/* NUEVO: Mostrar mensaje específico si es espaziontzia y faltan tecnologías */}
         {!isUnlocked && isSpaceship && !allOtherTechsUnlocked && (
           <div className="tech-detail-era-warning">
             <b>Ezinezkoa:</b> Teknologia guztiak desblokeatu behar dituzu espaziontzia eraiki aurretik.
           </div>
         )}
-        
+
         {/* Mostrar un mensaje si la tecnología es de una era futura */}
         {!isUnlocked && canUnlock && !isEraAllowed && (
           <div className="tech-detail-era-warning">

@@ -22,19 +22,21 @@ const GameUI: React.FC = () => {
     // Estados para FoundCityView
     const [showFoundCityView, setShowFoundCityView] = useState(false);
     const [kolonoToFoundCity, setKolonoToFoundCity] = useState<UnitProps | null>(null);
+    const [battleMode, setBattleMode] = useState<'full' | 'single'>('full');
 
     // Usa el contexto global para selectedVisibleObject
     const {
         message, setMessage,
         turn, endTurn, currentPlayer,
         selectedCity, cities, setCities, units, setUnits, resources, playerEra, civilization, unlockedTechs,
-        selectedVisibleObject, setSelectedVisibleObject // <-- usa el del contexto
+        selectedVisibleObject, setSelectedVisibleObject
     } = useGame();
 
-    const handleAttackEnemy = (attacker: UnitProps, defender: UnitProps) => {
+    const handleAttackEnemy = (attacker: UnitProps, defender: UnitProps, mode: 'full' | 'single') => {
         setShowBattle(true);
         setSelectedUnit(attacker);
         setSelectedEnemyUnit(defender);
+        setBattleMode(mode);
     };
 
     const handleFoundCity = (kolono: UnitProps) => {
@@ -42,19 +44,27 @@ const GameUI: React.FC = () => {
         setKolonoToFoundCity(kolono);
     };
 
+    const handleCloseBattle = () => {
+        // Refresca selectedUnit y selectedEnemyUnit desde el array actualizado
+        if (selectedUnit) {
+            const updated = units.find(u => u.id === selectedUnit.id);
+            setSelectedUnit(updated || null);
+        }
+        if (selectedEnemyUnit) {
+            const updated = units.find(u => u.id === selectedEnemyUnit.id);
+            setSelectedEnemyUnit(updated || null);
+        }
+        setShowBattle(false);
+    };
+
     const confirmFoundCity = (cityName: string) => {
         if (!kolonoToFoundCity) return;
 
         const { position } = kolonoToFoundCity;
-
-        // Siempre usar la era del jugador
         const era = playerEra || "Antzinaroa";
-
-        // Obtener la info de la era desde Constants, con fallback seguro
         const eraInfo = CITY_ERAS_BY_ID[era] || CITY_ERAS_BY_ID["Antzinaroa"];
         let production = { ...eraInfo.base_production };
 
-        // Sumar bonus de edificios construidos en la ciudad más reciente del jugador (si existe)
         const playerCities = cities.filter(city => city.owner === 'player');
         let buildings: string[] = [];
         if (playerCities.length > 0) {
@@ -78,7 +88,6 @@ const GameUI: React.FC = () => {
         production.gold += totalGoldBonus;
         production.culture += totalCultureBonus;
 
-        // Crear una nueva ciudad con la era y la producción adecuada
         const newCity: CityProps = {
             id: `city-${Date.now()}`,
             name: cityName || `Hiria ${playerCities.length + 1}`,
@@ -104,6 +113,16 @@ const GameUI: React.FC = () => {
     const cancelFoundCity = () => {
         setShowFoundCityView(false);
         setKolonoToFoundCity(null);
+    };
+
+    const handleUnitDeath = (unitId: string) => {
+        setUnits(prev => prev.filter(u => u.id !== unitId));
+    };
+
+    const handleUnitHealthChange = (unitId: string, newHealth: number) => {
+        setUnits(prev =>
+            prev.map(u => u.id === unitId ? { ...u, health: newHealth } : u)
+        );
     };
 
     return (
@@ -206,7 +225,10 @@ const GameUI: React.FC = () => {
                 <BattleView
                     attacker={selectedUnit}
                     defender={selectedEnemyUnit}
-                    onClose={() => setShowBattle(false)}
+                    mode={battleMode}
+                    onClose={handleCloseBattle}
+                    onUnitDeath={handleUnitDeath}
+                    onUnitHealthChange={handleUnitHealthChange}
                 />
             )}
 

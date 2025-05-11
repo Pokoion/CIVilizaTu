@@ -13,6 +13,7 @@ export interface Tile {
 export interface TileProps extends Tile {
   onClick: () => void;
   children?: React.ReactNode;
+  className?: string;
 }
 
 export interface Unit {
@@ -23,9 +24,11 @@ export interface Unit {
   movement_points_left: number;
   health: number;
   strength: number;
+  range: number;
   owner: 'player' | 'ai';
   direction?: string;
   hasAttackedCityThisTurn?: boolean;
+  hasAttackedThisTurn?: boolean;
 }
 
 export interface UnitProps extends Unit {
@@ -72,6 +75,7 @@ export interface City {
 export interface CityProps extends City {
   selected?: boolean;
   onClick?: () => void;
+  allowPopulationGrowth?: boolean;
 }
 
 export interface VisibleObjectProps {
