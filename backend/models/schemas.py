@@ -17,26 +17,35 @@ class Eszenatoki(Document):
     map_size = DictField(required=True)
     initial_state = DictField(required=True)
 
-
 class Position(EmbeddedDocument):
     x = IntField(required=True)
     y = IntField(required=True)
 
-class Production(EmbeddedDocument):
-    current_item = StringField()
-    turns_remaining = IntField()
-
-class Building(EmbeddedDocument):
+class trainingElements(EmbeddedDocument):
     id = StringField(required=True)
-    type = StringField(required=True)
-    production = EmbeddedDocumentField(Production)  
+    type = StringField()
+    turnsLeft = IntField()
+
+class Resources(EmbeddedDocument):
+    food = IntField()
+    natural_resources = IntField()
+    science = IntField()
+    gold = IntField()
+    culture = IntField()
+
 
 class City(EmbeddedDocument):
     id = StringField(required=True)
     name = StringField(required=True)
     position = EmbeddedDocumentField(Position)
     population = IntField()
-    buildings = EmbeddedDocumentListField(Building)
+    buildings = ListField(StringField(), default=[])  
+    production = EmbeddedDocumentField(Resources)
+    owner = StringField(required=True)  
+    defense = IntField(default=100)    
+    health = IntField(default=100)      
+    era = StringField()
+    training = EmbeddedDocumentField(trainingElements)  
 
 class Unit(EmbeddedDocument):
     id = StringField(required=True)
@@ -46,28 +55,18 @@ class Unit(EmbeddedDocument):
     movement_points_left = IntField()
     strength = IntField()
     health = IntField()
+    range = IntField()
     visible = BooleanField()
 
-class Technology(EmbeddedDocument):
-    id = StringField(required=True)
-    completed = BooleanField(default=False)
-    in_progress = BooleanField(default=False)
-    turns_remaining = IntField()
-
-class Resources(EmbeddedDocument):
-    food = IntField()
-    natural_resources = IntField()
-    science = IntField()
-    gold = IntField()
 
 class PlayerState(EmbeddedDocument):
-    civilization = StringField()   
-    era = StringField()            
-    leader_name = StringField()   
+    civilization = StringField()
+    era = StringField()
+    leader_name = StringField()
     resources = EmbeddedDocumentField(Resources)
     cities = EmbeddedDocumentListField(City)
     units = EmbeddedDocumentListField(Unit)
-    technologies = EmbeddedDocumentListField(Technology)
+    technologies = ListField(StringField(), default=[])
 
 class MapSize(EmbeddedDocument):
     width = IntField()
@@ -75,21 +74,20 @@ class MapSize(EmbeddedDocument):
 
 class VisibleObject(EmbeddedDocument):
     type = StringField(required=True)
-    resource_type = StringField()
     position = EmbeddedDocumentField(Position)
-    improved = BooleanField()
+
 
 class GameMap(EmbeddedDocument):
     size = EmbeddedDocumentField(MapSize)
     visible_objects = EmbeddedDocumentListField(VisibleObject)
-    fog_of_war_player = ListField(ListField(IntField()))  
-    fog_of_war_ai = ListField(ListField(IntField()))     
-    terrain = ListField(ListField(StringField()))  
+    fog_of_war_player = ListField(ListField(IntField()))
+    fog_of_war_ai = ListField(ListField(IntField()))
+    terrain = ListField(ListField(StringField()))
 
 class GameState(EmbeddedDocument):
     turn = IntField()
     current_player = StringField()
-    cheats_used = ListField(StringField())
+    cheats_used = ListField(StringField(), default=[])
     player = EmbeddedDocumentField(PlayerState)
     ai = EmbeddedDocumentField(PlayerState)
     map = EmbeddedDocumentField(GameMap)

@@ -18,19 +18,18 @@ def create_game():
     game_state = data.get('game_state')
     map_width = data.get('map_width')
     map_height = data.get('map_height')
-
-    if not name or not scenario_id or not game_state or not map_width or not map_height:
-        return jsonify({"error": "Izena, eszenatoki ID-a, game_state eta map_width/map_height beharrezkoak dira"}), 400
+  
 
     # Generar el mapa usando el servicio LLM
     map_result = create_map(map_width, map_height)
     if "error" in map_result:
         return jsonify({"error": f"Mapa sortzean errorea: {map_result['error']}"}), 500
 
-    # Inserta el mapa generado en el game_state
+    # Inserta el mapa generado en el atributo terrain de GameMap
     if "map" not in game_state:
         game_state["map"] = {}
-    game_state["map"].update(map_result)
+    game_state["map"]["terrain"] = map_result["mapa"]  
+    game_state["map"]["visible_objects"] = map_result["visible_objects"] 
 
     user_id = get_jwt_identity()
     try:
@@ -75,9 +74,6 @@ def save_game(game_id):
     data = request.get_json()
     game_state = data.get('game_state')
 
-    if not game_state:
-        return jsonify({"error": "Jokoaren egoera beharrezkoa da"}), 400
-
     user_id = get_jwt_identity()
     game = get_partida_by_id(game_id, user_id)
     if not game:
@@ -100,27 +96,17 @@ def load_game(game_id):
 
     return jsonify(partida_to_dict(game)), 200
 
-# POST /api/games/{gameId}/endTurn - End player turn and process AI turn
-@games_bp.route('/<string:game_id>/endTurn', methods=['POST'])
+
+
+# POST /api/games/{gameId}/getIAAction - Get AI actions based on the current game state
+@games_bp.route('/getIAAction', methods=['POST'])
 @jwt_required()
-def end_turn(game_id):
+def get_ia_action():
     data = request.get_json()
-    if not data:
-        return jsonify({"error": "Partidaren egoera beharrezkoa da"}), 400
-
-    user_id = get_jwt_identity()
-    game = get_partida_by_id(game_id, user_id)
-    if not game:
-        return jsonify({"error": "Partida ez da aurkitu"}), 404
-
-    # Guardar el nuevo estado de la partida en MongoDB
     game_state = data.get("game_state")
-    if not game_state:
-        return jsonify({"error": "game_state beharrezkoa da"}), 400
 
-    ok, err = save_partida_game_state(game, game_state)
-    if not ok:
-        return jsonify({"error": err}), 400
+    if not game_state:
+        return jsonify({"error": "Jokoaren egoera beharrezkoa da"}), 400
 
     # Obtener solo la información visible para la IA
     ai_visible_json = get_ai_visible_state(game_state)
@@ -130,33 +116,6 @@ def end_turn(game_id):
     if "error" in ai_response:
         return jsonify({"error": f"AI zerbitzuaren errorea: {ai_response['error']}"}), 500
 
-    return jsonify({
-        "message": "Txanda amaitu da"
-        }), 200
+    return jsonify(ai_response.get("action")), 200
 
-# POST /api/games/{gameId}/continueIATurn - Continue AI turn
-@games_bp.route('/<string:game_id>/continueIATurn', methods=['POST'])
-@jwt_required()
-def continue_ia_turn(game_id):
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "Partidaren egoera beharrezkoa da"}), 400
-
-    game_state = data.get("game_state")
-    if not game_state:
-        return jsonify({"error": "game_state beharrezkoa da"}), 400
-
-    # Calcular el JSON visible para la IA
-    ai_visible_json = get_ai_visible_state(game_state)
-
-    # Llamar al servicio LLM para obtener las acciones de la IA usando solo la información visible
-    ai_response = send_ia_game_state(ai_visible_json)
-    if "error" in ai_response:
-        return jsonify({"error": f"AI zerbitzuaren errorea: {ai_response['error']}"}), 500
-
-    return jsonify({
-        "ai_actions": ai_response.get("actions", []),
-        "ai_reasoning": ai_response.get("reasoning", ""),
-        "ai_analysis": ai_response.get("analysis", "")
-    }), 200
 
