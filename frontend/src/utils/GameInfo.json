@@ -1,4 +1,98 @@
 {
+  "actions": [
+    {
+      "type": "moveUnit",
+      "payload": {
+        "unitId": "string",
+        "position": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "type": "attackUnit",
+      "payload": {
+        "attackerId": "string",
+        "defenderId": "string"
+      }
+    },
+    {
+      "type": "attackCity",
+      "payload": {
+        "attackerId": "string",
+        "cityId": "string"
+      }
+    },
+    {
+      "type": "foundCity",
+      "payload": {
+        "name": "string",
+        "position": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "type": "changeCityPopulationProduction",
+      "payload": {
+        "cityId": "string",
+        "change": 0
+      }
+    },
+    {
+      "type": "collectResource",
+      "payload": {
+        "unitId": "string",
+        "position": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "type": "buildBuilding",
+      "payload": {
+        "cityId": "string",
+        "buildingType": "string"
+      }
+    },
+    {
+      "type": "trainUnit",
+      "payload": {
+        "cityId": "string",
+        "unitType": "string"
+      }
+    },
+    {
+      "type": "deployUnit",
+      "payload": {
+        "cityId": "string",
+        "unitType": "string",
+        "position": {
+          "x": 0,
+          "y": 0
+        }
+      }
+    },
+    {
+      "type": "researchTech",
+      "payload": {
+        "techId": "string"
+      }
+    },
+    {
+      "type": "upgradeCityEra",
+      "payload": {
+        "cityId": "string"
+      }
+    },
+    {
+      "type": "endTurn",
+      "payload": {}
+    }
+  ],
   "map_elements": [
     {
       "id": "arbola",

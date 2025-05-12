@@ -1,5 +1,5 @@
-import { TILE_TYPES } from '../utils/Constants';
-import { TerrainType, Unit, City, MapState } from '../types';
+import { TerrainType, Unit, City, MapState, AiAction } from '../types';
+import fakeGameState from '../utils/fakeGameState.json';
 
 // Mapa 50x50 con sentido: bordes de agua, interior variado
 const size = 50;
@@ -35,6 +35,21 @@ export const fetchUnits = async (): Promise<{ name: string; attack: number; defe
   });
 };
 
+let aiActionStep = 0;
+const aiActionSequence: AiAction[] = [
+  { type: "moveUnit", payload: { unitId: "militar3", position: { x: 15, y: 19 } } },
+  { type: "attackUnit", payload: { attackerId: "militar3", defenderId: "langile1" } },
+  { type: "attackCity", payload: { attackerId: "militar3", cityId: "city1" } },
+  { type: "endTurn", payload: {} }
+];
+
+export const fetchNextAiAction = async (gameState: any): Promise<AiAction> => {
+  const action = aiActionSequence[aiActionStep] || { type: "endTurn", payload: {} };
+  aiActionStep++;
+  if (action.type === "endTurn") aiActionStep = 0;
+  return new Promise(resolve => setTimeout(() => resolve(action), 2000));
+};
+
 export const loadMap = async (): Promise<{
   map: MapState;
   units: Unit[];
@@ -66,263 +81,6 @@ export const loadMap = async (): Promise<{
     position: { x: number; y: number };
   }[];
 }> => {
-  const fakeGameState = {
-    user_id: "665f1a2b3c4d5e6f7a8b9c0d",
-    name: "Nire partida IA-ren aurka",
-    scenario_id: "665f1a2b3c4d5e6f7a8b9c0e",
-    created_at: "2025-04-01T18:30:22.123Z",
-    last_saved: "2025-04-01T19:45:33.456Z",
-    cheats_used: ["mapa_agertu", "maila_igo"],
-    game_state: {
-      turn: 12,
-      current_player: "player", // Usado solo para inicializar currentSide
-      cheats_used: ["mapa_agertu", "maila_igo"],
-      player: {
-        civilization: "euskaldunak",
-        era: "Aro Modernoa",
-        leader_name: "Iker",
-        resources: {
-          food: 35,
-          culture: 1000,
-          science: 100000,
-          gold: 420,
-          natural_resources: 200
-        },
-        cities: [
-          {
-            id: "city1",
-            name: "Bilbo",
-            position: { x: 12, y: 13 },
-            population: 5,
-            buildings: ["aletegia", "unibertsitatea", "kuartela"],
-            production: {
-              food: 10,
-              gold: 5,
-              culture: 2,
-              science: 3,
-              natural_resources: 1
-            },
-            owner: "player",
-            defense: 100,
-            health: 100,
-            era: "Antzinaroa",
-            training: [
-              {
-                id: "city1-training",
-                type: "kolono",
-                turnsLeft: 0
-              },
-              {
-                id: "city1-training2",
-                type: "militar",
-                turnsLeft: 0
-              },
-              {
-                id: "itsasontzi2",
-                type: "itsasontzia",
-                turnsLeft: 0
-              }
-            ]
-          }
-        ],
-        units: [
-          {
-            id: "langile1",
-            type: "langile",
-            position: { x: 12, y: 12 },
-            movement_points: 2,
-            movement_points_left: 1,
-            strength: 30,
-            health: 100,
-            range: 1,
-            visible: true
-          },
-          {
-            id: "militar2",
-            type: "militar",
-            position: { x: 14, y: 18 },
-            movement_points: 1000,
-            movement_points_left: 1000,
-            strength: 30,
-            health: 100,
-            range: 1,
-            visible: true
-          },
-          {
-            id: "kolono1",
-            type: "kolono",
-            position: { x: 11, y: 18 },
-            movement_points: 1000,
-            movement_points_left: 1000,
-            strength: 30,
-            health: 100,
-            range: 1,
-            visible: true
-          },
-          {
-            id: "gudaria1",
-            type: "gudaria",
-            position: { x: 15, y: 19 },
-            movement_points: 1000,
-            movement_points_left: 1000,
-            strength: 30,
-            health: 100,
-            range: 1,
-            visible: true
-          },
-          {
-            id: "arkeroa1",
-            type: "arkeroa",
-            position: { x: 15, y: 20 },
-            movement_points: 1000,
-            movement_points_left: 1000,
-            strength: 30,
-            health: 100,
-            range: 4,
-            visible: true
-          },
-          {
-            id: "tankea1",
-            type: "tankea",
-            position: { x: 15, y: 21 },
-            movement_points: 1000,
-            movement_points_left: 1000,
-            strength: 30,
-            health: 100,
-            range: 4,
-            visible: true
-          },
-          {
-            id: "arkari_zalduna1",
-            type: "arkari_zalduna",
-            position: { x: 15, y: 22 },
-            movement_points: 1000,
-            movement_points_left: 1000,
-            strength: 30,
-            health: 100,
-            range: 4,
-            visible: true
-          },
-          {
-            id: "atlatl_erabiltzailea1",
-            type: "atlatl_erabiltzailea",
-            position: { x: 15, y: 23 },
-            movement_points: 1000,
-            movement_points_left: 1000,
-            strength: 30,
-            health: 100,
-            range: 3,
-            visible: true
-          },
-          {
-            id: "piromanoa1",
-            type: "piromanoa",
-            position: { x: 15, y: 24 },
-            movement_points: 1000,
-            movement_points_left: 1000,
-            strength: 30,
-            health: 100,
-            range: 1,
-            visible: true
-          }
-        ],
-        technologies: [],
-      },
-      ai: {
-        civilization: "mongolak",
-        era: "Antzinaroa",
-        leader_name: "Caesar",
-        resources: {
-          food: 0,
-          culture: 0,
-          science: 0,
-          gold: 0,
-          natural_resources: 0
-        },
-        cities: [
-          {
-            id: "city2",
-            name: "EnemyCity",
-            position: { x: 13, y: 17 },
-            population: 5,
-            buildings: ["aletegia", "unibertsitatea", "kuartela"],
-            production: {
-              food: 10,
-              gold: 5,
-              culture: 2,
-              science: 3,
-              natural_resources: 1
-            },
-            owner: "ai",
-            defense: 0,
-            health: 50,
-            era: "Antzinaroa",
-            training: [
-              {
-                id: "city1-training",
-                type: "kolono",
-                turnsLeft: 0
-              },
-              {
-                id: "city1-training2",
-                type: "militar",
-                turnsLeft: 0
-              }
-            ]
-          }
-        ],
-        units: [
-          {
-            id: "militar3",
-            type: "militar",
-            position: { x: 15, y: 18 },
-            movement_points: 2,
-            movement_points_left: 2,
-            strength: 5,
-            health: 100,
-            range: 1,
-            visible: false
-          },
-          {
-            id: "militar9",
-            type: "militar",
-            position: { x: 11, y: 13 },
-            movement_points: 2,
-            movement_points_left: 2,
-            strength: 5,
-            health: 100,
-            range: 1,
-            visible: false
-          }
-        ],
-        technologies: [],
-      },
-      map: {
-        size: { width: size, height: size },
-        tiles: customTiles,
-        visible_objects: [
-          {
-            type: "arbola",
-            position: { x: 14, y: 25 },
-          },
-          {
-            type: "urrea",
-            position: { x: 18, y: 22 },
-          },
-          {
-            type: "ganadua",
-            position: { x: 10, y: 18 },
-          },
-          {
-            type: "harria",
-            position: { x: 20, y: 15 },
-          }
-        ],
-        fog_of_war_player: [] as boolean[][],
-        fog_of_war_ai: [] as boolean[][]
-      }
-    }
-  };
 
   // --- Generar fog_of_war_player dinámicamente según las unidades del jugador ---
   const fog_of_war_player: boolean[][] = Array.from({ length: size }, () =>
@@ -363,6 +121,15 @@ export const loadMap = async (): Promise<{
   // Asigna el fog generado al fakeGameState
   fakeGameState.game_state.map.fog_of_war_player = fog_of_war_player;
   fakeGameState.game_state.map.fog_of_war_ai = fog_of_war_ai;
+
+  // ...dentro de loadMap, antes de usar fakeGameState.game_state.map.tiles...
+  if (
+    !fakeGameState.game_state.map.tiles ||
+    !Array.isArray(fakeGameState.game_state.map.tiles) ||
+    fakeGameState.game_state.map.tiles.length < size
+  ) {
+    fakeGameState.game_state.map.tiles = customTiles;
+  }
 
   // Extrae los datos para el estado del juego
   const map = {

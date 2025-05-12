@@ -61,6 +61,16 @@ export const RESOURCES = GameInfo.resources.map(resource => ({
   image: `/images/resources/${resource.id}.png` // Ruta predeterminada si no está en GameInfo
 }));
 
+export const ACTIONS = GameInfo.actions.map(action => ({
+  type: action.type,
+  payload: action.payload
+}));
+
+// Acceso rápido por type:
+export const ACTIONS_BY_TYPE: Record<string, typeof ACTIONS[0]> = Object.fromEntries(
+  ACTIONS.map(action => [action.type, action])
+);
+
 export const VISIBLE_OBJECTS = GameInfo.map_elements.map(obj => ({
   id: obj.id,
   name: obj.name,

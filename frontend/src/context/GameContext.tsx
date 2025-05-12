@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { MapState, UnitProps, CityProps, TrainingUnit } from "../types";
+import { MapState, UnitProps, CityProps, TrainingUnit, AiAction } from "../types";
 import TurnManager from "../managers/TurnManager";
 import GameManager from "../managers/GameManager";
-import { loadMap } from "../services/api";
+import { loadMap, fetchNextAiAction } from "../services/api";
+import { applyAiAction } from "../utils/aiActions";
 
 type GameContextType = {
   mapState: MapState;
@@ -166,6 +167,55 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const [gameStatus, setGameStatus] = useState<"playing" | "victory" | "defeat" | null>("playing");
   const [victoryType, setVictoryType] = useState<null | "science" | "culture" | "conquest">(null);
   const [currentSide, setCurrentSide] = useState<'player' | 'ai'>('player');
+  const [isAiRunning, setIsAiRunning] = useState(false);
+
+  const runAiTurn = async () => {
+    console.log("===> runAiTurn INICIO");
+    setIsAiRunning(true);
+    let continueAi = true;
+    let actionCount = 0;
+
+    while (continueAi) {
+      actionCount++;
+      console.log("===> runAiTurn ciclo", actionCount, "currentSide:", currentSide);
+      const gameState = {
+        units,
+        cities,
+        resources,
+        aiResources,
+        unlockedTechs,
+        aiUnlockedTechs,
+        playerEra,
+        aiEra,
+        civilization,
+        aiCivilization,
+        visibleObjects,
+      };
+
+      const action = await fetchNextAiAction(gameState);
+      console.log("===> Acción IA recibida:", action);
+
+      if (action.type === "endTurn") {
+        continueAi = false;
+      } else {
+        const newState = applyAiAction(gameState, action);
+        setUnits(newState.units);
+        setCities(newState.cities);
+        await new Promise(res => setTimeout(res, 1200)); // <-- retardo entre acciones
+      }
+    }
+
+    setCurrentSide('player');
+    setIsAiRunning(false);
+    console.log("===> runAiTurn FIN. currentSide puesto a 'player'");
+  };
+
+  useEffect(() => {
+    if (currentSide === 'ai' && !isAiRunning) {
+      console.log("===> useEffect: Lanzando runAiTurn porque currentSide es 'ai'");
+      runAiTurn();
+    }
+  }, [currentSide, isAiRunning]);
 
   const updateCity = (cityId: string, changes: Partial<CityProps>) => {
     setCities((prevCities) =>
@@ -228,7 +278,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
           resources,
           aiResources,
           visibleObjects,
-          currentSide, // <-- solo currentSide
+          currentSide,
         } = await loadMap();
         setMapState({
           ...map,
@@ -267,6 +317,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const endTurn = () => {
+    console.log("===> endTurn llamado. currentSide:", currentSide, "isAiRunning:", isAiRunning);
+    if (isAiRunning) return;
     turnManager.nextTurn(gameManager);
     setTurn((prev) => prev + 1);
 
@@ -331,11 +383,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       checkVictoryOrDefeat();
-
       return updatedCities;
     });
 
-    setCurrentSide(prev => (prev === 'player' ? 'ai' : 'player'));
+    setCurrentSide(prev => {
+      const next = prev === 'player' ? 'ai' : 'player';
+      console.log("===> setCurrentSide dentro de endTurn. prev:", prev, "next:", next);
+      // NO LLAMES A runAiTurn AQUÍ
+      return next;
+    });
 
     setTimeout(() => {
       console.log("ESTADO DEL JUEGO AL CAMBIAR DE TURNO:", JSON.stringify({
@@ -356,6 +412,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         victoryType
       }, null, 2));
     }, 10);
+
   };
 
   return (

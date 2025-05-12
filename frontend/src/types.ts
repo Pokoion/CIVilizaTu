@@ -1,4 +1,4 @@
-import { TILE_TYPES } from './utils/Constants';
+import { TILE_TYPES, ACTIONS } from './utils/Constants';
 
 export type TerrainType = keyof typeof TILE_TYPES;
 
@@ -15,6 +15,11 @@ export interface TileProps extends Tile {
   children?: React.ReactNode;
   className?: string;
 }
+
+type ActionType = typeof ACTIONS[number];
+export type AiAction = ActionType extends { type: infer T; payload: infer P }
+  ? { type: T & string; payload: P }
+  : never;
 
 export interface Unit {
   id: string;
