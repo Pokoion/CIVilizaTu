@@ -1,5 +1,5 @@
 import MapManager from './MapManager';
-import { Unit, City } from '../types';
+import { Unit, City, MapState } from '../types';
 import { loadMap } from '../services/api';
 
 class GameManager {
@@ -9,7 +9,8 @@ class GameManager {
     this.mapManager = new MapManager({
       size: { width: 0, height: 0 },
       tiles: [],
-      fog_of_war: [],
+      fog_of_war_player: [],
+      fog_of_war_ai: [],
     });
   }
 
@@ -18,10 +19,12 @@ class GameManager {
     try {
       const apiResponse = await loadMap();
 
-      const mapState = {
+      // Asegúrate de que el mapState tiene ambos fogs
+      const mapState: MapState = {
         size: apiResponse.map.size,
         tiles: apiResponse.map.tiles,
-        fog_of_war: apiResponse.map.fog_of_war,
+        fog_of_war_player: apiResponse.map.fog_of_war_player,
+        fog_of_war_ai: apiResponse.map.fog_of_war_ai,
       };
 
       const units: Unit[] = apiResponse.units.map((unit: any) => ({ ...unit }));

@@ -31,7 +31,8 @@ const Map2: React.FC<Map2Props> = ({
   const {
     mapState, setMapState, units, setUnits, cities, setCities,
     setSelectedCity, selectedUnitId, setSelectedUnitId, setMessage, setCamera,
-    setInitialCameraOffset, visibleObjects, setVisibleObjects, deployingUnit, setDeployingUnit, unlockedTechs
+    setInitialCameraOffset, visibleObjects, setVisibleObjects, deployingUnit, setDeployingUnit, unlockedTechs,
+    currentSide
   } = useGame();
 
   const gridRef = useRef<HTMLDivElement>(null);
@@ -70,6 +71,12 @@ const Map2: React.FC<Map2Props> = ({
     setSelectedUnitId
   );
 
+  // --- NUEVO: Selecciona el fog según el bando activo ---
+  const fog =
+    currentSide === 'player'
+      ? mapState.fog_of_war_player
+      : mapState.fog_of_war_ai;
+
   // --- NUEVO: Tiles válidos para desplegar unidad ---
   let deployableTiles: { x: number; y: number }[] = [];
   if (deployingUnit) {
@@ -84,7 +91,7 @@ const Map2: React.FC<Map2Props> = ({
           x >= 0 && x < mapState.size.width &&
           y >= 0 && y < mapState.size.height
         ) {
-          const isDiscovered = !!mapState.fog_of_war[y]?.[x];
+          const isDiscovered = !!fog?.[y]?.[x];
           const isEmpty =
             !units.some(u => u.position.x === x && u.position.y === y) &&
             !cities.some(c => c.position.x === x && c.position.y === y);
@@ -115,7 +122,12 @@ const Map2: React.FC<Map2Props> = ({
     return distance <= (attacker.range ?? 1);
   };
 
+  // --- NUEVO: Deshabilitar acciones si es turno de la IA ---
+  const isPlayerTurn = currentSide === 'player';
+
   const handleTileClick = async (rowIndex: number, colIndex: number, selectedUnitId: string | null) => {
+    if (!isPlayerTurn) return; // No permitir acciones en turno de la IA
+
     // --- NUEVO: Despliegue de unidad ---
     if (deployingUnit) {
       const isDeployable = deployableTiles.some(t => t.x === colIndex && t.y === rowIndex);
@@ -143,7 +155,7 @@ const Map2: React.FC<Map2Props> = ({
               id: `unit_${Date.now()}`,
               type: deployingUnit.unit.type,
               position: { x: colIndex, y: rowIndex },
-              owner: "player",
+              owner: currentSide, // <-- Cambia el owner según el bando activo
               movement_points: movement_points,
               movement_points_left: movement_points,
               health: unitDef.health + penizilinaBonus,
@@ -155,19 +167,27 @@ const Map2: React.FC<Map2Props> = ({
           const mapRows = mapState.tiles.length;
           const mapCols = mapState.tiles[0].length;
           const nuevosVisibles = getVisibleTiles(
-            newUnits.filter(u => u.owner === "player"),
+            newUnits.filter(u => u.owner === currentSide),
             mapRows,
             mapCols,
             1
           );
-          const fogAcumulado = mapState.fog_of_war.map((row, y) =>
-            row.map((cell, x) => cell || nuevosVisibles[y][x])
-          );
-
-          setMapState(prevMap => ({
-            ...prevMap,
-            fog_of_war: fogAcumulado,
-          }));
+          // Actualiza el fog correcto según el bando
+          if (currentSide === 'player') {
+            setMapState(prevMap => ({
+              ...prevMap,
+              fog_of_war_player: prevMap.fog_of_war_player.map((row, y) =>
+                row.map((cell, x) => cell || nuevosVisibles[y][x])
+              ),
+            }));
+          } else {
+            setMapState(prevMap => ({
+              ...prevMap,
+              fog_of_war_ai: prevMap.fog_of_war_ai.map((row, y) =>
+                row.map((cell, x) => cell || nuevosVisibles[y][x])
+              ),
+            }));
+          }
           return newUnits;
         });
         setCities(prev =>
@@ -203,7 +223,7 @@ const Map2: React.FC<Map2Props> = ({
         row: rowIndex,
         col: colIndex,
         type: mapState.tiles[rowIndex][colIndex],
-        isDiscovered: !!mapState.fog_of_war[rowIndex]?.[colIndex],
+        isDiscovered: !!fog?.[rowIndex]?.[colIndex],
       });
       setSelectedUnit(null);
       setSelectedCity(null);
@@ -213,9 +233,11 @@ const Map2: React.FC<Map2Props> = ({
   };
 
   const handleUnitClick = (unitId: string) => {
+    if (!isPlayerTurn) return; // No permitir acciones en turno de la IA
+
     const unit = units.find(u => u.id === unitId) || null;
     // Si tienes una unidad seleccionada y haces click en una enemiga
-    if (selectedUnitId && unit && unit.owner === 'ai') {
+    if (selectedUnitId && unit && unit.owner !== currentSide) {
       const selectedUnit = units.find(u => u.id === selectedUnitId);
       if (selectedUnit && canAttack(selectedUnit, unit)) {
         setSelectedEnemyUnit(unit);
@@ -229,7 +251,7 @@ const Map2: React.FC<Map2Props> = ({
       }
     }
     // Si haces click en una unidad tuya
-    if (unit && unit.owner === 'player') {
+    if (unit && unit.owner === currentSide) {
       setSelectedUnit(unit);
       setSelectedEnemyUnit(null);
       setSelectedTile(null);
@@ -240,6 +262,8 @@ const Map2: React.FC<Map2Props> = ({
   };
 
   const handleCityClick = (city: CityProps) => {
+    if (!isPlayerTurn) return; // No permitir acciones en turno de la IA
+
     setSelectedCity(city);
     setSelectedTile(null);
     setSelectedEnemyUnit(null);
@@ -247,11 +271,17 @@ const Map2: React.FC<Map2Props> = ({
   };
 
   const handleVisibleObjectClick = (obj: { type: string; position: { x: number; y: number } }) => {
+    if (!isPlayerTurn) return; // No permitir acciones en turno de la IA
+
     setSelectedVisibleObject(obj);
     setSelectedTile(null);
     setSelectedCity(null);
     setSelectedEnemyUnit(null);
   };
+
+  // --- NUEVO: Solo muestra ciudades/unidades del bando activo ---
+  const visibleCities = cities.filter(c => fog?.[c.position.y]?.[c.position.x]);
+  const visibleUnits = units.filter(u => fog?.[u.position.y]?.[u.position.x]);
 
   return (
     <div className="map-wrapper" style={{ userSelect: 'none' }}>
@@ -268,15 +298,15 @@ const Map2: React.FC<Map2Props> = ({
       >
         {mapState.tiles.map((row, rowIndex) =>
           row.map((tileType, colIndex) => {
-            const unit = units.find(
+            const unit = visibleUnits.find(
               (u) => u.position.x === colIndex && u.position.y === rowIndex
             );
-            const city = cities?.find(
+            const city = visibleCities?.find(
               (c) => c.position.x === colIndex && c.position.y === rowIndex
             );
 
             let fogStatus: 'undiscovered' | 'visible';
-            const isDiscovered = !!mapState.fog_of_war[rowIndex]?.[colIndex];
+            const isDiscovered = !!fog?.[rowIndex]?.[colIndex];
             if (!isDiscovered) {
               fogStatus = 'undiscovered';
             } else {
@@ -339,7 +369,7 @@ const Map2: React.FC<Map2Props> = ({
                     owner={unit.owner}
                     selected={selectedUnitId === unit.id}
                     onClick={() => handleUnitClick(unit.id)}
-                    disabled={unit.owner !== 'player'}
+                    disabled={unit.owner !== currentSide || !isPlayerTurn}
                     direction={unit.direction || 'default'}
                   />
                 )}

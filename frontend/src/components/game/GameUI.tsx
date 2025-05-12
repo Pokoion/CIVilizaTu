@@ -28,15 +28,31 @@ const GameUI: React.FC = () => {
     const [cheatOpen, setCheatOpen] = useState(false);
     const navigate = useNavigate();
 
-    // Usa el contexto global para selectedVisibleObject
+    // Usa el contexto global para selectedVisibleObject y recursos
     const {
         message, setMessage,
-        turn, endTurn, currentPlayer,
-        selectedCity, cities, setCities, units, setUnits, resources, playerEra, civilization, unlockedTechs,
+        turn, endTurn, currentSide,
+        selectedCity, cities, setCities, units, setUnits,
+        resources, aiResources,
+        playerEra, aiEra,
+        civilization, aiCivilization,
+        unlockedTechs, aiUnlockedTechs,
         selectedVisibleObject, setSelectedVisibleObject, checkVictoryOrDefeat, gameStatus, victoryType
     } = useGame();
 
+    // --- NUEVO: Deshabilitar botones y acciones si es turno de la IA ---
+    const isPlayerTurn = currentSide === 'player';
+
+    // Selecciona los datos según el bando activo
+    const sideResources = React.useMemo(() => (
+        currentSide === 'player' ? resources : aiResources
+    ), [currentSide, resources, aiResources]);
+    const sideEra = currentSide === 'player' ? playerEra : aiEra;
+    const sideCivilization = currentSide === 'player' ? civilization : aiCivilization;
+    const sideUnlockedTechs = currentSide === 'player' ? unlockedTechs : aiUnlockedTechs;
+
     const handleAttackEnemy = (attacker: UnitProps, defender: UnitProps, mode: 'full' | 'single') => {
+        if (!isPlayerTurn) return;
         setShowBattle(true);
         setSelectedUnit(attacker);
         setSelectedEnemyUnit(defender);
@@ -44,6 +60,7 @@ const GameUI: React.FC = () => {
     };
 
     const handleFoundCity = (kolono: UnitProps) => {
+        if (!isPlayerTurn) return;
         setShowFoundCityView(true);
         setKolonoToFoundCity(kolono);
     };
@@ -70,7 +87,6 @@ const GameUI: React.FC = () => {
     }, []);
 
     const handleCloseBattle = () => {
-        // Refresca selectedUnit y selectedEnemyUnit desde el array actualizado
         if (selectedUnit) {
             const updated = units.find(u => u.id === selectedUnit.id);
             setSelectedUnit(updated || null);
@@ -83,7 +99,7 @@ const GameUI: React.FC = () => {
     };
 
     const confirmFoundCity = (cityName: string) => {
-        if (!kolonoToFoundCity) return;
+        if (!isPlayerTurn || !kolonoToFoundCity) return;
 
         const { position } = kolonoToFoundCity;
         const era = playerEra || "Antzinaroa";
@@ -167,31 +183,31 @@ const GameUI: React.FC = () => {
                         <div className="resource">
                             <img src="/images/resources/urrea.png" alt="Urrea" className="resource-icon" />
                             <span className="resource-name">Urrea:</span>
-                            <span className="resource-value">{resources.gold}</span>
+                            <span className="resource-value">{sideResources.gold}</span>
                         </div>
                         <div className="resource">
                             <img src="/images/resources/janaria.png" alt="Janaria" className="resource-icon" />
                             <span className="resource-name">Janaria:</span>
-                            <span className="resource-value">{resources.food}</span>
+                            <span className="resource-value">{sideResources.food}</span>
                         </div>
                         <div className="resource">
                             <img src="/images/resources/kultura.png" alt="Kultura" className="resource-icon" />
                             <span className="resource-name">Kultura:</span>
-                            <span className="resource-value">{resources.culture}</span>
+                            <span className="resource-value">{sideResources.culture}</span>
                         </div>
                         <div className="resource">
                             <img src="/images/resources/baliabide_naturalak.png" alt="Baliabide Naturalak" className="resource-icon" />
                             <span className="resource-name">Baliabide Naturalak:</span>
-                            <span className="resource-value">{resources.natural_resources}</span>
+                            <span className="resource-value">{sideResources.natural_resources}</span>
                         </div>
                         <div className="resource">
                             <img src="/images/resources/zientzia.png" alt="Zientzia" className="resource-icon" />
                             <span className="resource-name">Zientzia:</span>
-                            <span className="resource-value">{resources.science}</span>
+                            <span className="resource-value">{sideResources.science}</span>
                         </div>
                     </div>
                     <div className="ui-top-right">
-                        <span>Jokalaria: {currentPlayer === 'player' ? 'Player' : 'AI'}</span>
+                        <span>Jokalaria: {currentSide === 'player' ? 'Player' : 'AI'}</span>
                     </div>
                 </div>
                 <div className="ui-main">
@@ -199,18 +215,18 @@ const GameUI: React.FC = () => {
                         <MiniMap />
                         <div className="player-info-block">
                             <div style={{ marginBottom: 8 }}>
-                                <b>Era:</b> {playerEra}
+                                <b>Era:</b> {sideEra}
                             </div>
                             <div style={{ marginBottom: 8, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
                                 <img
-                                    src={`/images/civilizations/${civilization}.png`}
-                                    alt={civilization}
+                                    src={`/images/civilizations/${sideCivilization}.png`}
+                                    alt={sideCivilization}
                                     style={{ width: 128, height: 148, borderRadius: "50%", border: "2px solid #ccc" }}
                                 />
-                                <span style={{ fontWeight: 500, fontSize: "1.2em", marginTop: 8 }}>{civilization}</span>
+                                <span style={{ fontWeight: 500, fontSize: "1.2em", marginTop: 8 }}>{sideCivilization}</span>
                             </div>
                             <div>
-                                <b>Teknologiak:</b> {unlockedTechs.length} / {TECHS.length}
+                                <b>Teknologiak:</b> {sideUnlockedTechs.length} / {TECHS.length}
                             </div>
                         </div>
                     </div>
@@ -244,7 +260,9 @@ const GameUI: React.FC = () => {
                 </div>
                 <div className="ui-bottom">
                     <button onClick={endTurn}>Txanda amaitu</button>
-                    <button onClick={() => setShowTechTree(true)}>Teknologia zuhaitza</button>
+                    {isPlayerTurn && (
+                        <button onClick={() => setShowTechTree(true)}>Teknologia zuhaitza</button>
+                    )}
                 </div>
             </div>
             {showBattle && selectedUnit && selectedEnemyUnit && (

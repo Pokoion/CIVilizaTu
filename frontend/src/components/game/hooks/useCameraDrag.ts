@@ -20,7 +20,6 @@ export function useCameraDrag(setCameraOffset: SetCameraOffset) {
         const dy = e.clientY - lastPos.current.y;
         setCameraOffset(prev => {
           const nuevo = { x: prev.x + dx, y: prev.y + dy };
-          console.log('Cámara arrastrada:', nuevo);
           return nuevo;
         });
         lastPos.current = { x: e.clientX, y: e.clientY };

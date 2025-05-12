@@ -121,46 +121,90 @@ const CHEAT_CODES = [
     },
     {
         code: "baliabide_maximoak",
-        action: (ctx: any) => {
-            ctx.setResources((r: any) => ({
-                ...r,
-                food: 9999,
-                gold: 9999,
-                culture: 9999,
-                science: 9999,
-                natural_resources: 9999
-            }));
-            ctx.setMessage("💰 Baliabide guztiak maximoan!");
+        action: (ctx: any, arg?: string) => {
+            // 0 = player (por defecto), 1 = ai
+            let target = "player";
+            if (arg === "1") target = "ai";
+            if (target === "player") {
+                ctx.setResources((r: any) => ({
+                    ...r,
+                    food: 9999,
+                    gold: 9999,
+                    culture: 9999,
+                    science: 9999,
+                    natural_resources: 9999
+                }));
+                ctx.setMessage("💰 Zure baliabide guztiak maximoan!");
+            } else if (target === "ai") {
+                if (!ctx.setAiResources) {
+                    ctx.setMessage("❌ AI baliabideak ezin dira aldatu!");
+                    return false;
+                }
+                ctx.setAiResources((r: any) => ({
+                    ...r,
+                    food: 9999,
+                    gold: 9999,
+                    culture: 9999,
+                    science: 9999,
+                    natural_resources: 9999
+                }));
+                ctx.setMessage("💰 AI-ren baliabide guztiak maximoan!");
+            }
             return true;
         }
     },
     {
         code: "mugimendu_infinitua",
-        action: (ctx: any) => {
+        action: (ctx: any, arg?: string) => {
+            let target = "player";
+            if (arg === "1") target = "ai";
             ctx.setUnits((prev: any) =>
-                prev.map((u: any) => ({
-                    ...u,
-                    movement_points: Infinity,
-                    movement_points_left: Infinity
-                }))
+                prev.map((u: any) =>
+                    (target === "player" && u.owner === "player") || (target === "ai" && u.owner === "ai")
+                        ? {
+                            ...u,
+                            movement_points: Infinity,
+                            movement_points_left: Infinity
+                        }
+                        : u
+                )
             );
-            ctx.setMessage("🏃‍♂️ Unitate guztiek mugimendu infinitua dute!");
+            ctx.setMessage(
+                target === "player"
+                    ? "🏃‍♂️ Zure unitate guztiek mugimendu infinitua dute!"
+                    : "🏃‍♂️ AI-ren unitate guztiek mugimendu infinitua dute!"
+            );
             return true;
         }
     },
     {
         code: "mapa_agertu",
-        action: (ctx: any) => {
+        action: (ctx: any, arg?: string) => {
+            // 0 = player (por defecto), 1 = ai
+            let target = "player";
+            if (arg === "1") target = "ai";
             ctx.setMapState((prev: any) => {
                 if (!prev.tiles) return prev;
                 const height = prev.tiles.length;
                 const width = prev.tiles[0]?.length || 0;
-                const fog_of_war = Array.from({ length: height }, () =>
-                    Array.from({ length: width }, () => true)
-                );
-                return { ...prev, fog_of_war };
+                // El fog correcto según el target
+                if (target === "player") {
+                    const fog_of_war_player = Array.from({ length: height }, () =>
+                        Array.from({ length: width }, () => true)
+                    );
+                    return { ...prev, fog_of_war_player };
+                } else {
+                    const fog_of_war_ai = Array.from({ length: height }, () =>
+                        Array.from({ length: width }, () => true)
+                    );
+                    return { ...prev, fog_of_war_ai };
+                }
             });
-            ctx.setMessage("🌍 Mapa osoa agerrarazi da!");
+            ctx.setMessage(
+                target === "player"
+                    ? "🌍 Mapa osoa agerrarazi da (PLAYER)!"
+                    : "🌍 Mapa osoa agerrarazi da (AI)!"
+            );
             return true;
         }
     },

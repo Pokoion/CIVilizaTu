@@ -40,11 +40,21 @@ export const loadMap = async (): Promise<{
   units: Unit[];
   cities: City[];
   unlockedTechs: string[];
+  aiUnlockedTechs: string[];
   turn: number;
-  currentPlayer: string;
+  currentSide: 'player' | 'ai';
   playerEra: string;
+  aiEra: string;
   civilization: string;
+  aiCivilization: string;
   resources: {
+    food: number;
+    gold: number;
+    culture: number;
+    science: number;
+    natural_resources: number;
+  };
+  aiResources: {
     food: number;
     gold: number;
     culture: number;
@@ -65,7 +75,7 @@ export const loadMap = async (): Promise<{
     cheats_used: ["mapa_agertu", "maila_igo"],
     game_state: {
       turn: 12,
-      current_player: "player",
+      current_player: "player", // Usado solo para inicializar currentSide
       cheats_used: ["mapa_agertu", "maila_igo"],
       player: {
         civilization: "euskaldunak",
@@ -73,7 +83,7 @@ export const loadMap = async (): Promise<{
         leader_name: "Iker",
         resources: {
           food: 35,
-          culture: 9999,
+          culture: 1000,
           science: 100000,
           gold: 420,
           natural_resources: 200
@@ -219,15 +229,15 @@ export const loadMap = async (): Promise<{
         technologies: [],
       },
       ai: {
-        civilization: "Romans",
-        era: "Ancient",
+        civilization: "mongolak",
+        era: "Antzinaroa",
         leader_name: "Caesar",
         resources: {
-          food: 35,
-          culture: 28,
-          science: 15,
-          gold: 420,
-          natural_resources: 30
+          food: 0,
+          culture: 0,
+          science: 0,
+          gold: 0,
+          natural_resources: 0
         },
         cities: [
           {
@@ -285,7 +295,7 @@ export const loadMap = async (): Promise<{
             visible: false
           }
         ],
-        technologies: []
+        technologies: [],
       },
       map: {
         size: { width: size, height: size },
@@ -318,6 +328,9 @@ export const loadMap = async (): Promise<{
   const fog_of_war_player: boolean[][] = Array.from({ length: size }, () =>
     Array.from({ length: size }, () => false)
   );
+  const fog_of_war_ai: boolean[][] = Array.from({ length: size }, () =>
+    Array.from({ length: size }, () => false)
+  );
 
   const playerUnits = fakeGameState.game_state.player.units;
   playerUnits.forEach(unit => {
@@ -333,14 +346,30 @@ export const loadMap = async (): Promise<{
     }
   });
 
+  const aiUnits = fakeGameState.game_state.ai.units;
+  aiUnits.forEach(unit => {
+    const { x, y } = unit.position;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+          fog_of_war_ai[ny][nx] = true;
+        }
+      }
+    }
+  });
+
   // Asigna el fog generado al fakeGameState
   fakeGameState.game_state.map.fog_of_war_player = fog_of_war_player;
+  fakeGameState.game_state.map.fog_of_war_ai = fog_of_war_ai;
 
   // Extrae los datos para el estado del juego
   const map = {
     size: fakeGameState.game_state.map.size,
     tiles: fakeGameState.game_state.map.tiles,
-    fog_of_war: fakeGameState.game_state.map.fog_of_war_player,
+    fog_of_war_player: fakeGameState.game_state.map.fog_of_war_player,
+    fog_of_war_ai: fakeGameState.game_state.map.fog_of_war_ai,
   };
 
   const units = [
@@ -354,7 +383,7 @@ export const loadMap = async (): Promise<{
       health: u.health,
       range: u.range,
       visible: u.visible,
-      owner: 'player' as 'player', // <-- type assertion
+      owner: 'player' as 'player',
     })),
     ...fakeGameState.game_state.ai.units.map((u: any) => ({
       id: u.id,
@@ -366,7 +395,7 @@ export const loadMap = async (): Promise<{
       health: u.health,
       range: u.range,
       visible: u.visible,
-      owner: 'ai' as 'ai', // <-- type assertion
+      owner: 'ai' as 'ai',
     })),
   ];
 
@@ -381,7 +410,7 @@ export const loadMap = async (): Promise<{
       owner: 'player' as 'player',
       defense: c.defense,
       health: c.health,
-      era: c.era ?? fakeGameState.game_state.player.era, // Usa la era de la ciudad o la del jugador
+      era: c.era ?? fakeGameState.game_state.player.era,
       training: Array.isArray(c.training)
         ? c.training
         : c.training
@@ -408,16 +437,20 @@ export const loadMap = async (): Promise<{
       defense: c.defense,
       health: c.health,
       era: c.era ?? fakeGameState.game_state.ai.era,
-      training: c.training ?? (
-        c.production?.current_item
-          ? {
-            id: `${c.id}-training`,
-            type: c.production.current_item,
-            name: c.production.current_item,
-            turnsLeft: c.production.turns_remaining,
-          }
-          : null
-      ),
+      training: Array.isArray(c.training)
+        ? c.training
+        : c.training
+          ? [c.training]
+          : (
+            c.production?.current_item
+              ? [{
+                id: `${c.id}-training`,
+                type: c.production.current_item,
+                name: c.production.current_item,
+                turnsLeft: c.production.turns_remaining,
+              }]
+              : []
+          ),
     })),
   ];
 
@@ -427,22 +460,30 @@ export const loadMap = async (): Promise<{
   }));
 
   const resources = fakeGameState.game_state.player.resources;
+  const aiResources = fakeGameState.game_state.ai.resources;
   const unlockedTechs = fakeGameState.game_state.player.technologies;
+  const aiUnlockedTechs = fakeGameState.game_state.ai.technologies;
   const playerEra = fakeGameState.game_state.player.era;
+  const aiEra = fakeGameState.game_state.ai.era;
   const turn = fakeGameState.game_state.turn;
-  const currentPlayer = fakeGameState.game_state.current_player;
+  const currentSide = fakeGameState.game_state.current_player as 'player' | 'ai';
   const civilization = fakeGameState.game_state.player.civilization;
+  const aiCivilization = fakeGameState.game_state.ai.civilization;
 
   return {
     map,
     units,
     cities,
     unlockedTechs,
+    aiUnlockedTechs,
     turn,
-    currentPlayer,
+    currentSide,
     playerEra,
+    aiEra,
     civilization,
+    aiCivilization,
     resources,
+    aiResources,
     visibleObjects
   };
 };

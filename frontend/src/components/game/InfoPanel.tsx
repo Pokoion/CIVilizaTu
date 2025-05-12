@@ -38,7 +38,8 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     gameManager,
     setSelectedUnitId,
     selectedUnitId,
-    checkVictoryOrDefeat
+    checkVictoryOrDefeat,
+    currentSide
   } = useGame();
 
   // Usar la unidad del estado global en lugar de las props
@@ -56,6 +57,13 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     }
   }, [selectedUnit, selectedCity]);
 
+  // --- NUEVO: Solo permitir acciones si es turno del jugador ---
+  const isPlayerTurn = currentSide === 'player';
+
+  if (!isPlayerTurn) {
+    return <div />; // Panel vacío
+  }
+
   // Mostrar información de objeto visible seleccionado
   if (selectedVisibleObject) {
     const objInfo = VISIBLE_OBJECTS_BY_ID[selectedVisibleObject.type];
@@ -69,6 +77,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     const hasNekazaritza = unlockedTechs?.includes('nekazaritza') || false;
 
     const puedeRecolectar =
+      isPlayerTurn &&
       selectedUnit &&
       selectedUnit.type === 'langile' && hasNekazaritza &&
       isAdjacent(selectedUnit, selectedVisibleObject);
@@ -146,6 +155,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     const inDefenderRange = distance <= defenderRange;
 
     const puedeAtacarUnidad =
+      isPlayerTurn &&
       inAttackerRange &&
       !selectedUnit.hasAttackedThisTurn &&
       selectedUnit.movement_points_left > 0;
@@ -185,9 +195,11 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
             </button>
           ) : (
             <span>
-              {selectedUnit.hasAttackedThisTurn || selectedUnit.movement_points_left === 0
-                ? 'Ezin du gehiago eraso egin edo mugitu'
-                : 'Ez dago eraso distantzian'}
+              {!isPlayerTurn
+                ? 'Ez da zure txanda'
+                : selectedUnit.hasAttackedThisTurn || selectedUnit.movement_points_left === 0
+                  ? 'Ezin du gehiago eraso egin edo mugitu'
+                  : 'Ez dago eraso distantzian'}
             </span>
           )}
         </div>
@@ -207,6 +219,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     };
 
     const puedeAtacarCiudad =
+      isPlayerTurn &&
       selectedUnit &&
       selectedUnit.owner === 'player' &&
       isEnemyCity &&
@@ -215,10 +228,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       selectedUnit.movement_points_left > 0;
 
     const handleAtacarCiudad = () => {
-      console.log('Botón Hiria erasotu pulsado', {
-        selectedUnit,
-        selectedCity
-      });
       // Marcar la unidad como que ha atacado a ciudad y sin movimientos
       setUnits &&
         setUnits(prev =>
@@ -235,7 +244,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         );
       setShowCityBattle(true);
       showCityBattleRef.current = true;
-      console.log('setShowCityBattle(true) ejecutado');
     };
 
     const onCityBattleEnd = (finalDefense: number, finalHealth: number) => {
@@ -254,12 +262,11 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
               !(city.id === selectedCity.id && finalHealth <= 0)
             )
         );
-      checkVictoryOrDefeat(); // <-- Añade esto aquí
+      checkVictoryOrDefeat();
     };
 
     // FORZAR el render de CityBattleView si showCityBattleRef o showCityBattle es true
     if ((showCityBattleRef.current || showCityBattle) && selectedUnit && selectedCity) {
-      console.log('FORZANDO CityBattleView', { selectedUnit, selectedCity, showCityBattle, ref: showCityBattleRef.current });
       return (
         <CityBattleView
           attacker={selectedUnit}
@@ -278,15 +285,11 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         <p>Osasuna: {selectedCity.health}</p>
         <div style={{ textAlign: 'right' }}>
           {puedeAtacarCiudad ? (
-            <>
-              <button onClick={handleAtacarCiudad}>
-                Hiria erasotu
-              </button>
-              {console.log('¿Renderizar CityBattleView?', { showCityBattle, selectedUnit, selectedCity })}
-              {/* El render forzado está arriba */}
-            </>
+            <button onClick={handleAtacarCiudad}>
+              Hiria erasotu
+            </button>
           ) : (
-            !isEnemyCity && (
+            !isEnemyCity && isPlayerTurn && (
               <button onClick={() => onEnterCity && onEnterCity(selectedCity)}>
                 Sartu hirian
               </button>
@@ -307,7 +310,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         <p>Osasuna: {selectedUnit.health}</p>
         <p>Indarra: {selectedUnit.strength}</p>
         <p>Rangoa: {selectedUnit.range ?? 1}</p>
-        {selectedUnit.type === 'kolono' && (
+        {selectedUnit.type === 'kolono' && isPlayerTurn && (
           <div style={{ textAlign: 'right' }}>
             <button onClick={() => onFoundCity && onFoundCity(selectedUnit)}>
               Hiria sortu

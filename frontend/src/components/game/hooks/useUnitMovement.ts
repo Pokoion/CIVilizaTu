@@ -3,6 +3,7 @@ import { TILE_TYPES } from '../../../utils/Constants';
 import Pathfinding2 from '../../../utils/Pathfinding2';
 import GameManager from '../../../managers/GameManager';
 import { MapState, Unit, City } from '../../../types';
+import { useGame } from '../../../context/GameContext';
 
 export function getVisibleTiles(units: Unit[], mapRows: number, mapCols: number, visionRange = 1) {
   const visible: boolean[][] = Array.from({ length: mapRows }, () => Array(mapCols).fill(false));
@@ -38,11 +39,12 @@ export function useUnitMovement(
   cities: City[],
   visibleObjects: { type: string; position: { x: number; y: number } }[],
   setUnits: React.Dispatch<React.SetStateAction<Unit[]>>,
-  setMapState: (map: MapState) => void,
+  setMapState: React.Dispatch<React.SetStateAction<MapState>>,
   setSelectedUnitId: (id: string | null) => void,
   setVisibleTiles?: (tiles: boolean[][]) => void
 ) {
-  // Añade un ref para bloquear el movimiento mientras se anima
+  // Obtén el bando actual del contexto
+  const { currentSide } = useGame();
   const isMovingRef = useRef(false);
 
   return useCallback(
@@ -51,7 +53,13 @@ export function useUnitMovement(
         return "Unitatea mugimenduan dago!";
       }
 
-      if (!mapState.fog_of_war[row]?.[col]) {
+      // Selecciona el fog correcto según el bando
+      const fog =
+        currentSide === 'player'
+          ? mapState.fog_of_war_player
+          : mapState.fog_of_war_ai;
+
+      if (!fog?.[row]?.[col]) {
         return "Ezin zara lurralde ezkutatura mugitu";
       }
 
@@ -65,6 +73,10 @@ export function useUnitMovement(
       if (selectedUnitId) {
         const unit = units.find(u => u.id === selectedUnitId);
         if (!unit) return "Unitatea ez da aurkitu";
+
+        if (unit.owner !== currentSide) {
+          return "Ezin duzu beste bando baten unitatea mugitu";
+        }
 
         if (unit.position.x === col && unit.position.y === row) {
           return "Unitatea dagoen tilean zaude jada";
@@ -82,13 +94,14 @@ export function useUnitMovement(
           { row: unit.position.y, col: unit.position.x },
           { row, col },
           unit.movement_points_left,
-          mapState.fog_of_war
+          fog
         );
 
         if (path) {
-          isMovingRef.current = true; // Bloquea nuevos movimientos
+          isMovingRef.current = true;
 
-          let fogAcumulado = mapState.fog_of_war.map(row => [...row]);
+          // Copia el fog adecuado
+          let fogAcumulado = fog.map(row => [...row]);
           let currentUnit = { ...unit };
           let movementLeft = currentUnit.movement_points_left;
 
@@ -125,7 +138,7 @@ export function useUnitMovement(
 
             movementLeft -= moveCost;
 
-            gameManager.getMapManager().moveUnit(selectedUnitId, { x: step.col, y: step.row });
+            gameManager.getMapManager().moveUnit(selectedUnitId, { x: step.col, y: step.row }, currentSide);
 
             setUnits((prevUnits: Unit[]) => {
               const updatedUnits = prevUnits.map(u =>
@@ -141,8 +154,9 @@ export function useUnitMovement(
 
               const mapRows = mapState.tiles.length;
               const mapCols = mapState.tiles[0].length;
+              // Solo unidades del bando activo
               const nuevosVisibles = getVisibleTiles(
-                updatedUnits.filter(u => u.owner === 'player'),
+                updatedUnits.filter(u => u.owner === currentSide),
                 mapRows,
                 mapCols,
                 1
@@ -155,22 +169,29 @@ export function useUnitMovement(
               return updatedUnits;
             });
 
-            setMapState({
-              ...mapState,
-              fog_of_war: fogAcumulado,
-            });
+            // Actualiza el fog correcto según el bando
+setMapState((prevMap: MapState) => ({
+  ...prevMap,
+  fog_of_war_player: currentSide === 'player' ? fogAcumulado : prevMap.fog_of_war_player,
+  fog_of_war_ai: currentSide === 'ai' ? fogAcumulado : prevMap.fog_of_war_ai,
+}));
 
             if (setVisibleTiles) {
               const mapRows = mapState.tiles.length;
               const mapCols = mapState.tiles[0].length;
-              const visibles = getVisibleTiles(gameManager.getMapManager().getUnits(), mapRows, mapCols, 1);
+              const visibles = getVisibleTiles(
+                gameManager.getMapManager().getUnits().filter(u => u.owner === currentSide),
+                mapRows,
+                mapCols,
+                1
+              );
               setVisibleTiles(visibles);
             }
 
             await new Promise(res => setTimeout(res, 750));
           }
 
-          isMovingRef.current = false; // Libera el bloqueo al terminar
+          isMovingRef.current = false;
           return true;
         }
 
@@ -178,6 +199,6 @@ export function useUnitMovement(
       }
       return "Mugimendua ez da baliozkoa";
     },
-    [gameManager, mapState, units, cities, visibleObjects, setUnits, setMapState, setSelectedUnitId, setVisibleTiles]
+    [gameManager, mapState, units, cities, visibleObjects, setUnits, setMapState, setSelectedUnitId, setVisibleTiles, currentSide]
   );
 }

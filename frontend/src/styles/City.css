@@ -32,10 +32,11 @@
 
 .city-container.enemy-city .city-person {
   filter:
-    drop-shadow(0 6px 6px rgba(0, 0, 0, 0.25))
-    hue-rotate(-20deg) /* Ligero tono rojizo */
-    saturate(1.15)
-    brightness(0.98);
+    hue-rotate(-40deg)
+    saturate(2)
+    brightness(0.92)
+    contrast(1.08);
+  border-radius: 14px;
 }
 
 .city-growth-btn {

@@ -242,7 +242,8 @@ const BarracksView: React.FC<BarracksViewProps> = ({
         <h3 className="barracks-queue-title">Cola de Entrenamiento ({trainingQueue.length}/{barracksCount})</h3>
         <ul className="barracks-queue-list">
           {trainingQueue.map((item) => {
-            const unit = availableUnits.find((u: any) => u.id === item.type);
+            // Busca la unidad en UNITS, no solo en availableUnits
+            const unit = UNITS.find((u: any) => u.id === item.type);
             if (!unit) return null;
             return (
               <li key={item.id} className="barracks-queue-item">

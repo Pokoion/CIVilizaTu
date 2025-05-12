@@ -1,47 +1,49 @@
 .unit-container {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    /* Center the unit */
-    transform: translate(-80%, -80%) rotateZ(-45deg);
-    width: 140px;
-    height: 180px;
-    z-index: 2;
-    pointer-events: auto;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-  }
-  
-  .unit-person {
-    width: 130px;
-    height: 170px;   /* Más alto que antes */
-    z-index: 2;
-    object-fit: fill;
-    image-rendering: pixelated;
-    filter: drop-shadow(0 6px 6px rgba(0,0,0,0.25));
-    display: block;
-    margin: 0 auto;
-    pointer-events: none;
-    user-select: none;
-    transition: box-shadow 0.2s;
-  }
-  
-  .unit.selected::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, 80%);
-    width: 60px;
-    height: 60px;
-    background: white;
-    border-radius: 50%;
-    z-index: 1;
-    opacity: 0.7;
-    pointer-events: none;
-  }
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* Center the unit */
+  transform: translate(-80%, -80%) rotateZ(-45deg);
+  width: 140px;
+  height: 180px;
+  z-index: 2;
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
 
-  .unit-enemy {
-    filter: hue-rotate(-30deg) sepia(0.7) saturate(2) brightness(0.9);
-  }
+.unit-person {
+  width: 130px;
+  height: 170px;
+  /* Más alto que antes */
+  z-index: 2;
+  object-fit: fill;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.25));
+  display: block;
+  margin: 0 auto;
+  pointer-events: none;
+  user-select: none;
+  transition: box-shadow 0.2s;
+}
+
+.unit.selected::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, 80%);
+  width: 60px;
+  height: 60px;
+  background: white;
+  border-radius: 50%;
+  z-index: 1;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.unit-enemy {
+  filter: hue-rotate(-60deg) sepia(1) saturate(3) brightness(0.7) contrast(1.5) drop-shadow(0 0 12px #ff2222);
+  border-radius: 12px;
+}

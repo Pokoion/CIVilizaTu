@@ -96,7 +96,8 @@ export class VisibleObject implements VisibleObjectProps {
 export type MapState = {
   size: { width: number; height: number };
   tiles: TerrainType[][];
-  fog_of_war: boolean[][];
+  fog_of_war_player: boolean[][];
+  fog_of_war_ai: boolean[][];
 };
 
 export interface Tech {
