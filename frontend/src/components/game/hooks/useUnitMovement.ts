@@ -170,11 +170,11 @@ export function useUnitMovement(
             });
 
             // Actualiza el fog correcto según el bando
-setMapState((prevMap: MapState) => ({
-  ...prevMap,
-  fog_of_war_player: currentSide === 'player' ? fogAcumulado : prevMap.fog_of_war_player,
-  fog_of_war_ai: currentSide === 'ai' ? fogAcumulado : prevMap.fog_of_war_ai,
-}));
+            setMapState((prevMap: MapState) => ({
+              ...prevMap,
+              fog_of_war_player: currentSide === 'player' ? fogAcumulado : prevMap.fog_of_war_player,
+              fog_of_war_ai: currentSide === 'ai' ? fogAcumulado : prevMap.fog_of_war_ai,
+            }));
 
             if (setVisibleTiles) {
               const mapRows = mapState.tiles.length;

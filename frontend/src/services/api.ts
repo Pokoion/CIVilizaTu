@@ -37,9 +37,11 @@ export const fetchUnits = async (): Promise<{ name: string; attack: number; defe
 
 let aiActionStep = 0;
 const aiActionSequence: AiAction[] = [
-  { type: "moveUnit", payload: { unitId: "militar3", position: { x: 15, y: 19 } } },
-  { type: "attackUnit", payload: { attackerId: "militar3", defenderId: "langile1" } },
-  { type: "attackCity", payload: { attackerId: "militar3", cityId: "city1" } },
+  { type: "moveUnit", payload: { unitId: "militar9", position: { x: 10, y: 14 } } },
+  { type: "moveUnit", payload: { unitId: "militar9", position: { x: 9, y: 15 } } },
+  { type: "moveUnit", payload: { unitId: "militar9", position: { x: 8, y: 16 } } },
+  { type: "attackUnit", payload: { attackerId: "militar9", defenderId: "langile1" } },
+  { type: "attackCity", payload: { attackerId: "militar9", cityId: "city1" } },
   { type: "endTurn", payload: {} }
 ];
 

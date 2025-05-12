@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { MapState, UnitProps, CityProps, TrainingUnit, AiAction } from "../types";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import { MapState, UnitProps, CityProps, TrainingUnit } from "../types";
 import TurnManager from "../managers/TurnManager";
 import GameManager from "../managers/GameManager";
 import { loadMap, fetchNextAiAction } from "../services/api";
@@ -168,47 +168,113 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   const [victoryType, setVictoryType] = useState<null | "science" | "culture" | "conquest">(null);
   const [currentSide, setCurrentSide] = useState<'player' | 'ai'>('player');
   const [isAiRunning, setIsAiRunning] = useState(false);
+  const [pendingAiAction, setPendingAiAction] = useState<any>(null);
+
+  const unitsRef = useRef(units);
+  const citiesRef = useRef(cities);
+  const mapStateRef = useRef(mapState);
+
+  useEffect(() => { unitsRef.current = units; }, [units]);
+  useEffect(() => { citiesRef.current = cities; }, [cities]);
+  useEffect(() => { mapStateRef.current = mapState; }, [mapState]);
 
   const runAiTurn = async () => {
-    console.log("===> runAiTurn INICIO");
     setIsAiRunning(true);
     let continueAi = true;
     let actionCount = 0;
 
     while (continueAi) {
-      actionCount++;
-      console.log("===> runAiTurn ciclo", actionCount, "currentSide:", currentSide);
+      // Siempre usa los valores actuales de los refs
       const gameState = {
-        units,
-        cities,
-        resources,
-        aiResources,
-        unlockedTechs,
-        aiUnlockedTechs,
-        playerEra,
-        aiEra,
-        civilization,
-        aiCivilization,
-        visibleObjects,
+        units: unitsRef.current,
+        cities: citiesRef.current,
+        mapState: mapStateRef.current,
       };
 
       const action = await fetchNextAiAction(gameState);
-      console.log("===> Acción IA recibida:", action);
 
       if (action.type === "endTurn") {
         continueAi = false;
       } else {
-        const newState = applyAiAction(gameState, action);
-        setUnits(newState.units);
-        setCities(newState.cities);
-        await new Promise(res => setTimeout(res, 1200)); // <-- retardo entre acciones
+        setPendingAiAction({ action, gameState });
+
+        // Espera a que el efecto termine antes de continuar
+        await new Promise(resolve => {
+          const interval = setInterval(() => {
+            if (!pendingAiAction) {
+              clearInterval(interval);
+              resolve(null);
+            }
+          }, 10);
+        });
+
+        // Espera un render para asegurar que los refs están actualizados
+        await new Promise(res => setTimeout(res, 0));
       }
     }
 
     setCurrentSide('player');
     setIsAiRunning(false);
-    console.log("===> runAiTurn FIN. currentSide puesto a 'player'");
   };
+
+ useEffect(() => {
+  if (pendingAiAction) {
+    const { action, gameState } = pendingAiAction;
+    console.log("[AI] Acción recibida:", action);
+    console.log("[AI] Estado antes de applyAiAction:", JSON.stringify(gameState.units.map((u: UnitProps) => ({
+      id: u.id,
+      owner: u.owner,
+      pos: u.position
+    })), null, 2));
+
+    const newState = applyAiAction(gameState, action);
+
+    // Log unidades después de applyAiAction
+    console.log("[AI] Unidades después de applyAiAction:", JSON.stringify(newState.units.map((u: UnitProps) => ({
+      id: u.id,
+      owner: u.owner,
+      pos: u.position
+    })), null, 2));
+
+    setUnits(newState.units);
+    setCities(newState.cities);
+
+    // Log tras setUnits
+    setTimeout(() => {
+      console.log("[AI] Unidades tras setUnits:", JSON.stringify(units.map(u => ({
+        id: u.id,
+        owner: u.owner,
+        pos: u.position
+      })), null, 2));
+    }, 0);
+
+    if (newState.aiMovePath) {
+      setMapState(prev => {
+        const fog = prev.fog_of_war_ai.map(row => [...row]);
+        for (const step of newState.aiMovePath) {
+          for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+              const nr = step.row + dr;
+              const nc = step.col + dc;
+              if (
+                nr >= 0 &&
+                nr < fog.length &&
+                nc >= 0 &&
+                nc < fog[0].length
+              ) {
+                fog[nr][nc] = true;
+              }
+            }
+          }
+        }
+        console.log("[AI] Fog actualizado tras movimiento:", fog);
+        return { ...prev, fog_of_war_ai: fog };
+      });
+    }
+
+    setPendingAiAction(null);
+  }
+}, [pendingAiAction]);
 
   useEffect(() => {
     if (currentSide === 'ai' && !isAiRunning) {
