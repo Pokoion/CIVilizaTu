@@ -1,0 +1,151 @@
+{
+  "user_id": "665f1a2b3c4d5e6f7a8b9c0d",
+  "name": "Partida Test",
+  "scenario_id": "665f1a2b3c4d5e6f7a8b9c0e",
+  "created_at": "2025-04-01T18:30:22.123Z",
+  "last_saved": "2025-04-01T19:45:33.456Z",
+  "cheats_used": [],
+  "game_state": {
+    "turn": 1,
+    "current_player": "player",
+    "cheats_used": [],
+    "player": {
+      "civilization": "Basques",
+      "era": "Ancient",
+      "leader_name": "Iker",
+      "resources": {
+        "food": 10,
+        "production": 5,
+        "science": 2,
+        "gold": 20
+      },
+      "cities": [
+        {
+          "id": "city1",
+          "name": "Bilbo",
+          "position": { "x": 5, "y": 7 },
+          "population": 3,
+          "buildings": [
+            {
+              "id": "granary",
+              "type": "food_building",
+              "production": {
+                "current_item": "warrior",
+                "turns_remaining": 2
+              }
+            }
+          ]
+        }
+      ],
+      "units": [
+        {
+          "id": "unit1",
+          "type": "settler",
+          "position": { "x": 6, "y": 8 },
+          "movement_points": 2,
+          "movement_points_left": 2,
+          "strength": 0,
+          "health": 100,
+          "visible": true
+        }
+      ],
+      "technologies": [
+        {
+          "id": "agriculture",
+          "completed": true,
+          "in_progress": false,
+          "turns_remaining": 0
+        }
+      ]
+    },
+    "ai": {
+      "civilization": "Romans",
+      "era": "Ancient",
+      "leader_name": "Caesar",
+      "resources": {
+        "food": 8,
+        "production": 6,
+        "science": 3,
+        "gold": 15
+      },
+      "cities": [
+        {
+          "id": "ai_city1",
+          "name": "Erroma",
+          "position": { "x": 10, "y": 12 },
+          "population": 2,
+          "buildings": [
+            {
+              "id": "barracks",
+              "type": "military_building",
+              "production": {
+                "current_item": "",
+                "turns_remaining": 0
+              }
+            }
+          ]
+        }
+      ],
+      "units": [
+        {
+          "id": "ai_unit1",
+          "type": "warrior",
+          "position": { "x": 11, "y": 13 },
+          "movement_points": 2,
+          "movement_points_left": 1,
+          "strength": 5,
+          "health": 100,
+          "visible": false
+        }
+      ],
+      "technologies": []
+    },
+    "map": {
+      "size": { "width": 10, "height": 10 },
+      "visible_objects": [
+        {
+          "type": "resource",
+          "resource_type": "iron",
+          "position": { "x": 3, "y": 4 },
+          "improved": false
+        }
+      ],
+      "fog_of_war_player": [
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0]
+      ],
+      "fog_of_war_ai": [
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0]
+      ],
+      "terrain": [
+        ["grass","grass","grass","grass","grass","grass","grass","grass","grass","grass"],
+        ["grass","grass","grass","grass","grass","grass","grass","grass","grass","grass"],
+        ["grass","grass","grass","grass","grass","grass","grass","grass","grass","grass"],
+        ["grass","grass","grass","grass","grass","grass","grass","grass","grass","grass"],
+        ["grass","grass","grass","grass","grass","grass","grass","grass","grass","grass"],
+        ["grass","grass","grass","grass","grass","grass","grass","grass","grass","grass"],
+        ["grass","grass","grass","grass","grass","grass","grass","grass","grass","grass"],
+        ["grass","grass","grass","grass","grass","grass","grass","grass","grass","grass"],
+        ["grass","grass","grass","grass","grass","grass","grass","grass","grass","grass"],
+        ["grass","grass","grass","grass","grass","grass","grass","grass","grass","grass"]
+      ]
+    }
+  }
+}

@@ -15,6 +15,7 @@
 
 # Python (Backend y LLM Service)
 __pycache__/
+*.pyc
 *.py[cod]
 *$py.class
 *.so

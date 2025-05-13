@@ -1,0 +1,97 @@
+{
+  "ai": {
+    "civilization": "Romans",
+    "era": "Ancient",
+    "leader_name": "Caesar",
+    "resources": {
+      "food": 8,
+      "production": 6,
+      "science": 3,
+      "gold": 15
+    },
+    "cities": [
+      {
+        "id": "ai_city1",
+        "name": "Erroma",
+        "position": { "x": 4, "y": 5 },
+        "population": 2,
+        "buildings": [
+          {
+            "id": "barracks",
+            "type": "military_building",
+            "production": {
+              "current_item": "warrior",
+              "turns_remaining": 1
+            }
+          }
+        ]
+      }
+    ],
+    "units": [
+      {
+        "id": "ai_unit1",
+        "type": "warrior",
+        "position": { "x": 5, "y": 6 },
+        "movement_points": 2,
+        "movement_points_left": 1,
+        "strength": 5,
+        "health": 100,
+        "visible": true
+      }
+    ],
+    "technologies": [
+      {
+        "id": "mining",
+        "completed": true,
+        "in_progress": false,
+        "turns_remaining": 0
+      }
+    ]
+  },
+  "map": {
+    "size": { "width": 6, "height": 6 },
+    "terrain": [
+      ["grass", "hill", "hill", "forest", "forest", "grass"],
+      ["grass", "hill", "hill", "forest", "forest", "grass"],
+      ["grass", "hill", "hill", "forest", "forest", "grass"],
+      ["grass", "hill", "hill", "forest", "forest", "grass"],
+      ["grass", "hill", "hill", "forest", "forest", "grass"],
+      ["grass", "hill", "hill", "forest", "forest", "grass"]
+    ],
+    "terrain_costs": {
+      "grass": 1,
+      "hill": 2,
+      "forest": 2
+    },
+    "fog_of_war_ai": [
+      [1,1,1,0,0,0],
+      [1,1,1,1,0,0],
+      [1,1,1,1,1,0],
+      [1,1,1,1,1,1],
+      [1,1,1,1,1,1],
+      [1,1,1,1,1,1]
+    ],
+    "visible_objects": [
+      {
+        "type": "resource",
+        "resource_type": "iron",
+        "position": { "x": 2, "y": 2 },
+        "improved": false
+      },
+      {
+        "type": "barbarian_camp",
+        "position": { "x": 4, "y": 4 }
+      },
+      {
+        "type": "enemy_unit",
+        "unit_type": "warrior",
+        "position": { "x": 3, "y": 3 }
+      },
+      {
+        "type": "structure",
+        "structure_type": "ruins",
+        "position": { "x": 1, "y": 1 }
+      }
+    ]
+  }
+}

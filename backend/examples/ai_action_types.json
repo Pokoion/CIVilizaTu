@@ -1,0 +1,44 @@
+[
+  {
+    "type": "moveUnit",
+    "details": {
+      "unitId": "string",
+      "destination": { "x": 0, "y": 0 }
+    }
+  },
+  {
+    "type": "buildStructure",
+    "details": {
+      "cityId": "string",
+      "structureType": "string"
+    }
+  },
+  {
+    "type": "createElement",
+    "details": {
+      "cityId": "string",
+      "structureType": "string",
+      "unitType": "string"
+        }
+  },
+  {
+    "type": "attackEnemy",
+    "details": {
+      "attackerId": "string",
+      "targetId": "string"
+    }
+  },
+  {
+    "type": "researchTechnology",
+    "details": {
+      "technologyId": "string"
+    }
+  },
+  {
+    "type": "foundCity",
+    "details": {
+      "unitId": "string",
+      "position": { "x": 0, "y": 0 }
+    }
+  }
+]
