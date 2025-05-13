@@ -75,12 +75,12 @@ export interface City {
   health: number;
   era: string;
   training: TrainingUnit[];
+  allowPopulationGrowth: boolean;
 }
 
 export interface CityProps extends City {
   selected?: boolean;
   onClick?: () => void;
-  allowPopulationGrowth?: boolean;
 }
 
 export interface VisibleObjectProps {

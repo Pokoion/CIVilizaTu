@@ -98,6 +98,15 @@ export function useUnitMovement(
         );
 
         if (path) {
+
+          for (let i = 1; i < path.length - 1; i++) {
+            const step = path[i];
+            const unitOnStep = units.some(u => u.position.x === step.col && u.position.y === step.row);
+            if (unitOnStep) {
+              isMovingRef.current = false;
+              return "Ezin zara beste unitate baten gainetik pasa";
+            }
+          }
           isMovingRef.current = true;
 
           // Copia el fog adecuado

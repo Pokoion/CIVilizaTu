@@ -231,7 +231,8 @@ const CheatConsoleModal: React.FC<CheatConsoleModalProps> = ({ open, onClose }) 
         const [cmd, arg] = cheatInput.trim().toLowerCase().split(" ");
         const cheat = CHEAT_CODES.find(c => c.code === cmd);
         if (cheat) {
-            cheat.action(ctx, arg);
+            const result = cheat.action(ctx, arg);
+            if (result) ctx.setCheatsUsed((prev: string[]) => [...prev, cmd]);
         } else {
             ctx.setMessage("Cheat ezezaguna.");
         }

@@ -28,17 +28,14 @@
       "type": "foundCity",
       "payload": {
         "name": "string",
-        "position": {
-          "x": 0,
-          "y": 0
-        }
+        "unitId": "string"
       }
     },
     {
       "type": "changeCityPopulationProduction",
       "payload": {
         "cityId": "string",
-        "change": 0
+        "change": true
       }
     },
     {
@@ -204,7 +201,9 @@
       "cost": {
         "food": 10,
         "gold": 5
-      }
+      },
+      "requirements": [],
+      "training_time": 4
     },
     {
       "id": "kolono",
@@ -217,7 +216,9 @@
       "cost": {
         "food": 20,
         "gold": 15
-      }
+      },
+      "requirements": [],
+      "training_time": 5
     },
     {
       "id": "langile",
@@ -230,7 +231,9 @@
       "cost": {
         "food": 15,
         "gold": 8
-      }
+      },
+      "requirements": [],
+      "training_time": 3
     },
     {
       "id": "gudaria",
@@ -243,7 +246,9 @@
       "cost": {
         "food": 25,
         "gold": 20
-      }
+      },
+      "requirements": [],
+      "training_time": 4
     },
     {
       "id": "arkari_zalduna",
@@ -256,7 +261,9 @@
       "cost": {
         "food": 30,
         "gold": 20
-      }
+      },
+      "requirements": [],
+      "training_time": 4
     },
     {
       "id": "atlatl_erabiltzailea",
@@ -269,7 +276,9 @@
       "cost": {
         "food": 18,
         "gold": 12
-      }
+      },
+      "requirements": [],
+      "training_time": 4
     },
     {
       "id": "piromanoa",
@@ -282,7 +291,9 @@
       "cost": {
         "food": 22,
         "gold": 25
-      }
+      },
+      "requirements": [],
+      "training_time": 4
     },
     {
       "id": "arkeroa",
@@ -295,7 +306,11 @@
       "cost": {
         "food": 12,
         "gold": 10
-      }
+      },
+      "requirements": [
+        "arku_tiroa"
+      ],
+      "training_time": 4
     },
     {
       "id": "tankea",
@@ -308,7 +323,11 @@
       "cost": {
         "natural_resources": 50,
         "gold": 60
-      }
+      },
+      "requirements": [
+        "artilleria"
+      ],
+      "training_time": 5
     },
     {
       "id": "itsasontzia",
@@ -321,7 +340,11 @@
       "cost": {
         "natural_resources": 30,
         "gold": 50
-      }
+      },
+      "requirements": [
+        "nabigazioa"
+      ],
+      "training_time": 5
     }
   ],
   "resources": [

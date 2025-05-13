@@ -9,6 +9,7 @@ interface BattleViewProps {
   onClose: () => void;
   onUnitDeath?: (unitId: string) => void;
   onUnitHealthChange?: (unitId: string, newHealth: number) => void;
+  onFinish?: (result: { attackerHealth: number; defenderHealth: number }) => void;
 }
 
 type Phase = 'idle' | 'attack' | 'defenderHit' | 'counter' | 'attackerHit' | 'end';
@@ -34,6 +35,7 @@ const BattleView: React.FC<BattleViewProps> = ({
   onClose,
   onUnitDeath,
   onUnitHealthChange,
+  onFinish,
 }) => {
   const [attackerHealth, setAttackerHealth] = useState(attacker.health);
   const [defenderHealth, setDefenderHealth] = useState(defender.health);
@@ -76,8 +78,14 @@ const BattleView: React.FC<BattleViewProps> = ({
           setWinner(defenderHealth - attacker.strength <= 0 ? 'attacker' : null);
           setPhase('end');
         }, 1000);
-      } else if (phase === 'end') {
-        timeout = setTimeout(() => onClose(), 1000);
+      }
+      else if (phase === 'end') {
+        timeout = setTimeout(() => {
+          if (onFinish) {
+            onFinish({ attackerHealth, defenderHealth });
+          }
+          onClose();
+        }, 1000);
       }
     } else {
       // Pelea clásica a muerte
@@ -105,8 +113,14 @@ const BattleView: React.FC<BattleViewProps> = ({
         }, isRanged(defender) ? 500 : 400);
       } else if (phase === 'attackerHit') {
         timeout = setTimeout(() => { }, 1);
-      } else if (phase === 'end') {
-        timeout = setTimeout(() => onClose(), 1000);
+      }
+      else if (phase === 'end') {
+        timeout = setTimeout(() => {
+          if (onFinish) {
+            onFinish({ attackerHealth, defenderHealth });
+          }
+          onClose();
+        }, 1000);
       }
     }
 

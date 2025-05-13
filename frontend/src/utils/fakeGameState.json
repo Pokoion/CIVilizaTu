@@ -30,7 +30,10 @@
         {
           "id": "city1",
           "name": "Bilbo",
-          "position": { "x": 12, "y": 13 },
+          "position": {
+            "x": 12,
+            "y": 13
+          },
           "population": 5,
           "buildings": [
             "aletegia",
@@ -64,14 +67,18 @@
               "type": "itsasontzia",
               "turnsLeft": 0
             }
-          ]
+          ],
+          "allowPopulationGrowth": true
         }
       ],
       "units": [
         {
           "id": "langile1",
           "type": "langile",
-          "position": { "x": 12, "y": 12 },
+          "position": {
+            "x": 12,
+            "y": 12
+          },
           "movement_points": 2,
           "movement_points_left": 1,
           "strength": 30,
@@ -82,7 +89,10 @@
         {
           "id": "militar2",
           "type": "militar",
-          "position": { "x": 14, "y": 18 },
+          "position": {
+            "x": 14,
+            "y": 18
+          },
           "movement_points": 1000,
           "movement_points_left": 1000,
           "strength": 30,
@@ -93,7 +103,10 @@
         {
           "id": "kolono1",
           "type": "kolono",
-          "position": { "x": 11, "y": 18 },
+          "position": {
+            "x": 11,
+            "y": 18
+          },
           "movement_points": 1000,
           "movement_points_left": 1000,
           "strength": 30,
@@ -104,7 +117,10 @@
         {
           "id": "gudaria1",
           "type": "gudaria",
-          "position": { "x": 15, "y": 19 },
+          "position": {
+            "x": 15,
+            "y": 19
+          },
           "movement_points": 1000,
           "movement_points_left": 1000,
           "strength": 30,
@@ -115,7 +131,10 @@
         {
           "id": "arkeroa1",
           "type": "arkeroa",
-          "position": { "x": 15, "y": 20 },
+          "position": {
+            "x": 15,
+            "y": 20
+          },
           "movement_points": 1000,
           "movement_points_left": 1000,
           "strength": 30,
@@ -126,7 +145,10 @@
         {
           "id": "tankea1",
           "type": "tankea",
-          "position": { "x": 15, "y": 21 },
+          "position": {
+            "x": 15,
+            "y": 21
+          },
           "movement_points": 1000,
           "movement_points_left": 1000,
           "strength": 30,
@@ -137,7 +159,10 @@
         {
           "id": "arkari_zalduna1",
           "type": "arkari_zalduna",
-          "position": { "x": 15, "y": 22 },
+          "position": {
+            "x": 15,
+            "y": 22
+          },
           "movement_points": 1000,
           "movement_points_left": 1000,
           "strength": 30,
@@ -148,7 +173,10 @@
         {
           "id": "atlatl_erabiltzailea1",
           "type": "atlatl_erabiltzailea",
-          "position": { "x": 15, "y": 23 },
+          "position": {
+            "x": 15,
+            "y": 23
+          },
           "movement_points": 1000,
           "movement_points_left": 1000,
           "strength": 30,
@@ -159,7 +187,10 @@
         {
           "id": "piromanoa1",
           "type": "piromanoa",
-          "position": { "x": 15, "y": 24 },
+          "position": {
+            "x": 15,
+            "y": 24
+          },
           "movement_points": 1000,
           "movement_points_left": 1000,
           "strength": 30,
@@ -172,20 +203,23 @@
     },
     "ai": {
       "civilization": "mongolak",
-      "era": "Antzinaroa",
+      "era": "Aro Modernoa",
       "leader_name": "Caesar",
       "resources": {
-        "food": 0,
-        "culture": 0,
-        "science": 0,
-        "gold": 0,
-        "natural_resources": 0
+        "food": 500,
+        "culture": 500,
+        "science": 1001,
+        "gold": 500,
+        "natural_resources": 500
       },
       "cities": [
         {
           "id": "city2",
           "name": "EnemyCity",
-          "position": { "x": 13, "y": 17 },
+          "position": {
+            "x": 13,
+            "y": 12
+          },
           "population": 5,
           "buildings": [
             "aletegia",
@@ -205,67 +239,97 @@
           "era": "Antzinaroa",
           "training": [
             {
-              "id": "city1-training",
+              "id": "city2-trainingkolono",
               "type": "kolono",
               "turnsLeft": 0
-            },
-            {
-              "id": "city1-training2",
-              "type": "militar",
-              "turnsLeft": 0
             }
-          ]
+          ],
+          "allowPopulationGrowth": false
         }
       ],
       "units": [
         {
-          "id": "militar3",
-          "type": "militar",
-          "position": { "x": 15, "y": 18 },
+          "id": "kolono999",
+          "type": "kolono",
+          "position": {
+            "x": 13,
+            "y": 11
+          },
           "movement_points": 10,
           "movement_points_left": 10,
-          "strength": 5,
+          "strength": 50,
           "health": 100,
-          "range": 1,
+          "range": 2,
           "visible": false
         },
         {
-          "id": "militar9",
-          "type": "militar",
-          "position": { "x": 11, "y": 13 },
-          "movement_points": 2,
-          "movement_points_left": 2,
+          "id": "langile999",
+          "type": "langile",
+          "position": {
+            "x": 10,
+            "y": 19
+          },
+          "movement_points": 4,
+          "movement_points_left": 4,
           "strength": 5,
           "health": 100,
           "range": 1,
           "visible": false
         }
       ],
-      "technologies": []
+      "technologies": [
+      ]
     },
     "map": {
-      "size": { "width": 50, "height": 50 },
-      "tiles": [["lautada"]],
+      "size": {
+        "width": 50,
+        "height": 50
+      },
+      "tiles": [
+        [
+          "lautada"
+        ]
+      ],
       "visible_objects": [
         {
           "type": "arbola",
-          "position": { "x": 14, "y": 25 }
+          "position": {
+            "x": 14,
+            "y": 25
+          }
         },
         {
           "type": "urrea",
-          "position": { "x": 18, "y": 22 }
+          "position": {
+            "x": 18,
+            "y": 22
+          }
         },
         {
           "type": "ganadua",
-          "position": { "x": 10, "y": 18 }
+          "position": {
+            "x": 10,
+            "y": 18
+          }
         },
         {
           "type": "harria",
-          "position": { "x": 20, "y": 15 }
+          "position": {
+            "x": 20,
+            "y": 15
+          }
         }
       ],
-      "fog_of_war_player": [[false]],
-      "fog_of_war_ai": [[false]]
+      "fog_of_war_player": [
+        [
+          false
+        ]
+      ],
+      "fog_of_war_ai": [
+        [
+          false
+        ]
+      ]
     }
   }
 }

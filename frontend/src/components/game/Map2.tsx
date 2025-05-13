@@ -118,7 +118,7 @@ const Map2: React.FC<Map2Props> = ({
   const canAttack = (attacker: UnitProps, target: UnitProps) => {
     const dx = Math.abs(attacker.position.x - target.position.x);
     const dy = Math.abs(attacker.position.y - target.position.y);
-    const distance = dx + dy;
+    const distance = Math.max(dx, dy); // Chebyshev distance
     return distance <= (attacker.range ?? 1);
   };
 
@@ -354,6 +354,7 @@ const Map2: React.FC<Map2Props> = ({
                     health={city.health}
                     era={city.era}
                     training={city.training}
+                    allowPopulationGrowth={city.allowPopulationGrowth}
                   />
                 )}
                 {unit && isDiscovered && (

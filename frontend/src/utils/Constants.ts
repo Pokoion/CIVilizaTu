@@ -41,7 +41,9 @@ export const UNITS = GameInfo.units.map(unit => ({
   movementPoints: unit.movement_points,
   range: unit.range,
   civilization: unit.civilization,
-  cost: unit.cost
+  requirement: unit.requirements,
+  cost: unit.cost,
+  training_time: unit.training_time,
 }));
 
 // Buildings (BUILDINGS)

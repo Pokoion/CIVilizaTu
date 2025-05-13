@@ -175,10 +175,9 @@ const BarracksView: React.FC<BarracksViewProps> = ({
             const movementPoints = (unit.movementPoints ?? 1) + (hasGurpila ? 3 : 0);
             const hasArkitektura = unlockedTechs.includes("arkitektura");
             const hasIndustria = unlockedTechs.includes("industria");
-            const baseTrainTurns = "trainTurns" in unit && typeof unit.trainTurns === "number"
-              ? unit.trainTurns
-              : DEFAULT_TRAIN_TURNS;
-            const trainTurns = Math.max(1, baseTrainTurns - (hasArkitektura ? 1 : 0) - (hasIndustria ? 1 : 0));
+            let trainTurns = unit.training_time ?? DEFAULT_TRAIN_TURNS;
+            if (hasArkitektura) trainTurns = Math.max(1, trainTurns - 1);
+            if (hasIndustria) trainTurns = Math.max(1, trainTurns - 1);
 
             return (
               <div key={unit.id} className="barracks-unit-card">

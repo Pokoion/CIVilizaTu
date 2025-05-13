@@ -37,11 +37,7 @@ export const fetchUnits = async (): Promise<{ name: string; attack: number; defe
 
 let aiActionStep = 0;
 const aiActionSequence: AiAction[] = [
-  { type: "moveUnit", payload: { unitId: "militar9", position: { x: 10, y: 14 } } },
-  { type: "moveUnit", payload: { unitId: "militar9", position: { x: 9, y: 15 } } },
-  { type: "moveUnit", payload: { unitId: "militar9", position: { x: 8, y: 16 } } },
-  { type: "attackUnit", payload: { attackerId: "militar9", defenderId: "langile1" } },
-  { type: "attackCity", payload: { attackerId: "militar9", cityId: "city1" } },
+  { type: "researchTech", payload: { techId: "espaziontzia" } },
   { type: "endTurn", payload: {} }
 ];
 
@@ -194,6 +190,7 @@ export const loadMap = async (): Promise<{
               }]
               : []
           ),
+      allowPopulationGrowth: c.allowPopulationGrowth,
     })),
     ...fakeGameState.game_state.ai.cities.map((c: any) => ({
       id: c.id,
@@ -220,6 +217,7 @@ export const loadMap = async (): Promise<{
               }]
               : []
           ),
+      allowPopulationGrowth: c.allowPopulationGrowth,
     })),
   ];
 

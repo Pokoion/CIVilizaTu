@@ -5,7 +5,8 @@ import '../../styles/CityBattleView.css';
 interface CityBattleViewProps {
     attacker: UnitProps;
     city: CityProps;
-    onClose: (finalDefense: number, finalHealth: number) => void;
+    onClose?: (finalDefense: number, finalHealth: number) => void;
+    onFinish?: (result: { attackerId: string; cityId: string; newDefense: number; newHealth: number }) => void;
 }
 
 type Phase = 'idle' | 'projectile' | 'cityHit' | 'end';
@@ -33,7 +34,7 @@ const getProjectileSize = (unit: UnitProps) => {
     return { width: 40, height: 40 };
 };
 
-const CityBattleView: React.FC<CityBattleViewProps> = ({ attacker, city, onClose }) => {
+const CityBattleView: React.FC<CityBattleViewProps> = ({ attacker, city, onFinish, onClose }) => {
     const [cityDefense, setCityDefense] = useState(city.defense ?? 20);
     const [cityHealth, setCityHealth] = useState(city.health ?? 100);
     const [phase, setPhase] = useState<Phase>('idle');
@@ -64,7 +65,19 @@ const CityBattleView: React.FC<CityBattleViewProps> = ({ attacker, city, onClose
         } else if (phase === 'cityHit') {
             timeout = setTimeout(() => setPhase('end'), 1100);
         } else if (phase === 'end') {
-            timeout = setTimeout(() => onClose(cityDefense, cityHealth), 1200);
+            timeout = setTimeout(() => {
+                if (onFinish) {
+                    onFinish({
+                        attackerId: attacker.id,
+                        cityId: city.id,
+                        newDefense: cityDefense,
+                        newHealth: cityHealth
+                    });
+                }
+                if (onClose) {
+                    onClose(cityDefense, cityHealth);
+                }
+            }, 1200);
         }
 
         return () => clearTimeout(timeout);

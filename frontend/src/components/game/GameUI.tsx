@@ -37,7 +37,7 @@ const GameUI: React.FC = () => {
         playerEra, aiEra,
         civilization, aiCivilization,
         unlockedTechs, aiUnlockedTechs,
-        selectedVisibleObject, setSelectedVisibleObject, checkVictoryOrDefeat, gameStatus, victoryType
+        selectedVisibleObject, setSelectedVisibleObject, checkVictoryOrDefeat, gameStatus, victoryType, confirmFoundCity,
     } = useGame();
 
     // --- NUEVO: Deshabilitar botones y acciones si es turno de la IA ---
@@ -98,63 +98,28 @@ const GameUI: React.FC = () => {
         setShowBattle(false);
     };
 
-    const confirmFoundCity = (cityName: string) => {
-        if (!isPlayerTurn || !kolonoToFoundCity) return;
-
-        const { position } = kolonoToFoundCity;
-        const era = playerEra || "Antzinaroa";
-        const eraInfo = CITY_ERAS_BY_ID[era] || CITY_ERAS_BY_ID["Antzinaroa"];
-        let production = { ...eraInfo.base_production };
-
-        const playerCities = cities.filter(city => city.owner === 'player');
-        let buildings: string[] = [];
-        if (playerCities.length > 0) {
-            buildings = playerCities[playerCities.length - 1].buildings || [];
-        }
-
-        let totalCultureBonus = 0;
-        let totalFoodBonus = 0;
-        let totalGoldBonus = 0;
-
-        buildings.forEach(buildingId => {
-            const building = BUILDINGS.find(b => b.id === buildingId);
-            if (!building) return;
-            if (building.id === "aletegia") totalFoodBonus += 2;
-            if (building.id === "merkatua") totalGoldBonus += 2;
-            if (building.id === "eskola") totalCultureBonus += (playerCities[playerCities.length - 1]?.population || 1) * 1;
-            if (building.id === "unibertsitatea") totalCultureBonus += (playerCities[playerCities.length - 1]?.population || 1) * 2;
-        });
-
-        production.food += totalFoodBonus;
-        production.gold += totalGoldBonus;
-        production.culture += totalCultureBonus;
-
-        const newCity: CityProps = {
-            id: `city-${Date.now()}`,
-            name: cityName || `Hiria ${playerCities.length + 1}`,
-            position,
-            population: 1,
-            owner: 'player',
-            buildings: [],
-            production,
-            defense: 50,
-            health: 100,
-            era,
-            training: []
-        };
-
-        setCities([...cities, newCity]);
-        setUnits(units.filter((unit) => unit.id !== kolonoToFoundCity.id));
-        setSelectedUnit(null);
-        setSelectedTile(null);
-        setShowFoundCityView(false);
-        setKolonoToFoundCity(null);
-    };
-
     const cancelFoundCity = () => {
         setShowFoundCityView(false);
         setKolonoToFoundCity(null);
     };
+
+    // ...luego tu JSX:
+    {
+        showFoundCityView && kolonoToFoundCity && (
+            <FoundCityView
+                onConfirm={(cityName: string) => {
+                    confirmFoundCity(
+                        cityName,
+                        kolonoToFoundCity.position,
+                        kolonoToFoundCity.owner,
+                        kolonoToFoundCity.id,
+                        playerEra
+                    );
+                }}
+                onCancel={cancelFoundCity}
+            />
+        )
+    }
 
     const handleUnitDeath = (unitId: string) => {
         setUnits(prev => prev.filter(u => u.id !== unitId));
@@ -277,9 +242,17 @@ const GameUI: React.FC = () => {
             )}
 
             {/* FoundCityView */}
-            {showFoundCityView && (
+            {showFoundCityView && kolonoToFoundCity && (
                 <FoundCityView
-                    onConfirm={confirmFoundCity}
+                    onConfirm={(cityName: string) => {
+                        confirmFoundCity(
+                            cityName,
+                            kolonoToFoundCity.position,
+                            kolonoToFoundCity.owner,
+                            kolonoToFoundCity.id,
+                            playerEra
+                        );
+                    }}
                     onCancel={cancelFoundCity}
                 />
             )}
