@@ -1,47 +1,245 @@
-.main-menu-container {
+.main-menu-bg {
+  min-height: 100vh;
+  width: 100vw;
+  background: linear-gradient(120deg, #2e1a0f 0%, #5c3a1e 100%), url('../assets/others/images/background.jpeg') no-repeat center center/cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+}
+
+.main-menu-glass {
+  background: rgba(30, 20, 10, 0.7);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  padding: 2.5rem 3.5rem;
+  min-width: 340px;
+  max-width: 600px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 100vh;
-  background: url('../assets/others/images/background.jpg') no-repeat center center/cover;
-  color: #f4e4c1;
-  font-family: 'Cinzel', serif;
-  text-align: center;
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  max-height: 95vh;
+  overflow-y: auto;
 }
 
-.main-menu-container h1 {
-  font-size: 3rem;
+@media (max-width: 700px) {
+  .main-menu-glass {
+    padding: 1rem 0.5rem;
+    min-width: unset;
+    max-width: 98vw;
+  }
+}
+
+.main-menu-glass h1 {
+  font-size: 3.2rem;
   margin-bottom: 2rem;
   color: #ffd700;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  text-shadow: 2px 2px 8px #000a;
   font-family: 'MedievalSharp', cursive;
 }
 
-.main-menu-container button {
-  margin: 10px;
-  padding: 15px 30px;
-  font-size: 1.2rem;
+.main-menu-btn {
+  margin: 12px 0;
+  padding: 16px 36px;
+  font-size: 1.25rem;
   cursor: pointer;
-  border-radius: 10px;
-  background-color: #8b4513;
-  color: #fff;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #8b4513 0%, #ffd700 100%);
+  color: #fffbe6;
   border: none;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  width: 80%;
-  max-width: 300px;
   font-family: 'Cinzel', serif;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  transition: background 0.3s, transform 0.2s, color 0.2s;
 }
 
-.main-menu-container button:hover {
-  background-color: #a0522d;
-  transform: scale(1.05);
+.main-menu-btn:hover {
+  background: linear-gradient(90deg, #ffd700 0%, #8b4513 100%);
+  color: #2e1a0f;
+  transform: scale(1.04);
 }
 
-.main-menu-container button:active {
-  transform: scale(0.95);
+.main-menu-btn.secondary {
+  background: #444;
+  color: #fff;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.game-setup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  width: 100%;
+  max-width: 520px;
+  background: rgba(30, 20, 10, 0.97);
+  padding: 2rem 2.5rem;
+  border-radius: 18px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+}
+
+.game-setup-form label {
+  font-size: 1.1rem;
+  color: #f4e4c1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  margin-bottom: 0.2rem;
+}
+
+.mainmenu-input {
+  margin-top: 0.5rem;
+  padding: 8px 12px;
+  border-radius: 7px;
+  border: 1px solid #ffd700;
+  font-size: 1rem;
+  width: 100%;
+  background: #fffbe6;
+  color: #5a3c0a;
+  box-shadow: 0 2px 6px rgba(139, 69, 19, 0.08) inset;
+  transition: border 0.2s;
+}
+
+.mainmenu-input:focus {
+  border: 1.5px solid #8b4513;
+  outline: none;
+}
+
+.civilization-select {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.civilization-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.civ-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #3e2c13;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border 0.2s, box-shadow 0.2s, background 0.2s;
+  min-width: 110px;
+  max-width: 120px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  font-size: 1rem;
+  color: #ffe4a0;
+  position: relative;
+}
+
+.civ-card.selected, .civ-card:hover {
+  border: 2px solid #ffd700;
+  background: #5c3a1e;
+  box-shadow: 0 0 16px #ffd70055;
+}
+
+.civ-card input[type="radio"] {
+  display: none;
+}
+
+.civ-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: #fffbe6;
+  border: 1.5px solid #ffd700;
+}
+
+.civ-info {
+  margin-top: 0.5rem;
+  font-size: 0.98rem;
+  color: #f4e4c1;
+  background: rgba(60,40,20,0.8);
+  border-radius: 8px;
+  padding: 8px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.civ-bonus {
+  color: #ffd700;
+  font-weight: bold;
+  display: block;
+  margin-top: 2px;
+}
+
+.game-setup-form select {
+  margin-top: 0.5rem;
+  padding: 8px 12px;
+  border-radius: 7px;
+  border: 1px solid #ffd700;
+  font-size: 1rem;
+  background: #fffbe6;
+  color: #5a3c0a;
+  transition: border 0.2s;
+}
+
+.game-setup-form select:focus {
+  border: 1.5px solid #8b4513;
+  outline: none;
+}
+
+.game-setup-form button {
+  margin-top: 1rem;
+  width: 70%;
+  max-width: 220px;
+  padding: 12px 0;
+  font-size: 1.1rem;
+  background: linear-gradient(90deg, #8b4513 0%, #ffd700 100%);
+  color: #fffbe6;
+  border-radius: 8px;
+  border: none;
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  transition: background 0.3s, transform 0.2s, color 0.2s;
+}
+
+.game-setup-form button:hover {
+  background: linear-gradient(90deg, #ffd700 0%, #8b4513 100%);
+  color: #2e1a0f;
+  transform: scale(1.04);
+}
+
+/* Añade esto a tu MainMenu.css para la lista de partidas guardadas */
+.load-game-container {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.saved-games-list {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.saved-game-item {
+  background: rgba(60,40,20,0.85);
+  border-radius: 10px;
+  margin-bottom: 12px;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #ffe4a0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }

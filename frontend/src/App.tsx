@@ -3,8 +3,6 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
 import MainMenu from './components/MainMenu';
-import GameSetup from './components/GameSetup';
-import GameIntro from './components/GameIntro';
 import ProtectedRoute from './components/ProtectedRoute';
 import GameUI from './components/game/GameUI';
 import { GameProvider } from './context/GameContext';
@@ -36,8 +34,6 @@ const App: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/main-menu" element={<ProtectedRoute><MainMenu /></ProtectedRoute> } />
-        <Route path="/game-setup" element={<ProtectedRoute><GameSetup /></ProtectedRoute>} />
-        <Route path="/game-intro" element={<ProtectedRoute><GameIntro /></ProtectedRoute>} />
         <Route
           path="/game"
           element={

@@ -9,7 +9,7 @@ body, html {
 
 .hero {
     height: 100vh;
-    background: url('../assets/others/images/background.jpg') no-repeat center center/cover;
+    background: url('../assets/others/images/background.jpeg') no-repeat center center/cover;
     position: relative;
     color: #f4e4c1;
 }
