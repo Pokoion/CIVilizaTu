@@ -18,18 +18,79 @@ def create_game():
     game_state = data.get('game_state')
     map_width = data.get('map_width')
     map_height = data.get('map_height')
-  
 
-    # Generar el mapa usando el servicio LLM
+    # Generar el mapa y posiciones iniciales usando el servicio LLM
     map_result = create_map(map_width, map_height)
     if "error" in map_result:
         return jsonify({"error": f"Mapa sortzean errorea: {map_result['error']}"}), 500
 
-    # Inserta el mapa generado en el atributo terrain de GameMap
+    # Matriz de niebla de guerra inicial (todo oculto)
+    fog_player = [[0 for _ in range(map_width)] for _ in range(map_height)]
+    fog_ai = [[0 for _ in range(map_width)] for _ in range(map_height)]
+
+    # Unidades iniciales para cada bando usando las posiciones de player_start y ai_start
+    player_units = []
+    ai_units = []
+    player_starts = map_result.get("player_start", [])
+    ai_starts = map_result.get("ai_start", [])
+
+    if len(player_starts) >= 2:
+        player_units.append({
+            "id": "kolono-start-player",
+            "type": "kolono",
+            "position": player_starts[0],
+            "movement_points": 4,
+            "movement_points_left": 4,
+            "strength": 5,
+            "health": 50,
+            "range": 1
+        })
+        player_units.append({
+            "id": "militar-start-player",
+            "type": "militar",
+            "position": player_starts[1],
+            "movement_points": 3,
+            "movement_points_left": 3,
+            "strength": 15,
+            "health": 75,
+            "range": 1
+        })
+
+    if len(ai_starts) >= 2:
+        ai_units.append({
+            "id": "kolono-start-ai",
+            "type": "kolono",
+            "position": ai_starts[0],
+            "movement_points": 4,
+            "movement_points_left": 4,
+            "strength": 5,
+            "health": 50,
+            "range": 1
+        })
+        ai_units.append({
+            "id": "militar-start-ai",
+            "type": "militar",
+            "position": ai_starts[1],
+            "movement_points": 3,
+            "movement_points_left": 3,
+            "strength": 15,
+            "health": 75,
+            "range": 1
+        })
+
+    # Inserta el mapa generado en el atributo tiles de GameMap
     if "map" not in game_state:
         game_state["map"] = {}
-    game_state["map"]["terrain"] = map_result["mapa"]  
-    game_state["map"]["visible_objects"] = map_result["visible_objects"] 
+    game_state["map"]["tiles"] = map_result["mapa"]
+    game_state["map"]["visible_objects"] = map_result.get("visible_objects", [])
+    game_state["map"]["fog_of_war_player"] = fog_player
+    game_state["map"]["fog_of_war_ai"] = fog_ai
+
+    # Asigna las unidades iniciales
+    if "player" in game_state:
+        game_state["player"]["units"] = player_units
+    if "ai" in game_state:
+        game_state["ai"]["units"] = ai_units
 
     user_id = get_jwt_identity()
     try:
@@ -96,9 +157,7 @@ def load_game(game_id):
 
     return jsonify(partida_to_dict(game)), 200
 
-
-
-# POST /api/games/{gameId}/getIAAction - Get AI actions based on the current game state
+# POST /api/games/getIAAction - Get AI actions based on the current game state
 @games_bp.route('/getIAAction', methods=['POST'])
 @jwt_required()
 def get_ia_action():
@@ -117,5 +176,3 @@ def get_ia_action():
         return jsonify({"error": f"AI zerbitzuaren errorea: {ai_response['error']}"}), 500
 
     return jsonify(ai_response.get("action")), 200
-
-

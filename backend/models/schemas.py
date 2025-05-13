@@ -39,13 +39,14 @@ class City(EmbeddedDocument):
     name = StringField(required=True)
     position = EmbeddedDocumentField(Position)
     population = IntField()
-    buildings = ListField(StringField(), default=[])  
+    buildings = ListField(StringField(), default=[])
     production = EmbeddedDocumentField(Resources)
-    owner = StringField(required=True)  
-    defense = IntField(default=100)    
-    health = IntField(default=100)      
+    owner = StringField(required=True)
+    defense = IntField(default=100)
+    health = IntField(default=100)
     era = StringField()
-    training = EmbeddedDocumentField(trainingElements)  
+    training = EmbeddedDocumentListField(trainingElements)
+    allowPopulationGrowth = BooleanField() 
 
 class Unit(EmbeddedDocument):
     id = StringField(required=True)
@@ -56,7 +57,6 @@ class Unit(EmbeddedDocument):
     strength = IntField()
     health = IntField()
     range = IntField()
-    visible = BooleanField()
 
 
 class PlayerState(EmbeddedDocument):
@@ -82,7 +82,7 @@ class GameMap(EmbeddedDocument):
     visible_objects = EmbeddedDocumentListField(VisibleObject)
     fog_of_war_player = ListField(ListField(IntField()))
     fog_of_war_ai = ListField(ListField(IntField()))
-    terrain = ListField(ListField(StringField()))
+    tiles = ListField(ListField(StringField()))
 
 class GameState(EmbeddedDocument):
     turn = IntField()

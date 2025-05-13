@@ -8,7 +8,8 @@ from flask_jwt_extended import JWTManager
 from routes.auth import auth_bp
 from routes.games import games_bp
 from routes.scenarios import scenarios_bp
-from routes.llm_events import llm_events_bp
+from datetime import timedelta
+#from routes.llm_events import llm_events_bp
 
 # Cargar variables de entorno
 load_dotenv()
@@ -25,6 +26,7 @@ db = MongoEngine(app)
 
 # JWT configuration
 app.config['JWT_SECRET_KEY'] = 'your_jwt_secret'
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=30)
 jwt = JWTManager(app)
 
 # URL del servicio LLM
@@ -34,7 +36,7 @@ LLM_SERVICE_URL = os.environ.get('LLM_SERVICE_URL', 'http://localhost:5001')
 app.register_blueprint(auth_bp)
 app.register_blueprint(games_bp)
 app.register_blueprint(scenarios_bp)
-app.register_blueprint(llm_events_bp)
+#app.register_blueprint(llm_events_bp)
 
 if __name__ == '__main__':
     app.run(port=5000)

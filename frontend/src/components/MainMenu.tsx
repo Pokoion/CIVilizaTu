@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/MainMenu.css';
+import { createGame } from '../services/gameService';
 
 // Civilizaciones y escenarios desde GameInfo.json y carpeta de imágenes
 const civilizations = [
@@ -102,7 +103,7 @@ const MainMenu: React.FC = () => {
     setShowSetup(false);
   };
 
-  const handleCreateGame = (e: React.FormEvent) => {
+  const handleCreateGame = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -124,18 +125,23 @@ const MainMenu: React.FC = () => {
       return;
     }
 
-    navigate('/game', {
-      state: {
+    try {
+      const result = await createGame({
         name: gameName,
         scenario_id: scenario.id,
-        civilization: playerCiv,
-        aiCivilization: aiCiv,
-        leader_name: playerName,
-        ai_leader_name: aiName,
+        playerCiv,
+        aiCiv,
+        playerName,
+        aiName,
         difficulty,
-        map_size: { width: 50, height: 50 }
-      }
-    });
+        map_size: { width: 50, height: 50 },
+      });
+      console.log("Partida sortu da:", result);
+      // No redirigir todavía
+    } catch (err: any) {
+      console.error("Errorea partida sortzean:", err?.response?.data || err.message);
+      setError("Errorea partida sortzean.");
+    }
   };
 
   return (

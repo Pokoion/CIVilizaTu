@@ -22,6 +22,7 @@ export const loginUser = async (email: string, password: string): Promise<{ succ
       return { success: false, message: 'Errorea saioa hastean.' };
     }
   } catch (error: any) {
+    console.log('Login error:', error);
     return { success: false, message: handleFirebaseError(error.code || 'unknown') };
   }
 };
@@ -42,12 +43,13 @@ export const registerUser = async (email: string, password: string): Promise<{ s
       return { success: true, message: response.data.message || 'Erregistratuta.' };
     } else {
       await user.delete();
-      return { success: false, message: 'Errorea erregistratzean.' };
+      return { success: false, message: response.data.error || 'Errorea erregistratzean.' };
     }
   } catch (error: any) {
     if (auth.currentUser) {
       await auth.currentUser.delete();
     }
+    console.log('Register error:', error);
     return { success: false, message: handleFirebaseError(error.code || 'unknown') };
   }
 };

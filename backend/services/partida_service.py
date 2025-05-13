@@ -17,19 +17,24 @@ def save_partida_game_state(game, game_state_dict):
                 game_state_dict[side].setdefault("cities", [])
                 game_state_dict[side].setdefault("units", [])
                 game_state_dict[side].setdefault("technologies", [])
+
         # Asegura que el mapa tenga los nuevos campos requeridos
         if "map" in game_state_dict:
             game_state_dict["map"].setdefault("visible_objects", [])
             game_state_dict["map"].setdefault("fog_of_war_player", [])
             game_state_dict["map"].setdefault("fog_of_war_ai", [])
-            # Asegura que terrain existe y es una matriz de strings
-            if "terrain" not in game_state_dict["map"]:
+            # Asegura que tiles existe y es una matriz de strings
+            if "tiles" not in game_state_dict["map"]:
                 width = game_state_dict["map"].get("size", {}).get("width", 0)
                 height = game_state_dict["map"].get("size", {}).get("height", 0)
-                game_state_dict["map"]["terrain"] = [["" for _ in range(width)] for _ in range(height)]
+                game_state_dict["map"]["tiles"] = [["" for _ in range(width)] for _ in range(height)]
+            # Elimina 'terrain' si existe, ya que no está en el schema
+            if "terrain" in game_state_dict["map"]:
+                del game_state_dict["map"]["terrain"]
             # Si tienes size, asegúrate de que sea un dict con width y height
             if "size" in game_state_dict["map"] and not isinstance(game_state_dict["map"]["size"], dict):
                 game_state_dict["map"]["size"] = dict(game_state_dict["map"]["size"])
+
         game.game_state = GameState(**game_state_dict)
         game.last_saved = datetime.utcnow()
         game.save()
