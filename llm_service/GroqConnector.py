@@ -22,7 +22,7 @@ class GroqConnector:
             'Content-Type': 'application/json'
         }
     
-    def send_prompt(self, prompt, model='llama3-70b', max_tokens=4096):
+    def send_prompt(self, prompt, model='llama3-70b', max_tokens=6000):
         """
         Prompt bat bidali Groq zerbitzura
         

@@ -5,9 +5,32 @@ def main():
     
     # Test prompt
     prompt = """
-    CIVilizaTu jokoan, zure zibilizazioa Euskaldunak dira. 
-    Uneko egoera azaldu eta zure estrategia zehaztu. Tell me
-    how many tokens left you have and the name of your model.
+    Genera un mapa:
+    
+    El mapa debe incluir diferentes tipos de terreno:
+    - Lautada (0)
+    - Basoa (1)
+    - Mendia (2)
+    - Ura (3)
+    - Desertua (4)
+    - Pantanoa (5)
+    - Itsasoa (6)
+    
+    Debes distribuir los terrenos de forma estratégica y coherente, con:
+    - Masas de agua conectadas
+    - Cadenas montañosas
+    - Bosques en zonas apropiadas
+    
+    Responde ÚNICAMENTE con un objeto JSON con esta estructura exacta:
+    {{
+        "terrain": [
+            [0, 2, 4, ...],
+            [2, 2, 3, ...],
+            ...
+        ]
+    }}
+    
+    Donde "terrain" es una matriz bidimensional de 50x50 pero en vez de numeros dame nombres de terrains.
     """
     
     response = connector.send_prompt(prompt)

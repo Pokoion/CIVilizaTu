@@ -4,6 +4,7 @@ import os
 import groq
 from dotenv import load_dotenv
 import time
+from GroqConnector import GroqConnector
 
 # Cargar variables de entorno
 load_dotenv()
@@ -12,15 +13,16 @@ app = Flask(__name__)
 CORS(app)
 
 # Configuración de Groq
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+GROQ_BASE_URL = os.getenv('GROQ_BASE_URL')
 if not GROQ_API_KEY:
     raise ValueError("No se ha configurado GROQ_API_KEY. Asegúrate de que esté en el archivo .env")
 
 # Configuración de modelos
-DEFAULT_MODEL = os.environ.get('GROQ_DEFAULT_MODEL', 'llama-3.3-70b-versatile')
-ALTERNATIVE_MODELS = os.environ.get('GROQ_AVAILABLE_MODELS', 'llama-3.3-70b-versatile,llama-3.1-8b-instant').split(',')
-TEMPERATURE = float(os.environ.get('GROQ_TEMPERATURE', '0.7'))
-MAX_TOKENS = int(os.environ.get('GROQ_MAX_TOKENS', '1024'))
+DEFAULT_MODEL = os.getenv('GROQ_DEFAULT_MODEL')
+ALTERNATIVE_MODELS = os.getenv('GROQ_AVAILABLE_MODELS')
+TEMPERATURE = os.getenv('GROQ_TEMPERATURE')
+MAX_TOKENS = os.getenv('GROQ_MAX_TOKENS')
 
 # Estado del servicio
 current_model = DEFAULT_MODEL
@@ -32,12 +34,10 @@ try:
     groq_client = groq.Groq(api_key=GROQ_API_KEY)
 except TypeError as e:
     print(f"Error al inicializar Groq client: {e}")
-    import httpx
-    from groq.client import Groq
     
-    groq_client = Groq(
+    groq_client = groq.Groq(
         api_key=GROQ_API_KEY,
-        base_url="https://api.groq.com/openai/v1",
+        base_url=GROQ_BASE_URL,
         timeout=60
     )
 
@@ -132,6 +132,112 @@ def get_status():
         'model_switch_count': model_switch_count,
         'last_error_time': last_error_time
     })
+
+@app.route('/eskuratuMapa', methods=['POST'])
+def eskuratu_mapa():
+    global current_model, model_switch_count, last_error_time
+    
+    data = request.json
+    if not data:
+        return jsonify({'error': 'No se recibieron datos'}), 400
+    
+    width = data.get('width')
+    height = data.get('height')
+    
+    if not width or not height:
+        return jsonify({'error': 'Se requieren los parámetros "width" y "height"'}), 400
+    
+    # Crear un prompt para generar el mapa
+    prompt = f"""
+    Genera un mapa para un juego de estrategia por turnos con las siguientes dimensiones:
+    - Ancho: {width}
+    - Alto: {height}
+    
+    El mapa debe incluir diferentes tipos de terreno:
+    - Lautada (0)
+    - Basoa (1)
+    - Mendia (2)
+    - Ura (3)
+    - Desertua (4)
+    - Pantanoa (5)
+    - Itsasoa (6)
+    
+    Debes distribuir los terrenos de forma estratégica y coherente, con:
+    - Masas de agua conectadas
+    - Cadenas montañosas
+    - Bosques en zonas apropiadas
+    
+    Responde ÚNICAMENTE con un objeto JSON con esta estructura exacta:
+    {{
+        "terrain": [
+            [0, 1, 2, ...],
+            [1, 1, 3, ...],
+            ...
+        ]
+    }}
+    
+    Donde "terrain" es una matriz bidimensional de {height}x{width} con valores numéricos entre 0-6 que representan los tipos de terreno.
+    """
+    
+    try:
+        # Usar el cliente directo de Groq para enviar el prompt
+        completion = groq_client.chat.completions.create(
+            model=current_model,
+            messages=[
+                {"role": "system", "content": "Eres un generador de mapas para juegos de estrategia por turnos."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=float(TEMPERATURE),
+            max_tokens=int(MAX_TOKENS)
+        )
+        
+        # Extraer la respuesta del modelo
+        response_text = completion.choices[0].message.content
+        
+        # Procesar la respuesta para extraer el JSON
+        
+        import json
+        import re
+
+        try:
+            json_match = re.search(r'```json\s*([\s\S]*?)\s*```', response_text)
+            if json_match:
+                json_text = json_match.group(1)
+                map_data = json.loads(json_text)
+                if "terrain" in map_data and isinstance(map_data["terrain"], list):
+                    return jsonify(map_data)
+                else:
+                    return jsonify({"error": "La respuesta del modelo no contiene un mapa válido"}), 500
+            else:
+                return jsonify({"error": "No se encontró JSON válido en la respuesta del modelo"}), 500
+        except json.JSONDecodeError:
+            return jsonify({"error": "La respuesta del modelo no es un JSON válido"}), 500
+        
+    
+    except Exception as e:
+        error_str = str(e)
+        print(f"Error al generar mapa: {error_str}")
+        
+        # Manejar el error 429 (Rate limit exceeded)
+        if "429" in error_str or "rate limit" in error_str.lower():
+            previous_model = current_model
+            current_model = get_next_model(current_model)
+            model_switch_count += 1
+            last_error_time = time.time()
+            
+            # Generar un mapa predeterminado
+            basic_terrain = [[2 for _ in range(width)] for _ in range(height)]
+            return jsonify({
+                "terrain": basic_terrain,
+                "model_switched": True,
+                "previous_model": previous_model,
+                "current_model": current_model,
+                "error_type": "rate_limit"
+            }), 429
+        
+        # Para otros errores, generar un mapa predeterminado
+        basic_terrain = [[3 for _ in range(width)] for _ in range(height)]
+        return jsonify({"terrain": basic_terrain, "error": error_str}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
