@@ -23,8 +23,8 @@ def create_map(width, height):
     visible_objects = []
 
     # Posiciones iniciales fijas para cada civilización (puedes ajustar las coordenadas)
-    player_start = [{"x": 2, "y": 2}, {"x": 3, "y": 3}]
-    ai_start = [{"x": 40, "y": 40}, {"x": 41, "y": 41}]
+    player_start = [{"x": 4, "y": 3}, {"x": 5, "y": 3}]
+    ai_start = [{"x": 4, "y": 4}, {"x": 5, "y": 4}]
 
     return {
         "mapa": mapa,
@@ -68,7 +68,7 @@ def get_ai_visible_state(game_state):
         fog_row = fog[i] if i < len(fog) else []
         visible_row = []
         for j, cell in enumerate(row):
-            if j < len(fog_row) and fog_row[j] == 1:
+            if j < len(fog_row) and fog_row[j]:
                 visible_row.append(cell)  
                 # Filtrar objetos visibles dentro del terreno visible
                 for obj in visible_objects:

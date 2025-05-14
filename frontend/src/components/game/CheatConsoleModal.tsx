@@ -163,8 +163,8 @@ const CHEAT_CODES = [
                     (target === "player" && u.owner === "player") || (target === "ai" && u.owner === "ai")
                         ? {
                             ...u,
-                            movement_points: Infinity,
-                            movement_points_left: Infinity
+                            movement_points: 9999,
+                            movement_points_left: 9999
                         }
                         : u
                 )
@@ -174,6 +174,21 @@ const CHEAT_CODES = [
                     ? "🏃‍♂️ Zure unitate guztiek mugimendu infinitua dute!"
                     : "🏃‍♂️ AI-ren unitate guztiek mugimendu infinitua dute!"
             );
+            return true;
+        }
+    },
+    {
+        code: "aro_modernoa",
+        action: (ctx: any, arg?: string) => {
+            let target = "player";
+            if (arg === "1") target = "ai";
+            if (target === "player") {
+                ctx.setPlayerEra("Aro Modernoa");
+                ctx.setMessage("⏩ Zure aroa Aro Modernoan jarri da!");
+            } else {
+                ctx.setAiEra("Aro Modernoa");
+                ctx.setMessage("⏩ AI-ren aroa Aro Modernoan jarri da!");
+            }
             return true;
         }
     },
@@ -337,7 +352,7 @@ const CheatConsoleModal: React.FC<CheatConsoleModalProps> = ({ open, onClose }) 
                     OK
                 </button>
                 <span style={{ color: "#aaa", fontSize: 13, marginTop: 8 }}>
-                    (Pulsa ESC o haz click fuera para cerrar)
+                    (ESC sakatu edo kanpoan itzuli isteko)
                 </span>
             </form>
         </div>

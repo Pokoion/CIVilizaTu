@@ -29,7 +29,7 @@ export function useGameInit(
         y: (window.innerHeight / 2) - (mapHeightPx / 2),
       };
       setCameraOffset(initialCameraOffset);
-      setInitialCameraOffset(initialCameraOffset); // ahora sí existe
+      setInitialCameraOffset(initialCameraOffset);
     });
   }, [gameManager, setMapState, setUnits, setCameraOffset, setInitialCameraOffset]);
 }

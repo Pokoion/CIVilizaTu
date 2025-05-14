@@ -135,7 +135,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
               setSelectedVisibleObject && setSelectedVisibleObject(null);
             }}
           >
-            Recolectar
+            Jaso
           </button>
         )}
       </div>
@@ -162,9 +162,9 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
 
     return (
       <div>
-        <h3>Atakar enemigo</h3>
-        <p>Atacante: {selectedUnit.type} - {selectedUnit.id}</p>
-        <p>Enemigo: {selectedEnemyUnit.type} - {selectedEnemyUnit.id}</p>
+        <h3>Etsaia erasotu</h3>
+        <p>Erasotzailea: {selectedUnit.type}</p>
+        <p>Etsaia: {selectedEnemyUnit.type}</p>
         <div style={{ textAlign: 'right' }}>
           {puedeAtacarUnidad ? (
             <button
@@ -191,7 +191,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
                 }
               }}
             >
-              Atakar enemigo
+              Etsaia erasotu
             </button>
           ) : (
             <span>
@@ -305,8 +305,8 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     return (
       <div>
         <h3>Unitatea</h3>
-        <p>Nombre: {selectedUnit.type} - {selectedUnit.id}</p>
-        <p>Movimiento: {selectedUnit.movement_points_left}/{selectedUnit.movement_points}</p>
+        <p>Mota: {selectedUnit.type} - {selectedUnit.id}</p>
+        <p>Mugimendu Puntuak: {selectedUnit.movement_points_left}/{selectedUnit.movement_points}</p>
         <p>Osasuna: {selectedUnit.health}</p>
         <p>Indarra: {selectedUnit.strength}</p>
         <p>Rangoa: {selectedUnit.range ?? 1}</p>

@@ -9,9 +9,10 @@ import FoundCityView from './FoundCityView';
 import CheatConsoleModal from './CheatConsoleModal';
 import { UnitProps, TerrainType, CityProps } from '../../types';
 import '../../styles/GameUI.css';
-import { BUILDINGS, CITY_ERAS_BY_ID, TECHS } from '../../utils/Constants';
+import { TECHS } from '../../utils/Constants';
 import { useGame } from '../../context/GameContext';
 import { useNavigate } from "react-router-dom";
+import { saveGame } from '../../services/gameService';
 
 const GameUI: React.FC = () => {
     const [selectedUnit, setSelectedUnit] = useState<UnitProps | null>(null);
@@ -26,6 +27,8 @@ const GameUI: React.FC = () => {
     const [kolonoToFoundCity, setKolonoToFoundCity] = useState<UnitProps | null>(null);
     const [battleMode, setBattleMode] = useState<'full' | 'single'>('full');
     const [cheatOpen, setCheatOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
     const navigate = useNavigate();
 
     // Usa el contexto global para selectedVisibleObject y recursos
@@ -37,7 +40,9 @@ const GameUI: React.FC = () => {
         playerEra, aiEra,
         civilization, aiCivilization,
         unlockedTechs, aiUnlockedTechs,
-        selectedVisibleObject, setSelectedVisibleObject, checkVictoryOrDefeat, gameStatus, victoryType, confirmFoundCity,
+        selectedVisibleObject, setSelectedVisibleObject, checkVictoryOrDefeat,
+        gameStatus, victoryType, confirmFoundCity, isLoaded, gameManager, visibleObjects,
+        mapState, gameId, cheatsUsed
     } = useGame();
 
     // --- NUEVO: Deshabilitar botones y acciones si es turno de la IA ---
@@ -65,6 +70,42 @@ const GameUI: React.FC = () => {
         setKolonoToFoundCity(kolono);
     };
 
+    const handleSaveAndMenu = async () => {
+        setSaving(true);
+        setSaveError(null);
+        try {
+            // Construye el game_state igual que en GameContext
+            const game_state = gameManager.buildGameState
+                ? gameManager.buildGameState({
+                    turn,
+                    currentSide,
+                    unlockedTechs,
+                    aiUnlockedTechs,
+                    civilization,
+                    aiCivilization,
+                    playerEra,
+                    aiEra,
+                    resources,
+                    aiResources,
+                    cities,
+                    units,
+                    mapState,
+                    visibleObjects,
+                    cheatsUsed,
+                })
+                : {}; // fallback si no existe
+            // Usa el id de partida si está en gameManager o contexto
+            if (!gameId) throw new Error("No se encontró el ID de la partida.");
+            await saveGame(gameId, game_state);
+            navigate("/main-menu");
+        } catch (err: any) {
+            setSaveError("Error al guardar la partida.");
+            console.error(err);
+        } finally {
+            setSaving(false);
+        }
+    };
+
     React.useEffect(() => {
         if (message) {
             const timeout = setTimeout(() => setMessage(""), 2500);
@@ -86,6 +127,10 @@ const GameUI: React.FC = () => {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, []);
 
+    if (!isLoaded) {
+        return <div style={{ color: "#fff", textAlign: "center", marginTop: "2rem" }}>Kargatzen...</div>;
+    }
+
     const handleCloseBattle = () => {
         if (selectedUnit) {
             const updated = units.find(u => u.id === selectedUnit.id);
@@ -103,23 +148,6 @@ const GameUI: React.FC = () => {
         setKolonoToFoundCity(null);
     };
 
-    // ...luego tu JSX:
-    {
-        showFoundCityView && kolonoToFoundCity && (
-            <FoundCityView
-                onConfirm={(cityName: string) => {
-                    confirmFoundCity(
-                        cityName,
-                        kolonoToFoundCity.position,
-                        kolonoToFoundCity.owner,
-                        kolonoToFoundCity.id,
-                        playerEra
-                    );
-                }}
-                onCancel={cancelFoundCity}
-            />
-        )
-    }
 
     const handleUnitDeath = (unitId: string) => {
         setUnits(prev => prev.filter(u => u.id !== unitId));
@@ -228,6 +256,10 @@ const GameUI: React.FC = () => {
                     {isPlayerTurn && (
                         <button onClick={() => setShowTechTree(true)}>Teknologia zuhaitza</button>
                     )}
+                    <button onClick={handleSaveAndMenu} disabled={saving} style={{ marginLeft: 8 }}>
+                        {saving ? "Gordetzen..." : "Gorde eta itzuli menura"}
+                    </button>
+                    {saveError && <span style={{ color: "red", marginLeft: 8 }}>{saveError}</span>}
                 </div>
             </div>
             {showBattle && selectedUnit && selectedEnemyUnit && (
@@ -241,59 +273,61 @@ const GameUI: React.FC = () => {
                 />
             )}
 
-            {/* FoundCityView */}
-            {showFoundCityView && kolonoToFoundCity && (
-                <FoundCityView
-                    onConfirm={(cityName: string) => {
-                        confirmFoundCity(
-                            cityName,
-                            kolonoToFoundCity.position,
-                            kolonoToFoundCity.owner,
-                            kolonoToFoundCity.id,
-                            playerEra
-                        );
-                    }}
-                    onCancel={cancelFoundCity}
-                />
-            )}
+            {
+                showFoundCityView && kolonoToFoundCity && (
+                    <FoundCityView
+                        onConfirm={(cityName: string) => {
+                            confirmFoundCity(
+                                cityName,
+                                kolonoToFoundCity.position,
+                                kolonoToFoundCity.owner,
+                                kolonoToFoundCity.id,
+                                playerEra
+                            );
+                            cancelFoundCity();
+                        }}
+                        onCancel={cancelFoundCity}
+                    />
+                )
+            }
 
             {/* MODAL DE VICTORIA/DERROTA */}
             {gameStatus === "victory" && victoryType === "science" && (
                 <div className="victory-modal">
                     <div className="victory-content science-victory animate-pop">
-                        <h1>🚀 VICTORIA CIENTÍFICA</h1>
+                        <h1>🚀 GARAIPEN ZIENTIFIKOA</h1>
                         <p className="victory-desc">
-                            ¡Has lanzado el <b>Espaziontzia</b> y tu civilización viaja a las estrellas!<br />
+                            <b>Espaziontzia</b> lortu duzu eta espaziora zoaz!<br />
                             <span style={{ fontSize: "2.5em" }}>🌌🛰️✨</span>
                         </p>
                         <div className="science-rocket"></div>
-                        <button onClick={() => window.location.reload()}>Volver al menú</button>
+                        <button onClick={() => navigate("/main-menu")}>Menura itzuli</button>
                     </div>
                 </div>
             )}
             {gameStatus === "victory" && victoryType === "culture" && (
                 <div className="victory-modal">
                     <div className="victory-content culture-victory animate-pop">
-                        <h1>🎨 VICTORIA CULTURAL</h1>
+                        <h1>🎨 GARAIPEN KULTURALA</h1>
                         <p className="victory-desc">
-                            ¡Tu civilización ha alcanzado <b>10000 kultura</b> y es admirada en todo el mundo!<br />
+                            ¡Zure zibilizazioak <b>10000 kultura</b> lortu du eta mundu guztiak miresten du!<br />
                             <span style={{ fontSize: "2.5em" }}>🎭📚🎶</span>
                         </p>
                         <div className="culture-fireworks"></div>
-                        <button onClick={() => navigate("/main-menu")}>Volver al menú</button>
+                        <button onClick={() => navigate("/main-menu")}>Menura itzuli</button>
                     </div>
                 </div>
             )}
             {gameStatus === "victory" && victoryType === "conquest" && (
                 <div className="victory-modal">
                     <div className="victory-content conquest-victory animate-pop">
-                        <h1>⚔️ VICTORIA MILITAR</h1>
+                        <h1>⚔️ GARAIPEN MILITARRA</h1>
                         <p className="victory-desc">
-                            ¡Has derrotado a todos tus enemigos!<br />
+                            Etsai guztiak garaitu dituzu<br />
                             <span style={{ fontSize: "2.5em" }}>🏰🔥🏹</span>
                         </p>
                         <div className="conquest-swords"></div>
-                        <button onClick={() => navigate("/main-menu")}>Volver al menú</button>
+                        <button onClick={() => navigate("/main-menu")}>Menura itzuli</button>
                     </div>
                 </div>
             )}
@@ -302,10 +336,10 @@ const GameUI: React.FC = () => {
                     <div className="defeat-content animate-pop">
                         <h1>💀 DERROTA</h1>
                         <p className="victory-desc">
-                            Tu civilización ha caído.<br />
+                            Zure zibilizazioak galdu egin du.<br />
                             <span style={{ fontSize: "2.5em" }}>☠️</span>
                         </p>
-                        <button onClick={() => navigate("/main-menu")}>Volver al menú</button>
+                        <button onClick={() => navigate("/main-menu")}>Menura itzuli</button>
                     </div>
                 </div>
             )}

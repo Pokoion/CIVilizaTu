@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/MainMenu.css';
-import { createGame, getSavedGames } from '../services/gameService';
+import { deleteGame, createGame, getSavedGames, getGameById } from '../services/gameService';
 
 // Civilizaciones y escenarios desde GameInfo.json y carpeta de imágenes
 const civilizations = [
@@ -106,11 +106,22 @@ const MainMenu: React.FC = () => {
         difficulty,
         map_size: { width: 50, height: 50 },
       });
-      console.log("Partida sortu da:", result);
-      // TODO cargaratu partida
+      console.log("JSON recibido al CREAR partida:", result);
+      // Solo navega si el JSON es correcto
+      navigate('/game', { state: { partida: result.game, loaded: true } });
     } catch (err: any) {
       console.error("Errorea partida sortzean:", err?.response?.data || err.message);
       setError("Errorea partida sortzean.");
+    }
+  };
+
+  const handleDeleteGame = async (gameId: string) => {
+    if (!window.confirm("Ziur zaude partida hau ezabatu nahi duzula?")) return;
+    try {
+      await deleteGame(gameId);
+      setSavedGames(games => games.filter(g => g.game_id !== gameId));
+    } catch (err) {
+      alert("Errorea partida ezabatzean.");
     }
   };
 
@@ -280,9 +291,24 @@ const MainMenu: React.FC = () => {
                     <button
                       className="main-menu-btn"
                       style={{ marginTop: 8 }}
-                      onClick={() => navigate('/game', { state: { ...game, loaded: true } })}
+                      onClick={async () => {
+                        try {
+                          const partidaCompleta = await getGameById(game.game_id);
+                          console.log("JSON recibido al CARGAR partida:", partidaCompleta);
+                          navigate('/game', { state: { partida: partidaCompleta, loaded: true } });
+                        } catch (err) {
+                          console.error("Errorea partida kargatzean:", err);
+                          // Puedes mostrar un error al usuario aquí
+                        }
+                      }}
                     >
                       Kargatu
+                    </button>
+                    <button
+                      className="main-menu-btn delete"
+                      onClick={() => handleDeleteGame(game.game_id)}
+                    >
+                      Ezabatu
                     </button>
                   </div>
                 ))}

@@ -91,7 +91,7 @@ const CityBattleView: React.FC<CityBattleViewProps> = ({ attacker, city, onFinis
         <div className="city-battle-overlay">
             <div className="city-battle-container">
                 <div className="city-battle-title">
-                    🏰 Hiria setiatzen! 🏹
+                    🏰 Hiria erasotzen! 🏹
                 </div>
                 <div className="city-battle-row">
                     {/* Atacante */}

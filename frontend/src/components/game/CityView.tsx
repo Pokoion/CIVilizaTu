@@ -313,7 +313,7 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
                   </div>
                 </>
               )
-              : <>Maximo erara iritsita</>
+              : <>Era maximora iritsita</>
             }
           </button>
         </div>
@@ -367,7 +367,7 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
         </div>
 
         <div className="city-buildings">
-          <h3>Edificios Construidos ({constructedBuildings.length}/{buildingLimit})</h3>
+          <h3>Eraikitako Eraikinak ({constructedBuildings.length}/{buildingLimit})</h3>
           {constructedBuildings.length > 0 ? (
             <ul className="building-list">
               {constructedBuildings.map((buildingId, idx) => {
@@ -414,7 +414,7 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
         </div>
 
         <div className="city-build-options">
-          <h3>Construir Edificios</h3>
+          <h3>Eraikinak Eraiki</h3>
           {availableBuildings.length === 0 ? (
             <div className="city-message city-message-warning" style={{ marginTop: 16 }}>
               Ez dago eraikin erabilgarririk teknologiarik gabe.
@@ -451,7 +451,7 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
                       ))}
                     </div>
                     <button onClick={() => handleBuild(building)} className="build-btn">
-                      Construir
+                      Eraiki
                     </button>
                   </div>
                 ))}

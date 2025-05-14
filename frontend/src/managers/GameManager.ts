@@ -1,43 +1,139 @@
 import MapManager from './MapManager';
 import { Unit, City, MapState } from '../types';
-import { loadMap } from '../services/api';
 
 class GameManager {
   private mapManager: MapManager;
 
-  constructor() {
-    this.mapManager = new MapManager({
-      size: { width: 0, height: 0 },
-      tiles: [],
-      fog_of_war_player: [],
-      fog_of_war_ai: [],
-    });
-  }
-
-  public async initializeGame(): Promise<void> {
-    console.log('Initializing game...');
-    try {
-      const apiResponse = await loadMap();
-
-      // Asegúrate de que el mapState tiene ambos fogs
-      const mapState: MapState = {
-        size: apiResponse.map.size,
-        tiles: apiResponse.map.tiles,
-        fog_of_war_player: apiResponse.map.fog_of_war_player,
-        fog_of_war_ai: apiResponse.map.fog_of_war_ai,
-      };
-
-      const units: Unit[] = apiResponse.units.map((unit: any) => ({ ...unit }));
-      const cities: City[] = apiResponse.cities.map((city: any) => ({ ...city }));
-
-      this.mapManager.setMap(mapState);
-      this.mapManager.setUnits(units);
-      this.mapManager.setCities(cities);
-      console.log('Game initialized with map from API.');
-    } catch (error) {
-      console.error('Error loading map from API:', error);
+  constructor(initialState?: { map: MapState; units: Unit[]; cities: City[] }) {
+    if (initialState) {
+      this.mapManager = new MapManager(initialState.map);
+      this.mapManager.setUnits(initialState.units);
+      this.mapManager.setCities(initialState.cities);
+    } else {
+      this.mapManager = new MapManager({
+        size: { width: 0, height: 0 },
+        tiles: [],
+        fog_of_war_player: [],
+        fog_of_war_ai: [],
+      });
     }
   }
+
+public buildGameState(params: {
+  turn: number;
+  currentSide: 'player' | 'ai';
+  unlockedTechs: string[];
+  aiUnlockedTechs: string[];
+  civilization: string;
+  aiCivilization: string;
+  playerEra: string;
+  aiEra: string;
+  resources: any;
+  aiResources: any;
+  cities: City[];
+  units: Unit[];
+  mapState: MapState;
+  visibleObjects: { type: string; position: { x: number; y: number } }[];
+  cheatsUsed: string[];
+}) {
+  function cleanUnit(u: Unit) {
+    return {
+      id: u.id,
+      type: u.type,
+      position: u.position,
+      movement_points: u.movement_points,
+      movement_points_left: u.movement_points_left,
+      strength: u.strength,
+      health: u.health,
+      range: u.range
+    };
+  }
+  function cleanCity(c: City) {
+    return {
+      id: c.id,
+      name: c.name,
+      position: c.position,
+      population: c.population,
+      buildings: c.buildings,
+      production: c.production,
+      defense: c.defense,
+      health: c.health,
+      era: c.era,
+      training: c.training,
+      allowPopulationGrowth: c.allowPopulationGrowth,
+      owner: c.owner,
+    };
+  }
+  function cleanVisibleObject(obj: { type: string; position: { x: number; y: number } }) {
+    return {
+      type: obj.type,
+      position: obj.position,
+    };
+  }
+  const {
+    turn,
+    currentSide,
+    unlockedTechs,
+    aiUnlockedTechs,
+    civilization,
+    aiCivilization,
+    playerEra,
+    aiEra,
+    resources,
+    aiResources,
+    cities,
+    units,
+    mapState,
+    visibleObjects,
+  } = params;
+  return {
+    turn,
+    current_player: currentSide,
+    cheats_used: params.cheatsUsed,
+    player: {
+      civilization,
+      era: playerEra,
+      leader_name: "Player",
+      resources,
+      cities: cities.filter(c => c.owner === "player").map(cleanCity),
+      units: units.filter(u => u.owner === "player").map(cleanUnit),
+      technologies: unlockedTechs,
+    },
+    ai: {
+      civilization: aiCivilization,
+      era: aiEra,
+      leader_name: "AI",
+      resources: aiResources,
+      cities: cities.filter(c => c.owner === "ai").map(cleanCity),
+      units: units.filter(u => u.owner === "ai").map(cleanUnit),
+      technologies: aiUnlockedTechs,
+    },
+    map: {
+      size: mapState.size,
+      tiles: mapState.tiles,
+      visible_objects: (visibleObjects || []).map(cleanVisibleObject),
+      fog_of_war_player: mapState.fog_of_war_player,
+      fog_of_war_ai: mapState.fog_of_war_ai,
+    }
+  };
+}
+
+public async initializeGame(initialState?: { map: MapState; units: Unit[]; cities: City[] }): Promise<void> {
+  if (initialState) {
+    this.mapManager.setMap(initialState.map);
+    this.mapManager.setUnits(initialState.units);
+    this.mapManager.setCities(initialState.cities);
+    console.log('Game initialized with provided state.');
+    return;
+  }
+  // Solo para debug/sandbox:
+  console.log('Initializing game...');
+  try {
+    console.log('Loading map from MOCK...');
+  } catch (error) {
+    console.error('Error loading map from MOCK:', error);
+  }
+}
 
   reloadUnitsMovement(units: Unit[]): Unit[] {
     return units.map(unit => ({

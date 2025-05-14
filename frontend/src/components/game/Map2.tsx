@@ -10,10 +10,8 @@ import { useUnitMovement } from './hooks/useUnitMovement';
 import { useGameInit } from './hooks/useGameInit';
 import { useCameraDrag } from './hooks/useCameraDrag';
 import { useGame } from '../../context/GameContext';
-import { UNITS, TILE_TYPES } from '../../utils/Constants';
+import { UNITS, TILE_TYPES, TILE_SIZE } from '../../utils/Constants';
 import { getVisibleTiles } from './hooks/useUnitMovement';
-
-const gameManager = new GameManager();
 
 type Map2Props = {
   setSelectedUnit: (unit: UnitProps | null) => void;
@@ -32,7 +30,7 @@ const Map2: React.FC<Map2Props> = ({
     mapState, setMapState, units, setUnits, cities, setCities,
     setSelectedCity, selectedUnitId, setSelectedUnitId, setMessage, setCamera,
     setInitialCameraOffset, visibleObjects, setVisibleObjects, deployingUnit, setDeployingUnit, unlockedTechs,
-    currentSide
+    currentSide, gameManager
   } = useGame();
 
   const gridRef = useRef<HTMLDivElement>(null);
@@ -53,6 +51,19 @@ const Map2: React.FC<Map2Props> = ({
       setSelectedUnit(updatedUnit);
     }
   }, [units, selectedUnitId, setSelectedUnit]);
+
+  useEffect(() => {
+    // Centra la cámara en el centro del mapa al cambiar de turno
+    if (mapState.size.width === 0 || mapState.size.height === 0) return;
+
+    const mapWidthPx = mapState.size.width * TILE_SIZE;
+    const mapHeightPx = mapState.size.height * TILE_SIZE;
+    const offset = {
+      x: (window.innerWidth / 2) - (mapWidthPx / 2),
+      y: (window.innerHeight / 2) - (mapHeightPx / 2),
+    };
+    setCameraOffset(offset);
+  }, [currentSide, mapState.size.width, mapState.size.height]);
 
   // Camera drag handlers
   useCameraDrag(setCameraOffset);

@@ -238,7 +238,7 @@ const BarracksView: React.FC<BarracksViewProps> = ({
           </button>
         </div>
 
-        <h3 className="barracks-queue-title">Cola de Entrenamiento ({trainingQueue.length}/{barracksCount})</h3>
+        <h3 className="barracks-queue-title">Entrenamendu ilara ({trainingQueue.length}/{barracksCount})</h3>
         <ul className="barracks-queue-list">
           {trainingQueue.map((item) => {
             // Busca la unidad en UNITS, no solo en availableUnits

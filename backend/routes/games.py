@@ -25,8 +25,8 @@ def create_game():
         return jsonify({"error": f"Mapa sortzean errorea: {map_result['error']}"}), 500
 
     # Matriz de niebla de guerra inicial (todo oculto)
-    fog_player = [[0 for _ in range(map_width)] for _ in range(map_height)]
-    fog_ai = [[0 for _ in range(map_width)] for _ in range(map_height)]
+    fog_player = [[False for _ in range(map_width)] for _ in range(map_height)]
+    fog_ai = [[False for _ in range(map_width)] for _ in range(map_height)]
 
     # Unidades iniciales para cada bando usando las posiciones de player_start y ai_start
     player_units = []
@@ -176,3 +176,13 @@ def get_ia_action():
         return jsonify({"error": f"AI zerbitzuaren errorea: {ai_response['error']}"}), 500
 
     return jsonify(ai_response.get("action")), 200
+
+@games_bp.route('/<string:game_id>', methods=['DELETE'])
+@jwt_required()
+def delete_game(game_id):
+    user_id = get_jwt_identity()
+    deleted = delete_partida(game_id, user_id)
+    if deleted:
+        return jsonify({"message": "Partida ezabatu da"}), 200
+    else:
+        return jsonify({"error": "Partida ez da aurkitu"}), 404

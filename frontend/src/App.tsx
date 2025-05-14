@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Navigate, useLocation, BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
 import MainMenu from './components/MainMenu';
@@ -20,10 +20,26 @@ const Home: React.FC = () => (
       </main>
     </div>
     <footer>
-      <p>&copy; 2023 CIVilizaTu. Eskubide guztiak erreserbatuta.</p>
+      <p>&copy; 2025 CIVilizaTu. Eskubide guztiak erreserbatuta.</p>
     </footer>
   </div>
 );
+
+const GameRouteWrapper: React.FC = () => {
+  const location = useLocation();
+  // Solo deja pasar si hay partida en el state (viene de MainMenu)
+  const partida = location.state?.partida || null;
+  if (!partida) {
+    // Si no hay partida, redirige al menú principal
+    return <Navigate to="/main-menu" replace />;
+  }
+
+  return (
+    <GameProvider initialGameState={partida}>
+      <GameUI />
+    </GameProvider>
+  );
+};
 
 const App: React.FC = () => {
   console.log('App renderizado correctamente');
@@ -33,14 +49,12 @@ const App: React.FC = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/main-menu" element={<ProtectedRoute><MainMenu /></ProtectedRoute> } />
+        <Route path="/main-menu" element={<ProtectedRoute><MainMenu /></ProtectedRoute>} />
         <Route
           path="/game"
           element={
             <ProtectedRoute>
-              <GameProvider>
-                <GameUI />
-              </GameProvider>
+              <GameRouteWrapper />
             </ProtectedRoute>
           }
         />

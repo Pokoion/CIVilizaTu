@@ -1,6 +1,7 @@
 from models.schemas import Partida, GameState
 from mongoengine import ValidationError
 from datetime import datetime
+import pprint
 
 def get_partida_by_id(game_id, user_id):
     return Partida.objects(id=game_id, user_id=user_id).first()
@@ -35,13 +36,24 @@ def save_partida_game_state(game, game_state_dict):
             if "size" in game_state_dict["map"] and not isinstance(game_state_dict["map"]["size"], dict):
                 game_state_dict["map"]["size"] = dict(game_state_dict["map"]["size"])
 
+        print("Claves game_state_dict:", list(game_state_dict.keys()))
+        if "map" in game_state_dict:
+            print("Claves game_state_dict['map']:", list(game_state_dict["map"].keys()))
         game.game_state = GameState(**game_state_dict)
         game.last_saved = datetime.utcnow()
         game.save()
         return True, None
     except ValidationError as e:
+        print("ValidationError:", repr(e))
+        import traceback
+        traceback.print_exc()
+        if hasattr(e, 'to_dict'):
+            print("Errores detallados:", e.to_dict())
         return False, f"GameState error: {str(e)}"
     except Exception as e:
+        print("Error inesperado:", repr(e))
+        import traceback
+        traceback.print_exc()
         return False, f"Unexpected error: {str(e)}"
 
 def partida_to_dict(game):

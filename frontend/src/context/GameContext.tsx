@@ -2,11 +2,11 @@ import React, { createContext, useContext, useState, useEffect, useRef } from "r
 import { MapState, UnitProps, CityProps, TrainingUnit } from "../types";
 import TurnManager from "../managers/TurnManager";
 import GameManager from "../managers/GameManager";
-import { loadMap, fetchNextAiAction } from "../services/api";
 import { applyAiAction } from "../utils/aiActions";
 import BattleView from "../components/game/BattleView";
 import CityBattleView from "../components/game/CityBattleView";
 import { CITY_ERAS_BY_ID, BUILDINGS, VISIBLE_OBJECTS_BY_ID } from "../utils/Constants";
+import { saveGame, fetchNextAiAction } from "../services/gameService";
 
 type GameContextType = {
   mapState: MapState;
@@ -88,7 +88,6 @@ type GameContextType = {
       position: { x: number; y: number };
     } | null>
   >;
-  gameManager: GameManager;
   deployingUnit: { unit: TrainingUnit; city: CityProps } | null;
   setDeployingUnit: React.Dispatch<
     React.SetStateAction<{ unit: TrainingUnit; city: CityProps } | null>
@@ -112,6 +111,9 @@ type GameContextType = {
   aiLog: (msg: string) => void;
   cheatsUsed: string[];
   setCheatsUsed: React.Dispatch<React.SetStateAction<string[]>>;
+  gameManager: GameManager;
+  isLoaded: boolean;
+  gameId: string;
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -140,8 +142,50 @@ function calculateResourcesForCities(cities: CityProps[], unlockedTechs: string[
   return { food, gold, culture, science, natural_resources };
 }
 
-export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
+// --- FUNCIONES DE LIMPIEZA PARA GUARDADO ---
+function cleanUnit(u: UnitProps) {
+  return {
+    id: u.id,
+    type: u.type,
+    position: u.position,
+    movement_points: u.movement_points,
+    movement_points_left: u.movement_points_left,
+    strength: u.strength,
+    health: u.health,
+    range: u.range
+  };
+}
+
+function cleanCity(c: CityProps) {
+  return {
+    id: c.id,
+    name: c.name,
+    position: c.position,
+    population: c.population,
+    buildings: c.buildings,
+    production: c.production,
+    defense: c.defense,
+    health: c.health,
+    era: c.era,
+    training: c.training,
+    allowPopulationGrowth: c.allowPopulationGrowth,
+    owner: c.owner,
+
+  };
+}
+
+function cleanVisibleObject(obj: { type: string; position: { x: number; y: number } }) {
+  return {
+    type: obj.type,
+    position: obj.position,
+  };
+}
+
+// --- FUNCIÓN PARA CONSTRUIR EL GAME STATE LIMPIO ---
+
+export const GameProvider: React.FC<{ children: React.ReactNode, initialGameState?: any }> = ({
   children,
+  initialGameState
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [mapState, setMapState] = useState<MapState>({
@@ -197,6 +241,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   } | null>(null);
   const aiLog = (msg: string) => setMessage(`[AI] ${msg}`);
   const [cheatsUsed, setCheatsUsed] = useState<string[]>([]);
+  const gameManagerRef = useRef<GameManager | null>(null);
+  const [gameId, setGameId] = useState<string>("");
 
   const confirmFoundCity = (
     cityName: string,
@@ -257,45 +303,24 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [cities, units, isAiRunning, currentSide]);
 
   const logGameState = () => {
-    const gameStateJson = {
-      user_id: "debug-user",
-      name: "Debug partida",
-      scenario_id: "debug-scenario",
-      created_at: new Date().toISOString(),
-      last_saved: new Date().toISOString(),
-      cheats_used: [],
-      game_state: {
-        turn,
-        current_player: currentSide,
-        cheats_used: [],
-        player: {
-          civilization,
-          era: playerEra,
-          leader_name: "Player",
-          resources,
-          cities: cities.filter(c => c.owner === "player"),
-          units: units.filter(u => u.owner === "player"),
-          technologies: unlockedTechs,
-        },
-        ai: {
-          civilization: aiCivilization,
-          era: aiEra,
-          leader_name: "AI",
-          resources: aiResources,
-          cities: cities.filter(c => c.owner === "ai"),
-          units: units.filter(u => u.owner === "ai"),
-          technologies: aiUnlockedTechs,
-        },
-        map: {
-          size: mapState.size,
-          tiles: mapState.tiles,
-          visible_objects: visibleObjects,
-          fog_of_war_player: mapState.fog_of_war_player,
-          fog_of_war_ai: mapState.fog_of_war_ai,
-        }
-      }
-    };
-    console.log("FAKEGAMESTATE JSON:", JSON.stringify(gameStateJson, null, 2));
+    const gameStateJson = gameManager.buildGameState({
+      turn,
+      currentSide,
+      unlockedTechs,
+      aiUnlockedTechs,
+      civilization,
+      aiCivilization,
+      playerEra,
+      aiEra,
+      resources,
+      aiResources,
+      cities,
+      units,
+      mapState,
+      visibleObjects,
+      cheatsUsed
+    });
+    console.log("GAMESTATE JSON:", JSON.stringify(gameStateJson, null, 2));
   };
 
   const unitsRef = useRef(units);
@@ -507,6 +532,33 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     checkVictoryOrDefeat();
     setCurrentSide('player');
     setIsAiRunning(false);
+
+    setTimeout(async () => {
+      if (gameId) {
+        const game_state = gameManager.buildGameState({
+          turn,
+          currentSide: 'player',
+          unlockedTechs,
+          aiUnlockedTechs,
+          civilization,
+          aiCivilization,
+          playerEra,
+          aiEra,
+          resources,
+          aiResources,
+          cities,
+          units,
+          mapState,
+          visibleObjects,
+          cheatsUsed
+        });
+        try {
+          await saveGame(gameId, game_state);
+        } catch (err) {
+          console.error("Error saving game:", err);
+        }
+      }
+    }, 10);
   };
 
   useEffect(() => {
@@ -518,7 +570,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       if (newState.cities) setCities(newState.cities);
       if (newState.visibleObjects) setVisibleObjects(newState.visibleObjects);
 
-      // Añade estas líneas:
       if (newState.aiUnlockedTechs) setAiUnlockedTechs(newState.aiUnlockedTechs);
       if (newState.aiEra) setAiEra(newState.aiEra);
       if (newState.aiResources) setAiResources(newState.aiResources);
@@ -652,60 +703,179 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  function recalculateFogOfWar(units: UnitProps[], size: { width: number; height: number }) {
+    const fog = Array.from({ length: size.height }, () =>
+      Array(size.width).fill(false)
+    );
+    for (const unit of units) {
+      const { x, y } = unit.position;
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (
+            nx >= 0 && nx < size.width &&
+            ny >= 0 && ny < size.height
+          ) {
+            fog[ny][nx] = true;
+          }
+        }
+      }
+    }
+    return fog;
+  }
+
+  function combineFog(originalFog: boolean[][], units: UnitProps[], size: { width: number; height: number }) {
+    // Copia profunda del fog original
+    const fog = originalFog.map(row => [...row]);
+    for (const unit of units) {
+      const { x, y } = unit.position;
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (
+            nx >= 0 && nx < size.width &&
+            ny >= 0 && ny < size.height
+          ) {
+            fog[ny][nx] = true;
+          }
+        }
+      }
+    }
+    return fog;
+  }
+
   useEffect(() => {
     const loadGameState = async () => {
-      try {
-        const {
-          map,
-          units,
-          cities,
-          unlockedTechs,
-          aiUnlockedTechs,
-          turn,
-          playerEra,
-          aiEra,
-          civilization,
-          aiCivilization,
-          resources,
-          aiResources,
-          visibleObjects,
-          currentSide,
-        } = await loadMap();
-        setMapState({
-          ...map,
-          fog_of_war_player: map.fog_of_war_player || [],
-          fog_of_war_ai: map.fog_of_war_ai || [],
-        });
-        setUnits(units);
-        setCities(
-          cities.map((city) => ({
-            ...city,
-            training: Array.isArray(city.training)
-              ? city.training
-              : city.training
-                ? [city.training]
-                : [],
-          }))
+      if (initialGameState) {
+        const gs = initialGameState.game_state;
+        console.log("GameState cargado en GameContext:", gs);
+        // Map
+        setGameId(initialGameState.game_id || initialGameState._id || null);
+        const map = {
+          size: gs.map?.size || { width: 0, height: 0 },
+          tiles: gs.map?.tiles || [],
+          fog_of_war_player: gs.map?.fog_of_war_player || [],
+          fog_of_war_ai: gs.map?.fog_of_war_ai || [],
+        };
+        console.log("Map creado en GameContext:", map);
+
+        // Units
+        const units = [
+          ...(gs.player?.units || []).map((u: any) => ({
+            id: u.id,
+            type: u.type,
+            position: u.position,
+            movement_points: u.movement_points,
+            movement_points_left: u.movement_points_left,
+            strength: u.strength,
+            health: u.health,
+            range: u.range,
+            visible: u.visible,
+            owner: 'player' as const,
+          })),
+          ...(gs.ai?.units || []).map((u: any) => ({
+            id: u.id,
+            type: u.type,
+            position: u.position,
+            movement_points: u.movement_points,
+            movement_points_left: u.movement_points_left,
+            strength: u.strength,
+            health: u.health,
+            range: u.range,
+            visible: u.visible,
+            owner: 'ai' as const,
+          })),
+        ];
+
+        const fog_of_war_player = combineFog(
+          map.fog_of_war_player,
+          units.filter(u => u.owner === 'player'),
+          map.size
         );
-        setUnlockedTechs(unlockedTechs);
-        setAiUnlockedTechs(aiUnlockedTechs);
-        setTurn(turn);
-        setPlayerEra(playerEra);
-        setAiEra(aiEra);
-        setCivilization(civilization);
-        setAiCivilization(aiCivilization);
-        setResources(resources);
-        setAiResources(aiResources);
+        const fog_of_war_ai = combineFog(
+          map.fog_of_war_ai,
+          units.filter(u => u.owner === 'ai'),
+          map.size
+        );
+
+        const mapWithFog = {
+          ...map,
+          fog_of_war_player,
+          fog_of_war_ai,
+        };
+
+        // Cities
+        const cities = [
+          ...(gs.player?.cities || []).map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            position: c.position,
+            population: c.population,
+            buildings: c.buildings,
+            production: c.production,
+            owner: 'player' as const,
+            defense: c.defense,
+            health: c.health,
+            era: c.era ?? gs.player?.era,
+            training: Array.isArray(c.training)
+              ? c.training
+              : c.training
+                ? [c.training]
+                : [],
+            allowPopulationGrowth: c.allowPopulationGrowth,
+          })),
+          ...(gs.ai?.cities || []).map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            position: c.position,
+            population: c.population,
+            buildings: c.buildings,
+            production: c.production,
+            owner: 'ai' as const,
+            defense: c.defense,
+            health: c.health,
+            era: c.era ?? gs.ai?.era,
+            training: Array.isArray(c.training)
+              ? c.training
+              : c.training
+                ? [c.training]
+                : [],
+            allowPopulationGrowth: c.allowPopulationGrowth,
+          })),
+        ];
+
+        // Visible objects
+        const visibleObjects = (gs.map?.visible_objects || []).map((obj: any) => ({
+          type: obj.type,
+          position: obj.position,
+        }));
+
+        gameManagerRef.current = new GameManager({ map: mapWithFog, units, cities });
+
+        setMapState(map);
+        setUnits(units);
+        setCities(cities);
+        setUnlockedTechs(gs.player?.technologies || []);
+        setAiUnlockedTechs(gs.ai?.technologies || []);
+        setTurn(gs.turn || 1);
+        setPlayerEra(gs.player?.era || "");
+        setAiEra(gs.ai?.era || "");
+        setCivilization(gs.player?.civilization || "");
+        setAiCivilization(gs.ai?.civilization || "");
+        setResources(gs.player?.resources || { food: 0, gold: 0, culture: 0, science: 0, natural_resources: 0 });
+        setAiResources(gs.ai?.resources || { food: 0, gold: 0, culture: 0, science: 0, natural_resources: 0 });
         setVisibleObjects(visibleObjects);
-        setCurrentSide(currentSide);
+        setCurrentSide(gs.current_player || 'player');
         setIsLoaded(true);
-      } catch (error) {
-        console.error("Error al cargar el estado del juego:", error);
+      } else {
+        // Si no hay estado inicial, inicializa el juego con valores por defecto
+        gameManagerRef.current = new GameManager({ map: { size: { width: 0, height: 0 }, tiles: [], fog_of_war_player: [], fog_of_war_ai: [] }, units: [], cities: [] });
       }
     };
-
     loadGameState();
-  }, []);
+  }, [initialGameState]);
 
   const endTurn = () => {
     if (isAiRunning) return;
@@ -750,6 +920,23 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         newFood = 0;
       }
 
+      // --- DECREMENTA turnsLeft DE TRAINING SOLO PARA PLAYER ---
+      updatedCities = updatedCities.map(city => {
+        if (city.owner === 'player') {
+          return {
+            ...city,
+            training: Array.isArray(city.training)
+              ? city.training.map(t =>
+                t.turnsLeft > 0
+                  ? { ...t, turnsLeft: t.turnsLeft - 1 }
+                  : t
+              )
+              : [],
+          };
+        }
+        return city;
+      });
+
       setResources({
         food: newFood,
         gold: newGold,
@@ -778,7 +965,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
 
     setCurrentSide(prev => {
       const next = prev === 'player' ? 'ai' : 'player';
-      // NO LLAMES A runAiTurn AQUÍ
       return next;
     });
 
@@ -786,6 +972,32 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
       logGameState();
     }, 10);
 
+    setTimeout(async () => {
+      if (gameId) {
+        const game_state = gameManager.buildGameState({
+          turn,
+          currentSide,
+          unlockedTechs,
+          aiUnlockedTechs,
+          civilization,
+          aiCivilization,
+          playerEra,
+          aiEra,
+          resources,
+          aiResources,
+          cities,
+          units,
+          mapState,
+          visibleObjects,
+          cheatsUsed
+        });
+        try {
+          await saveGame(gameId, game_state);
+        } catch (err) {
+          console.error("Error saving game:", err);
+        }
+      }
+    }, 10);
   };
 
   return (
@@ -830,7 +1042,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         setVisibleObjects,
         selectedVisibleObject,
         setSelectedVisibleObject,
-        gameManager,
         deployingUnit,
         setDeployingUnit,
         checkVictoryOrDefeat,
@@ -844,6 +1055,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
         aiLog,
         cheatsUsed,
         setCheatsUsed,
+        gameManager: gameManagerRef.current!,
+        isLoaded,
+        gameId
       }}
     >
 
