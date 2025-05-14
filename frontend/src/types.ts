@@ -36,6 +36,18 @@ export interface Unit {
   hasAttackedThisTurn?: boolean;
 }
 
+export interface Civilization {
+  id: string;
+  name: string;
+  initial_resources: {
+    food: number;
+    gold: number;
+    natural_resources: number;
+    science: number;
+    culture: number;
+  };
+}
+
 export interface UnitProps extends Unit {
   selected?: boolean;
   onClick?: () => void;

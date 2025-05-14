@@ -46,6 +46,17 @@ export const UNITS = GameInfo.units.map(unit => ({
   training_time: unit.training_time,
 }));
 
+export const CIVILIZATIONS = GameInfo.civilizations.map(civ => ({
+  id: civ.id,
+  name: civ.name,
+  initial_resources: civ.initial_resources
+}));
+
+// Acceso rápido por id:
+export const CIVILIZATIONS_BY_ID: Record<string, typeof CIVILIZATIONS[0]> = Object.fromEntries(
+  CIVILIZATIONS.map(civ => [civ.id, civ])
+);
+
 // Buildings (BUILDINGS)
 export const BUILDINGS = GameInfo.buildings.map(building => ({
   id: building.id,

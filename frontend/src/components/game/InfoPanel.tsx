@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { UnitProps, TerrainType, CityProps } from '../../types';
 import { TILE_TYPES, VISIBLE_OBJECTS_BY_ID } from '../../utils/Constants';
 import { useGame } from '../../context/GameContext';
-import BattleView from './BattleView';
 import CityBattleView from './CityBattleView';
+import '../../styles/InfoPanel.css';
 
 export interface InfoPanelProps {
   selectedUnit?: UnitProps | null;
@@ -61,7 +61,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
   const isPlayerTurn = currentSide === 'player';
 
   if (!isPlayerTurn) {
-    return <div />; // Panel vacío
+    return <div className="info-panel-root" />;
   }
 
   // Mostrar información de objeto visible seleccionado
@@ -83,70 +83,74 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       isAdjacent(selectedUnit, selectedVisibleObject);
 
     return (
-      <div className="visible-object-info-panel">
+      <div className="info-panel-root visible-object-info-panel">
         <h3>{objInfo.name}</h3>
         <img
           src={`/images/visibleObjects/${objInfo.name}.png`}
           alt={objInfo.name}
-          style={{ width: 80, height: 80, margin: '8px auto', display: 'block' }}
         />
-        <div>
+        <div className="info-panel-section">
           {Object.entries(objInfo.bonus || {}).map(([k, v]) => (
-            <div key={k}>{k}: {v}</div>
+            <div key={k}>
+              <span className="info-panel-label">{k}:</span>
+              <span className="info-panel-value">{v}</span>
+            </div>
           ))}
         </div>
         {puedeRecolectar && (
-          <button
-            style={{ marginTop: 12 }}
-            onClick={() => {
-              setResources(prev => {
-                const updated = { ...prev };
-                (Object.entries(objInfo.bonus || {}) as [keyof typeof updated, number][]).forEach(([k, v]) => {
-                  if (k in updated) updated[k] += v;
+          <div className="info-panel-btns">
+            <button
+              onClick={() => {
+                // ...igual que antes...
+                setResources(prev => {
+                  const updated = { ...prev };
+                  (Object.entries(objInfo.bonus || {}) as [keyof typeof updated, number][]).forEach(([k, v]) => {
+                    if (k in updated) updated[k] += v;
+                  });
+                  return updated;
                 });
-                return updated;
-              });
 
-              setVisibleObjects(prev => prev.filter(
-                obj => !(obj.type === selectedVisibleObject.type &&
-                  obj.position.x === selectedVisibleObject.position.x &&
-                  obj.position.y === selectedVisibleObject.position.y)
-              ));
+                setVisibleObjects(prev => prev.filter(
+                  obj => !(obj.type === selectedVisibleObject.type &&
+                    obj.position.x === selectedVisibleObject.position.x &&
+                    obj.position.y === selectedVisibleObject.position.y)
+                ));
 
-              if (selectedUnit) {
-                const unitId = selectedUnit.id;
-                setUnits(prev =>
-                  prev.map(u =>
-                    u.id === unitId
-                      ? { ...u, movement_points_left: 0 }
-                      : u
-                  )
-                );
-                const unitInGameManager = gameManager.getMapManager().getUnits().find(u => u.id === unitId);
-                if (unitInGameManager) {
-                  unitInGameManager.movement_points_left = 0;
+                if (selectedUnit) {
+                  const unitId = selectedUnit.id;
+                  setUnits(prev =>
+                    prev.map(u =>
+                      u.id === unitId
+                        ? { ...u, movement_points_left: 0 }
+                        : u
+                    )
+                  );
+                  const unitInGameManager = gameManager.getMapManager().getUnits().find(u => u.id === unitId);
+                  if (unitInGameManager) {
+                    unitInGameManager.movement_points_left = 0;
+                  }
+                  setSelectedUnitId(null);
+                  setTimeout(() => {
+                    setSelectedUnitId(unitId);
+                  }, 50);
                 }
-                setSelectedUnitId(null);
-                setTimeout(() => {
-                  setSelectedUnitId(unitId);
-                }, 50);
-              }
 
-              setSelectedVisibleObject && setSelectedVisibleObject(null);
-            }}
-          >
-            Jaso
-          </button>
+                setSelectedVisibleObject && setSelectedVisibleObject(null);
+              }}
+            >
+              Jaso
+            </button>
+          </div>
         )}
       </div>
     );
   }
 
-  // Prioridad: ataque a unidad enemiga
+  // --- Ataque a unidad enemiga ---
   if (selectedUnit && selectedEnemyUnit) {
     const dx = Math.abs(selectedUnit.position.x - selectedEnemyUnit.position.x);
     const dy = Math.abs(selectedUnit.position.y - selectedEnemyUnit.position.y);
-    const distance = Math.max(dx, dy); // Chebyshev distance
+    const distance = Math.max(dx, dy);
 
     const attackerRange = selectedUnit.range ?? 1;
     const defenderRange = selectedEnemyUnit.range ?? 1;
@@ -161,16 +165,21 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       selectedUnit.movement_points_left > 0;
 
     return (
-      <div>
+      <div className="info-panel-root">
         <h3>Etsaia erasotu</h3>
-        <p>Erasotzailea: {selectedUnit.type}</p>
-        <p>Etsaia: {selectedEnemyUnit.type}</p>
-        <div style={{ textAlign: 'right' }}>
+        <div className="info-panel-section">
+          <span className="info-panel-label">Erasotzailea:</span>
+          <span className="info-panel-value">{selectedUnit.type}</span>
+        </div>
+        <div className="info-panel-section">
+          <span className="info-panel-label">Etsaia:</span>
+          <span className="info-panel-value">{selectedEnemyUnit.type}</span>
+        </div>
+        <div className="info-panel-btns">
           {puedeAtacarUnidad ? (
             <button
               onClick={() => {
                 if (onAttackEnemy) {
-                  // Marcar la unidad como que ha atacado y sin movimientos
                   setUnits &&
                     setUnits(prev =>
                       prev.map(u =>
@@ -194,7 +203,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
               Etsaia erasotu
             </button>
           ) : (
-            <span>
+            <span style={{ color: "#ffd700" }}>
               {!isPlayerTurn
                 ? 'Ez da zure txanda'
                 : selectedUnit.hasAttackedThisTurn || selectedUnit.movement_points_left === 0
@@ -207,14 +216,14 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     );
   }
 
-  // Mostrar información de la ciudad seleccionada
+  // --- Ciudad seleccionada ---
   if (selectedCity) {
     const isEnemyCity = selectedCity.owner === 'ai';
 
     const isInRange = (unit: UnitProps, city: CityProps) => {
       const dx = Math.abs(unit.position.x - city.position.x);
       const dy = Math.abs(unit.position.y - city.position.y);
-      const distance = Math.max(dx, dy); // Chebyshev distance
+      const distance = Math.max(dx, dy);
       return distance <= (unit.range ?? 1);
     };
 
@@ -228,7 +237,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       selectedUnit.movement_points_left > 0;
 
     const handleAtacarCiudad = () => {
-      // Marcar la unidad como que ha atacado a ciudad y sin movimientos
       setUnits &&
         setUnits(prev =>
           prev.map(u =>
@@ -265,7 +273,6 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       checkVictoryOrDefeat();
     };
 
-    // FORZAR el render de CityBattleView si showCityBattleRef o showCityBattle es true
     if ((showCityBattleRef.current || showCityBattle) && selectedUnit && selectedCity) {
       return (
         <CityBattleView
@@ -277,13 +284,25 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     }
 
     return (
-      <div>
+      <div className="info-panel-root" style={{ width: "100%" }}>
         <h3>Hiria</h3>
-        <p>Izena: {selectedCity.name}</p>
-        <p>Populazioa: {selectedCity.population} </p>
-        <p>Defentsa: {selectedCity.defense}</p>
-        <p>Osasuna: {selectedCity.health}</p>
-        <div style={{ textAlign: 'right' }}>
+        <div className="info-panel-section">
+          <span className="info-panel-label">Izena:</span>
+          <span className="info-panel-value">{selectedCity.name}</span>
+        </div>
+        <div className="info-panel-section">
+          <span className="info-panel-label">Populazioa:</span>
+          <span className="info-panel-value">{selectedCity.population}</span>
+        </div>
+        <div className="info-panel-section">
+          <span className="info-panel-label">Defentsa:</span>
+          <span className="info-panel-value">{selectedCity.defense}</span>
+        </div>
+        <div className="info-panel-section">
+          <span className="info-panel-label">Osasuna:</span>
+          <span className="info-panel-value">{selectedCity.health}</span>
+        </div>
+        <div className="info-panel-btns">
           {puedeAtacarCiudad ? (
             <button onClick={handleAtacarCiudad}>
               Hiria erasotu
@@ -300,18 +319,33 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     );
   }
 
-  // Mostrar información de la unidad seleccionada
+  // --- Unidad seleccionada ---
   if (selectedUnit) {
     return (
-      <div>
+      <div className="info-panel-root">
         <h3>Unitatea</h3>
-        <p>Mota: {selectedUnit.type} - {selectedUnit.id}</p>
-        <p>Mugimendu Puntuak: {selectedUnit.movement_points_left}/{selectedUnit.movement_points}</p>
-        <p>Osasuna: {selectedUnit.health}</p>
-        <p>Indarra: {selectedUnit.strength}</p>
-        <p>Rangoa: {selectedUnit.range ?? 1}</p>
+        <div className="info-panel-section">
+          <span className="info-panel-label">Mota:</span>
+          <span className="info-panel-value">{selectedUnit.type} - {selectedUnit.id}</span>
+        </div>
+        <div className="info-panel-section">
+          <span className="info-panel-label">Mugimendu Puntuak:</span>
+          <span className="info-panel-value">{selectedUnit.movement_points_left}/{selectedUnit.movement_points}</span>
+        </div>
+        <div className="info-panel-section">
+          <span className="info-panel-label">Osasuna:</span>
+          <span className="info-panel-value">{selectedUnit.health}</span>
+        </div>
+        <div className="info-panel-section">
+          <span className="info-panel-label">Indarra:</span>
+          <span className="info-panel-value">{selectedUnit.strength}</span>
+        </div>
+        <div className="info-panel-section">
+          <span className="info-panel-label">Rangoa:</span>
+          <span className="info-panel-value">{selectedUnit.range ?? 1}</span>
+        </div>
         {selectedUnit.type === 'kolono' && isPlayerTurn && (
-          <div style={{ textAlign: 'right' }}>
+          <div className="info-panel-btns">
             <button onClick={() => onFoundCity && onFoundCity(selectedUnit)}>
               Hiria sortu
             </button>
@@ -321,26 +355,38 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
     );
   }
 
-  // Mostrar información del tile seleccionado
+  // --- Tile seleccionado ---
   if (selectedTile) {
     if (!selectedTile.isDiscovered) {
       return (
-        <div>
+        <div className="info-panel-root">
           <h3>Lurraldea</h3>
           <p>Ezagutu gabea</p>
         </div>
       );
     }
     return (
-      <div>
+      <div className="info-panel-root">
         <h3>Lurraldea</h3>
-        <p>Mota: {selectedTile.type}</p>
-        <p>Mugimendu kostua: {TILE_TYPES[selectedTile.type].movementCost}</p>
+        <div className="info-panel-section">
+          <span className="info-panel-label">Mota:</span>
+          <span className="info-panel-value">{selectedTile.type}</span>
+        </div>
+        <div className="info-panel-section">
+          <span className="info-panel-label">Mugimendu kostua:</span>
+          <span className="info-panel-value">{TILE_TYPES[selectedTile.type].movementCost}</span>
+        </div>
       </div>
     );
   }
 
-  return <div>Egin ezazu klik unitate edo lurralde batean informazioa ikusteko.</div>;
+  return (
+    <div className="info-panel-root">
+      <span style={{ color: "#ffd700" }}>
+        Egin ezazu klik unitate edo lurralde batean informazioa ikusteko.
+      </span>
+    </div>
+  );
 };
 
 export default InfoPanel;

@@ -1,0 +1,79 @@
+.info-panel-root {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  max-width: 100%;
+  min-width: 0;
+  font-size: 1.05em;
+  overflow-y: auto;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7em;
+}
+
+.info-panel-root h3 {
+  margin-top: 0;
+  margin-bottom: 0.5em;
+  font-size: 1.25em;
+  color: #ffd700;
+  text-shadow: 1px 1px 4px #000a;
+}
+
+.info-panel-section {
+  margin-bottom: 0.7em;
+}
+
+.info-panel-label {
+  color: #ffd700;
+  font-weight: bold;
+  margin-right: 0.3em;
+}
+
+.info-panel-value {
+  color: #fffbe6;
+  font-weight: normal;
+}
+
+.info-panel-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 1em;
+  flex-wrap: wrap;
+}
+
+.info-panel-btns button {
+  background: linear-gradient(90deg, #2d7cff 0%, #1e3a8a 100%);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 8px 18px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px #0004;
+}
+
+.info-panel-btns button:hover {
+  background: linear-gradient(90deg, #1e3a8a 0%, #2d7cff 100%);
+}
+
+.visible-object-info-panel img {
+  display: block;
+  margin: 0.5em auto 0.5em auto;
+  max-width: 90px;
+  max-height: 90px;
+  border-radius: 8px;
+  box-shadow: 0 1px 8px #0006;
+}
+
+@media (max-width: 600px) {
+  .info-panel-root {
+    max-width: 98vw;
+    min-width: 0;
+    font-size: 0.98em;
+    padding: 10px 4vw;
+  }
+}

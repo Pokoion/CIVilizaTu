@@ -42,7 +42,7 @@ const GameUI: React.FC = () => {
         unlockedTechs, aiUnlockedTechs,
         selectedVisibleObject, setSelectedVisibleObject, checkVictoryOrDefeat,
         gameStatus, victoryType, confirmFoundCity, isLoaded, gameManager, visibleObjects,
-        mapState, gameId, cheatsUsed
+        mapState, gameId, cheatsUsed, playerLeaderName, aiLeaderName,
     } = useGame();
 
     // --- NUEVO: Deshabilitar botones y acciones si es turno de la IA ---
@@ -92,6 +92,8 @@ const GameUI: React.FC = () => {
                     mapState,
                     visibleObjects,
                     cheatsUsed,
+                    playerLeaderName,
+                    aiLeaderName,
                 })
                 : {}; // fallback si no existe
             // Usa el id de partida si está en gameManager o contexto
@@ -217,6 +219,9 @@ const GameUI: React.FC = () => {
                                     style={{ width: 128, height: 148, borderRadius: "50%", border: "2px solid #ccc" }}
                                 />
                                 <span style={{ fontWeight: 500, fontSize: "1.2em", marginTop: 8 }}>{sideCivilization}</span>
+                                <span style={{ fontSize: "1em", marginTop: 2 }}>
+                                    Liderra: {currentSide === 'player' ? playerLeaderName : aiLeaderName}
+                                </span>
                             </div>
                             <div>
                                 <b>Teknologiak:</b> {sideUnlockedTechs.length} / {TECHS.length}

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { AiAction } from '../types';
+import { CIVILIZATIONS_BY_ID } from '../utils/Constants';
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
@@ -23,6 +24,10 @@ export const createGame = async ({
   map_size: { width: number; height: number };
 }) => {
   const token = localStorage.getItem("jwt_token");
+
+  const playerInitialResources = CIVILIZATIONS_BY_ID[playerCiv]?.initial_resources || { food: 0, natural_resources: 0, science: 0, gold: 0, culture: 0 };
+  const aiInitialResources = CIVILIZATIONS_BY_ID[aiCiv]?.initial_resources || { food: 0, natural_resources: 0, science: 0, gold: 0, culture: 0 };
+
   const game_state = {
     turn: 1,
     current_player: "player",
@@ -31,7 +36,7 @@ export const createGame = async ({
       civilization: playerCiv,
       era: "Antzinaroa",
       leader_name: playerName,
-      resources: { food: 0, natural_resources: 0, science: 0, gold: 0, culture: 0 },
+      resources: { ...playerInitialResources },
       cities: [],
       units: [],
       technologies: [],
@@ -40,7 +45,7 @@ export const createGame = async ({
       civilization: aiCiv,
       era: "Antzinaroa",
       leader_name: aiName,
-      resources: { food: 0, natural_resources: 0, science: 0, gold: 0, culture: 0 },
+      resources: { ...aiInitialResources },
       cities: [],
       units: [],
       technologies: [],

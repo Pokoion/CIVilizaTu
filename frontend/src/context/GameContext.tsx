@@ -114,6 +114,10 @@ type GameContextType = {
   gameManager: GameManager;
   isLoaded: boolean;
   gameId: string;
+  playerLeaderName: string;
+  setPlayerLeaderName: React.Dispatch<React.SetStateAction<string>>;
+  aiLeaderName: string;
+  setAiLeaderName: React.Dispatch<React.SetStateAction<string>>;
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -141,47 +145,6 @@ function calculateResourcesForCities(cities: CityProps[], unlockedTechs: string[
   }
   return { food, gold, culture, science, natural_resources };
 }
-
-// --- FUNCIONES DE LIMPIEZA PARA GUARDADO ---
-function cleanUnit(u: UnitProps) {
-  return {
-    id: u.id,
-    type: u.type,
-    position: u.position,
-    movement_points: u.movement_points,
-    movement_points_left: u.movement_points_left,
-    strength: u.strength,
-    health: u.health,
-    range: u.range
-  };
-}
-
-function cleanCity(c: CityProps) {
-  return {
-    id: c.id,
-    name: c.name,
-    position: c.position,
-    population: c.population,
-    buildings: c.buildings,
-    production: c.production,
-    defense: c.defense,
-    health: c.health,
-    era: c.era,
-    training: c.training,
-    allowPopulationGrowth: c.allowPopulationGrowth,
-    owner: c.owner,
-
-  };
-}
-
-function cleanVisibleObject(obj: { type: string; position: { x: number; y: number } }) {
-  return {
-    type: obj.type,
-    position: obj.position,
-  };
-}
-
-// --- FUNCIÓN PARA CONSTRUIR EL GAME STATE LIMPIO ---
 
 export const GameProvider: React.FC<{ children: React.ReactNode, initialGameState?: any }> = ({
   children,
@@ -243,6 +206,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
   const [cheatsUsed, setCheatsUsed] = useState<string[]>([]);
   const gameManagerRef = useRef<GameManager | null>(null);
   const [gameId, setGameId] = useState<string>("");
+  const [playerLeaderName, setPlayerLeaderName] = useState<string>("");
+  const [aiLeaderName, setAiLeaderName] = useState<string>("");
 
   const confirmFoundCity = (
     cityName: string,
@@ -318,7 +283,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
       units,
       mapState,
       visibleObjects,
-      cheatsUsed
+      cheatsUsed,
+      playerLeaderName,
+      aiLeaderName,
     });
     console.log("GAMESTATE JSON:", JSON.stringify(gameStateJson, null, 2));
   };
@@ -550,7 +517,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
           units,
           mapState,
           visibleObjects,
-          cheatsUsed
+          cheatsUsed,
+          playerLeaderName,
+          aiLeaderName,
         });
         try {
           await saveGame(gameId, game_state);
@@ -864,6 +833,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
         setAiEra(gs.ai?.era || "");
         setCivilization(gs.player?.civilization || "");
         setAiCivilization(gs.ai?.civilization || "");
+        setPlayerLeaderName(gs.player?.leader_name || "");
+        setAiLeaderName(gs.ai?.leader_name || "");
         setResources(gs.player?.resources || { food: 0, gold: 0, culture: 0, science: 0, natural_resources: 0 });
         setAiResources(gs.ai?.resources || { food: 0, gold: 0, culture: 0, science: 0, natural_resources: 0 });
         setVisibleObjects(visibleObjects);
@@ -989,7 +960,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
           units,
           mapState,
           visibleObjects,
-          cheatsUsed
+          cheatsUsed,
+          playerLeaderName,
+          aiLeaderName,
         });
         try {
           await saveGame(gameId, game_state);
@@ -1057,7 +1030,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
         setCheatsUsed,
         gameManager: gameManagerRef.current!,
         isLoaded,
-        gameId
+        gameId,
+        playerLeaderName,
+        setPlayerLeaderName,
+        aiLeaderName,
+        setAiLeaderName,
       }}
     >
 

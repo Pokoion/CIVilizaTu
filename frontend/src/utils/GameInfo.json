@@ -1,4 +1,50 @@
 {
+  "civilizations": [
+    {
+      "id": "euskaldunak",
+      "name": "Euskaldunak",
+      "initial_resources": {
+        "food": 30,
+        "gold": 25,
+        "natural_resources": 10,
+        "science": 0,
+        "culture": 5
+      }
+    },
+    {
+      "id": "mongolak",
+      "name": "Mongolak",
+      "initial_resources": {
+        "food": 28,
+        "gold": 22,
+        "natural_resources": 12,
+        "science": 0,
+        "culture": 4
+      }
+    },
+    {
+      "id": "mayak",
+      "name": "Mayak",
+      "initial_resources": {
+        "food": 32,
+        "gold": 18,
+        "natural_resources": 8,
+        "science": 0,
+        "culture": 6
+      }
+    },
+    {
+      "id": "bizantziarrak",
+      "name": "Bizantziarrak",
+      "initial_resources": {
+        "food": 26,
+        "gold": 28,
+        "natural_resources": 14,
+        "science": 0,
+        "culture": 7
+      }
+    }
+  ],
   "actions": [
     {
       "type": "moveUnit",
@@ -134,6 +180,13 @@
       "bonus": {
         "natural_resources": 1
       }
+    },
+    {
+      "id": "zientzia",
+      "name": "Zientzia",
+      "bonus": {
+        "science": 5
+      }
     }
   ],
   "city_eras": [
@@ -142,8 +195,8 @@
       "name": "Antzinaroa",
       "next_era": "Erdi Aroa",
       "upgrade_cost": {
-        "gold": 200,
-        "natural_resources": 100
+        "gold": 150,
+        "natural_resources": 80
       },
       "base_production": {
         "food": 2,
@@ -152,24 +205,24 @@
         "science": 0,
         "natural_resources": 1
       },
-      "building_limit": 5
+      "building_limit": 4
     },
     {
       "id": "Erdi Aroa",
       "name": "Erdi Aroa",
       "next_era": "Aro Modernoa",
       "upgrade_cost": {
-        "gold": 400,
-        "natural_resources": 200
+        "gold": 300,
+        "natural_resources": 160
       },
       "base_production": {
         "food": 4,
-        "gold": 3,
+        "gold": 2,
         "culture": 1,
         "science": 1,
         "natural_resources": 2
       },
-      "building_limit": 6
+      "building_limit": 5
     },
     {
       "id": "Aro Modernoa",
@@ -181,12 +234,12 @@
       },
       "base_production": {
         "food": 6,
-        "gold": 5,
+        "gold": 4,
         "culture": 2,
         "science": 3,
         "natural_resources": 3
       },
-      "building_limit": 7
+      "building_limit": 6
     }
   ],
   "units": [
@@ -199,11 +252,11 @@
       "range": 1,
       "civilization": null,
       "cost": {
-        "food": 10,
-        "gold": 5
+        "food": 12,
+        "gold": 8
       },
       "requirements": [],
-      "training_time": 4
+      "training_time": 3
     },
     {
       "id": "kolono",
@@ -214,7 +267,7 @@
       "range": 1,
       "civilization": null,
       "cost": {
-        "food": 20,
+        "food": 22,
         "gold": 15
       },
       "requirements": [],
@@ -229,22 +282,22 @@
       "range": 1,
       "civilization": null,
       "cost": {
-        "food": 15,
-        "gold": 8
+        "food": 14,
+        "gold": 7
       },
       "requirements": [],
-      "training_time": 3
+      "training_time": 2
     },
     {
       "id": "gudaria",
       "type": "Gudaria",
-      "health": 150,
-      "strength": 20,
+      "health": 120,
+      "strength": 22,
       "movement_points": 3,
       "range": 1,
       "civilization": "euskaldunak",
       "cost": {
-        "food": 25,
+        "food": 28,
         "gold": 20
       },
       "requirements": [],
@@ -253,14 +306,14 @@
     {
       "id": "arkari_zalduna",
       "type": "Arkari zalduna",
-      "health": 125,
-      "strength": 15,
+      "health": 110,
+      "strength": 16,
       "movement_points": 4,
       "range": 3,
       "civilization": "mongolak",
       "cost": {
-        "food": 30,
-        "gold": 20
+        "food": 32,
+        "gold": 22
       },
       "requirements": [],
       "training_time": 4
@@ -268,78 +321,78 @@
     {
       "id": "atlatl_erabiltzailea",
       "type": "Atlatl erabiltzailea",
-      "health": 100,
-      "strength": 20,
+      "health": 90,
+      "strength": 18,
       "movement_points": 2,
       "range": 3,
       "civilization": "mayak",
       "cost": {
-        "food": 18,
-        "gold": 12
+        "food": 20,
+        "gold": 14
       },
       "requirements": [],
-      "training_time": 4
+      "training_time": 3
     },
     {
       "id": "piromanoa",
       "type": "Piromanoa",
       "health": 80,
-      "strength": 40,
+      "strength": 32,
       "movement_points": 2,
       "range": 1,
       "civilization": "bizantziarrak",
       "cost": {
-        "food": 22,
-        "gold": 25
+        "food": 24,
+        "gold": 28
       },
       "requirements": [],
-      "training_time": 4
+      "training_time": 5
     },
     {
       "id": "arkeroa",
       "type": "Arkeroa",
       "health": 60,
-      "strength": 15,
+      "strength": 13,
       "movement_points": 2,
       "range": 4,
       "civilization": null,
       "cost": {
-        "food": 12,
-        "gold": 10
+        "food": 14,
+        "gold": 12
       },
       "requirements": [
         "arku_tiroa"
       ],
-      "training_time": 4
+      "training_time": 3
     },
     {
       "id": "tankea",
       "type": "Tankea",
-      "health": 200,
-      "strength": 50,
+      "health": 180,
+      "strength": 40,
       "movement_points": 3,
       "range": 3,
       "civilization": null,
       "cost": {
-        "natural_resources": 50,
-        "gold": 60
+        "natural_resources": 45,
+        "gold": 55
       },
       "requirements": [
         "artilleria"
       ],
-      "training_time": 5
+      "training_time": 6
     },
     {
       "id": "itsasontzia",
       "type": "Itsasontzia",
-      "health": 200,
-      "strength": 50,
+      "health": 160,
+      "strength": 35,
       "movement_points": 3,
       "range": 3,
       "civilization": null,
       "cost": {
-        "natural_resources": 30,
-        "gold": 50
+        "natural_resources": 28,
+        "gold": 40
       },
       "requirements": [
         "nabigazioa"
@@ -381,8 +434,8 @@
       "bonus": "+2 food",
       "requirement": "buztingintza",
       "cost": {
-        "gold": 5,
-        "natural_resources": 3,
+        "gold": 7,
+        "natural_resources": 4,
         "culture": 0
       }
     },
@@ -392,8 +445,8 @@
       "bonus": "Unitate militarren ekoizpena",
       "requirement": "burdina",
       "cost": {
-        "gold": 10,
-        "natural_resources": 5,
+        "gold": 12,
+        "natural_resources": 7,
         "culture": 2
       }
     },
@@ -403,8 +456,8 @@
       "bonus": "+1 culture (biztanleko)",
       "requirement": "idazketa",
       "cost": {
-        "gold": 8,
-        "natural_resources": 4,
+        "gold": 10,
+        "natural_resources": 5,
         "culture": 4
       }
     },
@@ -414,8 +467,8 @@
       "bonus": "+2 gold",
       "requirement": "merkataritza",
       "cost": {
-        "gold": 15,
-        "natural_resources": 6,
+        "gold": 18,
+        "natural_resources": 8,
         "culture": 3
       }
     },
@@ -425,8 +478,8 @@
       "bonus": "Hiriaren defentsa + 50",
       "requirement": null,
       "cost": {
-        "gold": 6,
-        "natural_resources": 10,
+        "gold": 8,
+        "natural_resources": 12,
         "culture": 1
       }
     },
@@ -436,8 +489,8 @@
       "bonus": "+2 culture (biztanleko)",
       "requirement": "ingeniaritza",
       "cost": {
-        "gold": 20,
-        "natural_resources": 8,
+        "gold": 24,
+        "natural_resources": 10,
         "culture": 8
       }
     }
@@ -447,7 +500,7 @@
       "id": "nekazaritza",
       "name": "Nekazaritza",
       "bonus": "Janaria +100 eta baliabide naturalak lortu ahal",
-      "cost": 3,
+      "cost": 4,
       "era": "Antzinaroa",
       "dependencies": [],
       "x": 100,
@@ -457,7 +510,7 @@
       "id": "idazketa",
       "name": "Idazketa",
       "bonus": "Eskolak desblokeatu",
-      "cost": 8,
+      "cost": 9,
       "era": "Antzinaroa",
       "dependencies": [
         "nekazaritza"
@@ -469,7 +522,7 @@
       "id": "penizilina",
       "name": "Penizilina",
       "bonus": "Unitate guztien bizitza +30",
-      "cost": 15,
+      "cost": 18,
       "era": "Aro Modernoa",
       "dependencies": [
         "idazketa"
@@ -481,7 +534,7 @@
       "id": "ekonomia",
       "name": "Ekonomia",
       "bonus": "Txanda bakoitzeko hirietatik lortzen en urre kopurua +5",
-      "cost": 14,
+      "cost": 15,
       "era": "Erdi Aroa",
       "dependencies": [
         "idazketa"
@@ -493,7 +546,7 @@
       "id": "merkataritza",
       "name": "Merkataritza",
       "bonus": "Merkatuak desblokeatu",
-      "cost": 12,
+      "cost": 13,
       "era": "Aro Modernoa",
       "dependencies": [
         "ekonomia"
@@ -505,7 +558,7 @@
       "id": "burdina",
       "name": "Burdina",
       "bonus": "+5 eraso zibilizazioaren unitate bakoitzeko eta kuartelak desblokeatu",
-      "cost": 8,
+      "cost": 9,
       "era": "Antzinaroa",
       "dependencies": [
         "nekazaritza"
@@ -517,7 +570,7 @@
       "id": "meatzaritza",
       "name": "Meatzaritza",
       "bonus": "Mapatik natural_resources eskuratzea desblokeatzen du",
-      "cost": 4,
+      "cost": 5,
       "era": "Antzinaroa",
       "dependencies": [
         "burdina"
@@ -529,7 +582,7 @@
       "id": "ingeniaritza",
       "name": "Ingeniaritza",
       "bonus": "Unibertsitateak desblokeatzen ditu",
-      "cost": 12,
+      "cost": 13,
       "era": "Erdi Aroa",
       "dependencies": [
         "meatzaritza"
@@ -541,7 +594,7 @@
       "id": "artilleria",
       "name": "Artilleria",
       "bonus": "Unitate militar hobeak (+10 eraso zibilizazioaren unitate bakoitzeko) eta tankeak desblokeatu",
-      "cost": 16,
+      "cost": 18,
       "era": "Aro Modernoa",
       "dependencies": [
         "ingeniaritza"
@@ -563,7 +616,7 @@
       "id": "arkitektura",
       "name": "Arkitektura",
       "bonus": "Produkzio guztien txanda kopurua murriztu",
-      "cost": 14,
+      "cost": 15,
       "era": "Erdi Aroa",
       "dependencies": [
         "meatzaritza"
@@ -575,7 +628,7 @@
       "id": "buztingintza",
       "name": "Buztingintza",
       "bonus": "Aletegia desblokeatu",
-      "cost": 5,
+      "cost": 6,
       "era": "Antzinaroa",
       "dependencies": [],
       "x": 100,
@@ -585,7 +638,7 @@
       "id": "industria",
       "name": "Industria",
       "bonus": "Produkzio guztien txanda kopurua murriztu",
-      "cost": 14,
+      "cost": 15,
       "era": "Aro Modernoa",
       "dependencies": [
         "buztingintza"
@@ -597,7 +650,7 @@
       "id": "arku_tiroa",
       "name": "Arku Tiroa",
       "bonus": "Distantziako oinarrizko unitatea desblokeatu",
-      "cost": 15,
+      "cost": 12,
       "era": "Antzinaroa",
       "dependencies": [],
       "x": 100,
@@ -607,7 +660,7 @@
       "id": "gurpila",
       "name": "Gurpila",
       "bonus": "Unitate guztien mugimenduak +3",
-      "cost": 10,
+      "cost": 11,
       "era": "Antzinaroa",
       "dependencies": [],
       "x": 100,
@@ -617,7 +670,7 @@
       "id": "nabigazioa",
       "name": "Nabigazioa",
       "bonus": "Ura zeharkatzea ahalbidetzen duen itsasontzia desblokeatzen du",
-      "cost": 6,
+      "cost": 7,
       "era": "Erdi Aroa",
       "dependencies": [],
       "x": 100,

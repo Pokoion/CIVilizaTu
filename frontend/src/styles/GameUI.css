@@ -32,11 +32,18 @@
   gap: 2rem;
 }
 
-.ui-top-right {
-  flex: 0 0 auto;
+.ui-right {
+  width: 260px;
+  background: rgba(40, 40, 40, 0.95);
+  color: #fff;
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1.5rem 0.5rem;
+  z-index: 5;
+  min-height: 0;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .ui-bottom {
