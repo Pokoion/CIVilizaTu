@@ -34,50 +34,6 @@ def create_game():
     player_starts = map_result.get("player_start", [])
     ai_starts = map_result.get("ai_start", [])
 
-    if len(player_starts) >= 2:
-        player_units.append({
-            "id": "kolono-start-player",
-            "type": "kolono",
-            "position": player_starts[0],
-            "movement_points": 4,
-            "movement_points_left": 4,
-            "strength": 5,
-            "health": 50,
-            "range": 1
-        })
-        player_units.append({
-            "id": "militar-start-player",
-            "type": "militar",
-            "position": player_starts[1],
-            "movement_points": 3,
-            "movement_points_left": 3,
-            "strength": 15,
-            "health": 75,
-            "range": 1
-        })
-
-    if len(ai_starts) >= 2:
-        ai_units.append({
-            "id": "kolono-start-ai",
-            "type": "kolono",
-            "position": ai_starts[0],
-            "movement_points": 4,
-            "movement_points_left": 4,
-            "strength": 5,
-            "health": 50,
-            "range": 1
-        })
-        ai_units.append({
-            "id": "militar-start-ai",
-            "type": "militar",
-            "position": ai_starts[1],
-            "movement_points": 3,
-            "movement_points_left": 3,
-            "strength": 15,
-            "health": 75,
-            "range": 1
-        })
-
     # Inserta el mapa generado en el atributo tiles de GameMap
     if "map" not in game_state:
         game_state["map"] = {}
@@ -103,7 +59,12 @@ def create_game():
             game_state=game_state
         )
         game.save()
-        return jsonify({"game": partida_to_dict(game), "message": "Partida arrakastaz sortu da"}), 201
+        return jsonify({
+            "game": partida_to_dict(game),
+            "player_positions": player_starts,
+            "ai_positions": ai_starts,
+            "message": "Partida arrakastaz sortu da"
+        }), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

@@ -1,6 +1,8 @@
 import axios from "axios";
 import { AiAction } from '../types';
-import { CIVILIZATIONS_BY_ID } from '../utils/Constants';
+import { CIVILIZATIONS_BY_ID, UNITS } from '../utils/Constants';
+import { Unit } from '../types';
+import { cleanUnit } from '../utils/Cleaner';
 
 const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
@@ -70,7 +72,77 @@ export const createGame = async ({
   const response = await axios.post(`${API_URL}/api/games`, body, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return response.data;
+
+  // Extrae posiciones del backend
+  const { game, player_positions, ai_positions } = response.data;
+
+  console.log("Respuesta del backend:", response.data);
+
+  // Busca los datos base de las unidades
+  const kolonoBase = UNITS.find(u => u.id === "kolono");
+  const militarBase = UNITS.find(u => u.id === "militar");
+
+  // Crea las unidades iniciales con owner para el frontend
+  const playerUnits: Unit[] = [];
+  if (player_positions && player_positions.length >= 2 && kolonoBase && militarBase) {
+    playerUnits.push({
+      ...kolonoBase,
+      movement_points: kolonoBase.movementPoints,
+      id: "kolono-start-player",
+      position: player_positions[0],
+      movement_points_left: kolonoBase.movementPoints,
+      owner: "player"
+    });
+    playerUnits.push({
+      ...militarBase,
+      movement_points: militarBase.movementPoints,
+      id: "militar-start-player",
+      position: player_positions[1],
+      movement_points_left: militarBase.movementPoints,
+      owner: "player"
+    });
+  }
+
+  console.log("playerUnits creados:", playerUnits);
+
+  const aiUnits: Unit[] = [];
+  if (ai_positions && ai_positions.length >= 2 && kolonoBase && militarBase) {
+    aiUnits.push({
+      ...kolonoBase,
+      movement_points: kolonoBase.movementPoints,
+      id: "kolono-start-ai",
+      position: ai_positions[0],
+      movement_points_left: kolonoBase.movementPoints,
+      owner: "ai"
+    });
+    aiUnits.push({
+      ...militarBase,
+      movement_points: militarBase.movementPoints,
+      id: "militar-start-ai",
+      position: ai_positions[1],
+      movement_points_left: militarBase.movementPoints,
+      owner: "ai"
+    });
+  }
+
+  console.log("aiUnits creados:", aiUnits);
+
+  // Inserta las unidades en el game_state antes de guardar, LIMPIANDO los campos extra
+  game.game_state.player.units = playerUnits.map(cleanUnit);
+  game.game_state.ai.units = aiUnits.map(cleanUnit);
+
+  console.log("game.game_state.player.units FINAL:", game.game_state.player.units);
+  console.log("game.game_state.ai.units FINAL:", game.game_state.ai.units);
+
+  try {
+    await saveGame(game.game_id || game._id, game.game_state);
+    console.log("Partida guardada automáticamente tras crearla.");
+  } catch (err) {
+    console.error("Error al guardar la partida automáticamente:", err);
+  }
+
+  // Devuelve el objeto game modificado
+  return game;
 };
 
 export const getSavedGames = async () => {
@@ -106,8 +178,8 @@ export const deleteGame = async (gameId: string) => {
 
 let aiActionStep = 0;
 const aiActionSequence: AiAction[] = [
-  { type: "foundCity", payload: { name: "CityEnemy", unitId:"kolono-start-ai" } },
-  { type: "trainUnit", payload: { cityId: "CityEnemy", unitType:"militar" } },
+  { type: "foundCity", payload: { name: "CityEnemy", unitId: "kolono-start-ai" } },
+  { type: "trainUnit", payload: { cityId: "CityEnemy", unitType: "militar" } },
   { type: "endTurn", payload: {} }
 ];
 

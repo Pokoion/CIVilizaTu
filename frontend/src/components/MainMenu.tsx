@@ -108,7 +108,7 @@ const MainMenu: React.FC = () => {
       });
       console.log("JSON recibido al CREAR partida:", result);
       // Solo navega si el JSON es correcto
-      navigate('/game', { state: { partida: result.game, loaded: true } });
+      navigate('/game', { state: { partida: result, loaded: true } });
     } catch (err: any) {
       console.error("Errorea partida sortzean:", err?.response?.data || err.message);
       setError("Errorea partida sortzean.");
