@@ -183,6 +183,7 @@ terrain. Los posibles visible-objects son los siguientes:
 - ganadua: las vacas que va a haber en el mapa
 - burdina: las menas de hierro que van a haber en el mapa
 - egurra: las pilas de madera que van a haber en el mapa
+- zientzia: 5 puntos de ciencia que van a haber en el mapa
 
 - El objeto de visible-objects lo tienes que generar de esta manera:
 {{
@@ -197,6 +198,8 @@ Debes tener en cuenta:
 - Los objetos posición de los objetos visibles es valida siempre y cuando las coordenadas estén acorde las dimensiones del mapa
 y siempre y cuando la posición no coincida con un tile 3 (Ura) ni tamoco 6 (Itsasoa)
 - No se pueden solapar los objetos visibles sobre si mismos, una posición única por cada objeto
+- Incluye al menos 10 objetos visibles de cada tipo
+- La posición de los objetos visibles no puede estar a menos de 15 tiles de distancia entre ellos
 
 3. Un objeto llamado start que contiene los puntos de aparición de las unidades del jugador y del agente IA, es decir, tú. 
 - El objeto start lo tienes que generar de la siguiente manera: 
@@ -217,7 +220,7 @@ y siempre y cuando la posición no coincida con un tile 3 (Ura) ni tamoco 6 (Its
 - Los settler y soldier de ambos tienen que aparecer a 1 tile de distancia, puede ser horizontalmente, verticalmente o en diagonal siempre y cuando el mapa lo permita
 - Las unidades del jugador y del agente IA deben aparecer lejos, por ello la distancia entre los puntos de aparición debe ser notable
 
-QUIERO QUE SOLO DEVUELVAS LOS JSON, NADA MAS. NO QUIERO NINGUN TEXTO EXPLICATIVO NI NINGUN TIPO DE COMENTARIO.
+QUIERO QUE SOLAMENTE DEVUELVAS UN JSON DONDE SE GUARDA terrain, visible-objects y start. LOS JSON, NADA MAS. NO QUIERO NINGUN TEXTO EXPLICATIVO NI NINGUN TIPO DE COMENTARIO.
     """
  
     try:
@@ -234,24 +237,32 @@ QUIERO QUE SOLO DEVUELVAS LOS JSON, NADA MAS. NO QUIERO NINGUN TEXTO EXPLICATIVO
         
         # Extraer la respuesta del modelo
         response_text = completion.choices[0].message.content
-        return jsonify(response_text)
+        #return jsonify(response_text)
         # Procesar la respuesta para extraer el JSON
         import json
         import re
 
         try:
+            # Buscar el bloque JSON en el texto
             json_match = re.search(r'```json\s*([\s\S]*?)\s*```', response_text)
             if json_match:
                 json_text = json_match.group(1)
                 map_data = json.loads(json_text)
-                if "terrain" in map_data and isinstance(map_data["terrain"], list)and \
+
+                # Validar que los datos contengan terrain, visible-objects y start
+                if "terrain" in map_data and isinstance(map_data["terrain"], list) and \
                    "visible-objects" in map_data and isinstance(map_data["visible-objects"], list) and \
                    "start" in map_data and isinstance(map_data["start"], list):
-                    return jsonify(map_data)
+                    # Devolver un único JSON con los datos
+                    return jsonify({
+                        "terrain": map_data["terrain"],
+                        "visible-objects": map_data["visible-objects"],
+                        "start": map_data["start"]
+                    })
                 else:
                     return jsonify({"error": "La respuesta del modelo no contiene los datos esperados (terrain, visible-objects, start)"}), 500
             else:
-                return jsonify({"error": "No se encontro JSON valido en la respuesta del modelo"}), 500
+                return jsonify({"error": "No se encontró un bloque JSON válido en la respuesta del modelo"}), 500
         except json.JSONDecodeError:
             return jsonify({"error": "La respuesta del modelo no es un JSON valido"}), 500
     
@@ -279,6 +290,282 @@ QUIERO QUE SOLO DEVUELVAS LOS JSON, NADA MAS. NO QUIERO NINGUN TEXTO EXPLICATIVO
         # Para otros errores, generar un mapa predeterminado
         basic_terrain = [[3 for _ in range(width)] for _ in range(height)]
         return jsonify({"terrain": basic_terrain, "error": error_str}), 500
+    
+@app.route('/eskuratuEkintza', methods=['POST'])
+def eskuratu_ekintza():
+    global current_model, model_switch_count, last_error_time
+
+    data = request.json
+    if not data:
+        return jsonify({'error': 'No se recibió el estado del juego (game state)'}), 400
+
+    game_state = data.get('game_state_visible')
+    if not game_state:
+        return jsonify({'error': 'El campo "game_state" es obligatorio'}), 400
+
+    # Crear un prompt para generar las acciones
+    prompt = f"""
+    He aqí el estado del juego:
+    {{game_state}}
+
+    Tu eres un agente IA que está jugando a un juego de estrategia por turnos. 
+    Tu objetivo es expandir tu imperio, conqustar ciudades enemigas, reunir recursos
+    y ganarle a tu contrincante. Recibiras el estado del juego y deberás de generar
+    una serie de acciones que deberás de realizar en este turno.
+
+    Es tu responsabilidad analizar el estado del juego, formular una estrategia y 
+    definir las acciones que debes de realizar este turno. Sigue estos pasos:
+
+    1. Analiza el estado del juego, teniendo esto en cuenta:
+    - La posición, situación y edificios de tus ciudades
+    - La posición y estadisticas de tus unidades
+    - Los recursos que tienes y de donde los obtienes
+    - Zonas exploradas en el mapa
+    - La posición y fortalezas de las unidades enemigas
+    - Oportunidades (recursos, tecnologías)
+    - Fog of war (zonas no exploradas)
+
+    2. Formula una estrategia basada en estas prioridades:
+    - Exploracion para descubrir recursos y ciudades enemigas
+    - Asegurar fuentes de ingresos
+    - Desarrollo de ciudades para para reclutar unidades
+    - Investigación de tecnologías para conseguir la ventaja
+    - Regular la economía y la fuerza militar
+
+    3. Genera una lista de acciones que deberás de realizar en este turno.
+    Puedes realizar múltiples acciones hasta que se acaben los puntos de movimiento.
+    Estas acciones pueden incluir:
+    - moveUnit: mover una unidad a una nueva posición
+    - attackUnit: atacar una unidad enemiga
+    - attackCity: atacar una ciudad enemiga
+    - foundCity: fundar una nueva ciudad
+    - changeCityPopulationProduction:
+    - collectResource: recolectar un recurso de un tile
+    - buildBuilding: construir un edificio en una ciudad
+    - trainUnit: reclutar una nueva unidad en una ciudad
+    - deployUnit: desplegar una unidad en una posición
+    - researchTech: investigar una nueva tecnología
+    - upgradeCityEra: actualizar la era de una ciudad
+    - endTurn: finalizar el turno
+
+    este es el formato que debes de seguir para cada acción:
+    {{
+      "type": "moveUnit",
+      "payload": {{
+        "unitId": "string",
+        "position": {{
+          "x": 0,
+          "y": 0
+        }}
+      }}
+    }},
+    {{
+      "type": "attackUnit",
+      "payload": {{
+        "attackerId": "string",
+        "defenderId": "string"
+      }}
+    }},
+    {{
+      "type": "attackCity",
+      "payload": {{
+        "attackerId": "string",
+        "cityId": "string"
+      }}
+    }},
+    {{
+      "type": "foundCity",
+      "payload": {{
+        "name": "string",
+        "unitId": "string"
+      }}
+    }},
+    {{
+      "type": "changeCityPopulationProduction",
+      "payload": {{
+        "cityId": "string",
+        "change": 0
+      }}
+    }},
+    {{
+      "type": "collectResource",
+      "payload": {{
+        "unitId": "string",
+        "position": {{
+          "x": 0,
+          "y": 0
+        }}
+      }}
+    }},
+    {{
+      "type": "buildBuilding",
+      "payload": {{
+        "cityId": "string",
+        "buildingType": "string"
+      }}
+    }},
+    {{
+      "type": "trainUnit",
+      "payload": {{
+        "cityId": "string",
+        "unitType": "string"
+      }}
+    }},
+    {{
+      "type": "deployUnit",
+      "payload": {{
+        "cityId": "string",
+        "unitType": "string",
+        "position":{ {
+          "x": 0,
+          "y": 0
+        }}
+      }}
+    }},
+    {{
+      "type": "researchTech",
+      "payload":{{
+        "techId": "string"
+      }}
+    }},
+    {{
+      "type": "upgradeCityEra",
+      "payload": {{
+        "cityId": "string"
+      }}
+    }},
+    {{
+      "type": "endTurn",
+      "payload": {{}}
+    }}
+
+    Tu respuesta debe ser un JSON que contenga una lista de acciones, de esta manera:
+    {{
+        "actions": [
+            {{
+                "type": "tipo de acción",
+                "payload": {{
+                  //dependiendo del tipo de acción
+                }}
+            }},
+            //...mas acciones...
+            {{
+                "type": "endTurn",
+                "payload": {{}}
+            }}
+        ],
+        "reasoning": "Explicacion detallada de la estrategia y de los planes para siguientes turnos",
+        "analysis": "Analisis del estado del juego y de la posicion del contrincante"
+    }}
+
+    He aquí un ejemplo de respuesta:
+    {{
+        "actions": [
+            {{
+                "type": "moveUnit",
+                "payload": {{
+                    "unitId": "string",
+                    "position": {{
+                        "x": 0,
+                        "y": 0
+                    }}
+                }}
+            }},
+            {{
+                "type": "attackUnit",
+                "payload": {{
+                    "attackerId": "string",
+                    "defenderId": "string"
+                }}
+            }},
+            {{
+                "type": "foundCity",
+                "payload": {{
+                    "name": "string",
+                    "unitId": "string"
+                }}
+            }},
+            {{
+                "type": "endTurn",
+                "payload": {{}}
+            }}
+        ],
+        "reasoning": "Explicacion detallada de la estrategia y de los planes para siguientes turnos",
+        "analysis": "Analisis del estado del juego y de la posicion del contrincante"
+    }}
+
+    Ten en cuenta:
+    - Piensa de manera estratégica y a largo plazo
+    - Gestiona los recursos de manera eficiente
+    - Adecúa tus acciones a la situación del juego
+    - Busca un equilibrio entre la fuerza militar y el desarrollo económico
+    - Aprovecha tus fortalezas y explota las debilidades del enemigo
+    - Siempre termina el turno con la acción endTurn
+    - Da un razonamiento detallado de tus acciones
+    - Respeta las reglas y mecanicas del juego
+
+    Ahora, basandote en el estado del juego que te he dado, analiza la situación, formula una estrategia,
+    y genera tus acciones, razonamiento y análisis para este turno.
+    """
+
+    try:
+        # Usar el cliente directo de Groq para enviar el prompt
+        completion = groq_client.chat.completions.create(
+            model=current_model,
+            messages=[
+                {"role": "system", "content": "Eres un generador de acciones para un agente IA en un juego de estrategia por turnos."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=float(TEMPERATURE),
+            max_tokens=int(MAX_TOKENS)
+        )
+
+        # Extraer la respuesta del modelo
+        response_text = completion.choices[0].message.content
+
+        # Procesar la respuesta para extraer el JSON
+        import json
+        import re
+
+        try:
+            # Buscar el bloque JSON en el texto
+            json_match = re.search(r'```json\s*([\s\S]*?)\s*```', response_text)
+            if json_match:
+                json_text = json_match.group(1)
+                actions_data = json.loads(json_text)
+
+                # Validar que los datos contengan "actions"
+                if "actions" in actions_data and isinstance(actions_data["actions"], list):
+                    # Devolver un único JSON con las acciones
+                    return jsonify(actions_data)
+                else:
+                    return jsonify({"error": "La respuesta del modelo no contiene el objeto esperado 'actions'"}), 500
+            else:
+                return jsonify({"error": "No se encontró un bloque JSON válido en la respuesta del modelo"}), 500
+        except json.JSONDecodeError:
+            return jsonify({"error": "La respuesta del modelo no es un JSON válido"}), 500
+
+    except Exception as e:
+        error_str = str(e)
+        print(f"Error al generar acciones: {error_str}")
+        
+        # Manejar el error 429 (Rate limit exceeded)
+        if "429" in error_str or "rate limit" in error_str.lower():
+            previous_model = current_model
+            current_model = get_next_model(current_model)
+            model_switch_count += 1
+            last_error_time = time.time()
+            
+            return jsonify({
+                "actions": [],
+                "model_switched": True,
+                "previous_model": previous_model,
+                "current_model": current_model,
+                "error_type": "rate_limit"
+            }), 429
+        
+        # Para otros errores, devolver un mensaje de error
+        return jsonify({"error": error_str}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5001)
