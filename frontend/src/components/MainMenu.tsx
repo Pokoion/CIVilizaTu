@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/MainMenu.css';
-import { createGame } from '../services/gameService';
+import { createGame, getSavedGames } from '../services/gameService';
 
 // Civilizaciones y escenarios desde GameInfo.json y carpeta de imágenes
 const civilizations = [
@@ -50,26 +50,6 @@ const defaultLeaderNames: Record<string, string> = {
   bizantziarrak: "Justiniano"
 };
 
-const getSavedGames = () => {
-  // Simulación: puedes cambiar esto por una petición real a backend o localStorage
-  const saved = localStorage.getItem('savedGames');
-  if (saved) return JSON.parse(saved);
-  // Ejemplo de estructura de partida guardada
-  return [
-    {
-      id: '1',
-      name: 'Partida 1',
-      date: '2025-05-13 18:00',
-      civilization: 'euskaldunak',
-      aiCivilization: 'mongolak',
-      leader_name: 'Sabino arana',
-      ai_leader_name: 'Gengis Kan',
-      difficulty: 'normal',
-      map_size: { width: 50, height: 50 }
-    }
-  ];
-};
-
 const MainMenu: React.FC = () => {
   const navigate = useNavigate();
   const [showSetup, setShowSetup] = useState(false);
@@ -82,25 +62,15 @@ const MainMenu: React.FC = () => {
   const [difficulty, setDifficulty] = useState(difficulties[1].id);
   const [error, setError] = useState<string | null>(null);
   const [savedGames, setSavedGames] = useState<any[]>([]);
+  const [loadingGames, setLoadingGames] = useState(false);
 
   // Info de civilización seleccionada
   const playerCivInfo = civilizations.find(c => c.id === playerCiv)!;
   const aiCivInfo = civilizations.find(c => c.id === aiCiv)!;
 
-  useEffect(() => {
-    if (showLoad) {
-      setSavedGames(getSavedGames());
-    }
-  }, [showLoad]);
-
   const handleStartSetup = () => {
     setShowSetup(true);
     setShowLoad(false);
-  };
-
-  const handleShowLoad = () => {
-    setShowLoad(true);
-    setShowSetup(false);
   };
 
   const handleCreateGame = async (e: React.FormEvent) => {
@@ -137,11 +107,24 @@ const MainMenu: React.FC = () => {
         map_size: { width: 50, height: 50 },
       });
       console.log("Partida sortu da:", result);
-      // No redirigir todavía
+      // TODO cargaratu partida
     } catch (err: any) {
       console.error("Errorea partida sortzean:", err?.response?.data || err.message);
       setError("Errorea partida sortzean.");
     }
+  };
+
+  const handleShowLoad = async () => {
+    setShowLoad(true);
+    setShowSetup(false);
+    setLoadingGames(true);
+    try {
+      const games = await getSavedGames();
+      setSavedGames(games);
+    } catch (err) {
+      setSavedGames([]);
+    }
+    setLoadingGames(false);
   };
 
   return (
@@ -276,32 +259,34 @@ const MainMenu: React.FC = () => {
         {showLoad && (
           <div className="load-game-container">
             <h2>Kargatu Partida</h2>
-            {savedGames.length === 0 ? (
+            {loadingGames ? (
+              <div>Kargatzen...</div>
+            ) : savedGames.length === 0 ? (
               <div style={{ color: "#ffd700", margin: "1rem" }}>Ez dago partida gordetarik.</div>
             ) : (
-              <ul className="saved-games-list">
+              <div className="saved-games-list">
                 {savedGames.map(game => (
-                  <li key={game.id} className="saved-game-item">
+                  <div key={game.game_id} className="saved-game-card">
                     <div>
-                      <strong>{game.name}</strong> <span style={{ color: "#ffd700" }}>({game.date})</span>
+                      <strong>{game.name}</strong>
                       <br />
                       <span style={{ fontSize: "0.95em" }}>
-                        {game.leader_name} ({game.civilization}) vs {game.ai_leader_name} ({game.aiCivilization})<br />
-                        Zailtasuna: {game.difficulty}, Mapa: {game.map_size.width}x{game.map_size.height}
+                        Eszenatokia: {game.scenario_id}<br />
+                        Sortuta: {game.created_at?.slice(0, 19).replace('T', ' ')}
+                        <br />
+                        Azken aldaketa: {game.last_saved?.slice(0, 19).replace('T', ' ')}
                       </span>
                     </div>
                     <button
                       className="main-menu-btn"
-                      style={{ margin: 0, padding: "8px 18px", fontSize: "1rem" }}
-                      onClick={() => {
-                        navigate('/game', { state: { ...game, loaded: true } });
-                      }}
+                      style={{ marginTop: 8 }}
+                      onClick={() => navigate('/game', { state: { ...game, loaded: true } })}
                     >
                       Kargatu
                     </button>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
             <button className="main-menu-btn secondary" onClick={() => setShowLoad(false)}>Atzera</button>
           </div>

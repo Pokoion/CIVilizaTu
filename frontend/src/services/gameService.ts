@@ -67,3 +67,12 @@ export const createGame = async ({
   });
   return response.data;
 };
+
+export const getSavedGames = async () => {
+  const token = localStorage.getItem('jwt_token');
+  const response = await axios.get(`${API_URL}/api/games`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  console.log("Saved games response:", response.data);
+  return response.data;
+};

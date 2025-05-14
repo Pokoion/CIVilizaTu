@@ -47,8 +47,11 @@ def save_partida_game_state(game, game_state_dict):
 def partida_to_dict(game):
     return {
         "game_id": str(game.id),
+        "user_id": str(game.user_id),
         "name": game.name,
         "scenario_id": game.scenario_id,
+        "created_at": game.created_at.isoformat() if hasattr(game, "created_at") else None,
+        "last_saved": game.last_saved.isoformat() if hasattr(game, "last_saved") else None,
         "game_state": game.game_state.to_mongo().to_dict() if game.game_state else None
     }
 

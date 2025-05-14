@@ -218,28 +218,131 @@
 /* Añade esto a tu MainMenu.css para la lista de partidas guardadas */
 .load-game-container {
   width: 100%;
-  max-width: 520px;
+  max-width: 540px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 22px;
+  background: rgba(40, 25, 10, 0.93);
+  border-radius: 18px;
+  box-shadow: 0 6px 32px #000a;
+  padding: 2rem 2.5rem 2.5rem 2.5rem;
+  margin: 0 auto;
+  margin-top: 1.5rem;
+}
+
+.load-game-container h2 {
+  color: #ffd700;
+  font-size: 2.2rem;
+  margin-bottom: 1.2rem;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 8px #000a;
 }
 
 .saved-games-list {
-  list-style: none;
-  padding: 0;
   width: 100%;
-  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 1.5rem;
 }
 
-.saved-game-item {
-  background: rgba(60,40,20,0.85);
-  border-radius: 10px;
-  margin-bottom: 12px;
-  padding: 14px 18px;
+.saved-game-card {
+  width: 98%;
+  max-width: 420px;
+  background: linear-gradient(120deg, #3e2c13 60%, #5c3a1e 100%);
+  border-radius: 14px;
+  box-shadow: 0 4px 18px #0007;
+  padding: 1.3rem 1.5rem 1.1rem 1.5rem;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+  border: 2px solid #ffd70033;
+  transition: box-shadow 0.2s, border 0.2s, transform 0.15s;
+}
+
+.saved-game-card:hover {
+  box-shadow: 0 8px 32px #ffd70055;
+  border: 2px solid #ffd700;
+  transform: scale(1.025);
+  background: linear-gradient(120deg, #5c3a1e 60%, #ffd70033 100%);
+}
+
+.saved-game-card strong {
+  color: #ffd700;
+  font-size: 1.25rem;
+  font-family: 'Cinzel', serif;
+  margin-bottom: 0.2rem;
+  letter-spacing: 0.5px;
+}
+
+.saved-game-card span {
   color: #ffe4a0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  font-size: 1.05rem;
+  margin-top: 0.2rem;
+  display: block;
+}
+
+.saved-game-card .main-menu-btn {
+  align-self: flex-end;
+  margin-top: 1.1rem;
+  padding: 10px 30px;
+  font-size: 1.08rem;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #ffd700 0%, #8b4513 100%);
+  color: #2e1a0f;
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  box-shadow: 0 2px 8px #0005;
+  border: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.saved-game-card .main-menu-btn:hover {
+  background: linear-gradient(90deg, #8b4513 0%, #ffd700 100%);
+  color: #fffbe6;
+}
+
+@media (max-width: 700px) {
+  .load-game-container {
+    padding: 1rem 0.5rem 1.5rem 0.5rem;
+    max-width: 99vw;
+  }
+  .saved-game-card {
+    max-width: 98vw;
+    padding: 1rem 0.7rem 1rem 0.7rem;
+  }
+}
+
+/* Centrar el botón "Atzera" y darle estilo */
+.load-game-container > .main-menu-btn.secondary {
+  align-self: center;
+  margin-top: 0.5rem;
+  width: 60%;
+  max-width: 180px;
+  font-size: 1.08rem;
+  padding: 10px 0;
+  background: #444;
+  color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px #0003;
+  transition: background 0.2s, color 0.2s;
+}
+
+.load-game-container > .main-menu-btn.secondary:hover {
+  background: #ffd700;
+  color: #2e1a0f;
+}
+
+/* Mensaje de "Ez dago partida gordetarik" */
+.load-game-container > div[style] {
+  color: #ffd700 !important;
+  font-size: 1.15rem;
+  text-align: center;
+  margin: 1.2rem 0 !important;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.5px;
 }

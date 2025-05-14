@@ -103,7 +103,7 @@ def create_game():
             game_state=game_state
         )
         game.save()
-        return jsonify({"game_id": str(game.id), "message": "Partida arrakastaz sortu da"}), 201
+        return jsonify({"game": partida_to_dict(game), "message": "Partida arrakastaz sortu da"}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
