@@ -6,7 +6,7 @@ class GroqConnector:
     def __init__(self):
         load_dotenv()
         self.api_key = os.getenv('GROQ_API_KEY')
-        self.base_url = os.getenv('GROQ_BASE_URL')
+        self.base_url = os.getenv('BASE_URL')
         
         # Modeloak konfiguratuko ditugu
         self.models = {
@@ -22,7 +22,7 @@ class GroqConnector:
             'Content-Type': 'application/json'
         }
     
-    def send_prompt(self, prompt, model='llama3-70b', max_tokens=6000):
+    def send_prompt(self, prompt, model='llama-3.3-70b'):
         """
         Prompt bat bidali Groq zerbitzura
         
@@ -42,8 +42,7 @@ class GroqConnector:
                     'role': 'user',
                     'content': prompt
                 }
-            ],
-            'max_tokens': max_tokens
+            ]
         }
         
         try:
