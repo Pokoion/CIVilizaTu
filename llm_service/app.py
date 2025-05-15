@@ -198,16 +198,15 @@ Debes tener en cuenta:
 - Los objetos posición de los objetos visibles es valida siempre y cuando las coordenadas estén acorde las dimensiones del mapa
 y siempre y cuando la posición no coincida con un tile 3 (Ura) ni tamoco 6 (Itsasoa)
 - No se pueden solapar los objetos visibles sobre si mismos, una posición única por cada objeto
+- Los objetos visibles tampoco se pueden solapar con las unidades del jugador y del agente IA
 - Incluye al menos 10 objetos visibles de cada tipo
 - La posición de los objetos visibles no puede estar a menos de 15 tiles de distancia entre ellos
 
-3. Un objeto llamado start que contiene los puntos de aparición de las unidades del jugador y del agente IA, es decir, tú. 
-- El objeto start lo tienes que generar de la siguiente manera: 
+3. Dos objetos llamados player_start y ai_start que contienen los puntos de aparición de las unidades del jugador y del agente IA, es decir, tú. 
+- Los objetos start los tienes que generar de la siguiente manera: 
 {{
-    "start": [
-        [{{"x": 2, "y": 2}}, {{"x": 3, "y": 3}}], 
-        [{{"x": 30, "y": 30}}, {{"x": 31, "y": 31}}]
-    ]
+        player_start: [{{"x": 2, "y": 2}}, {{"x": 3, "y": 3}}], 
+        ai_start: [{{"x": 30, "y": 30}}, {{"x": 31, "y": 31}}]
 }}
 Debes tener en cuenta: 
 - La primera fila indica las coordenadas dentro del mapa terrain de las unidades settler (colono) y soldier (soldado) del jugador
@@ -220,7 +219,7 @@ y siempre y cuando la posición no coincida con un tile 3 (Ura) ni tamoco 6 (Its
 - Los settler y soldier de ambos tienen que aparecer a 1 tile de distancia, puede ser horizontalmente, verticalmente o en diagonal siempre y cuando el mapa lo permita
 - Las unidades del jugador y del agente IA deben aparecer lejos, por ello la distancia entre los puntos de aparición debe ser notable
 
-QUIERO QUE SOLAMENTE DEVUELVAS UN JSON DONDE SE GUARDA terrain, visible-objects y start. LOS JSON, NADA MAS. NO QUIERO NINGUN TEXTO EXPLICATIVO NI NINGUN TIPO DE COMENTARIO.
+QUIERO QUE SOLAMENTE DEVUELVAS UN JSON DONDE SE GUARDA terrain, visible-objects y ambost start. LOS JSON, NADA MAS. NO QUIERO NINGUN TEXTO EXPLICATIVO NI NINGUN TIPO DE COMENTARIO.
     """
  
     try:
@@ -252,12 +251,14 @@ QUIERO QUE SOLAMENTE DEVUELVAS UN JSON DONDE SE GUARDA terrain, visible-objects 
                 # Validar que los datos contengan terrain, visible-objects y start
                 if "terrain" in map_data and isinstance(map_data["terrain"], list) and \
                    "visible-objects" in map_data and isinstance(map_data["visible-objects"], list) and \
-                   "start" in map_data and isinstance(map_data["start"], list):
+                   "player_start" in map_data and isinstance(map_data["player_start"], list) and \
+                   "ai_start" in map_data and isinstance(map_data["ai_start"], list):
                     # Devolver un único JSON con los datos
                     return jsonify({
                         "terrain": map_data["terrain"],
                         "visible-objects": map_data["visible-objects"],
-                        "start": map_data["start"]
+                        "player_start": map_data["player_start"],
+                        "ai_start": map_data["ai_start"],
                     })
                 else:
                     return jsonify({"error": "La respuesta del modelo no contiene los datos esperados (terrain, visible-objects, start)"}), 500
@@ -305,11 +306,11 @@ def eskuratu_ekintza():
 
     # Crear un prompt para generar las acciones
     prompt = f"""
-    He aqí el estado del juego:
-    {{game_state}}
+    He aquí el estado del juego:
+    {game_state}
 
     Tu eres un agente IA que está jugando a un juego de estrategia por turnos. 
-    Tu objetivo es expandir tu imperio, conqustar ciudades enemigas, reunir recursos
+    Tu objetivo es expandir tu imperio, conquistar ciudades enemigas, reunir recursos
     y ganarle a tu contrincante. Recibiras el estado del juego y deberás de generar
     una serie de acciones que deberás de realizar en este turno.
 
@@ -339,10 +340,11 @@ def eskuratu_ekintza():
     - attackUnit: atacar una unidad enemiga
     - attackCity: atacar una ciudad enemiga
     - foundCity: fundar una nueva ciudad
-    - changeCityPopulationProduction:
+    - changeCityPopulationProduction: Elegir si quieres aumentar la población de una ciudad en 1 (si es true) o mantenerla (si es false). 
+      Es importante saber que cada ciudadano consume 1 de comida cada turno.
     - collectResource: recolectar un recurso de un tile
-    - buildBuilding: construir un edificio en una ciudad
-    - trainUnit: reclutar una nueva unidad en una ciudad
+    - buildBuilding: construir un edificio en una ciudad.
+    - trainUnit: reclutar una nueva unidad en una ciudad. Solo puedes entrenar unidades que sean de tu civilización o que sea null (la civilización)
     - deployUnit: desplegar una unidad en una posición
     - researchTech: investigar una nueva tecnología
     - upgradeCityEra: actualizar la era de una ciudad
@@ -384,7 +386,7 @@ def eskuratu_ekintza():
       "type": "changeCityPopulationProduction",
       "payload": {{
         "cityId": "string",
-        "change": 0
+        "change": boolean
       }}
     }},
     {{
@@ -416,7 +418,7 @@ def eskuratu_ekintza():
       "payload": {{
         "cityId": "string",
         "unitType": "string",
-        "position":{ {
+        "position": {{
           "x": 0,
           "y": 0
         }}
@@ -503,9 +505,90 @@ def eskuratu_ekintza():
     - Siempre termina el turno con la acción endTurn
     - Da un razonamiento detallado de tus acciones
     - Respeta las reglas y mecanicas del juego
+        -He aquí un todas los objetos, unidades, edificios y recursos que hay en el juego:
+        {{
+            "map_elements": [
+                {{"id": "arbola", "name": "Arbola", "bonus": {{"food": 1, "natural_resources": 1}}}},
+                {{"id": "harria", "name": "Harria", "bonus": {{"natural_resources": 2}}}},
+                {{"id": "urrea", "name": "Urrea", "bonus": {{"gold": 3}}}},
+                {{"id": "ganadua", "name": "Ganadua", "bonus": {{"food": 2}}}},
+                {{"id": "burdina", "name": "Burdina", "bonus": {{"natural_resources": 2, "gold": 1}}}},
+                {{"id": "egurra", "name": "Egurra", "bonus": {{"natural_resources": 1}}}}
+            ],
+            "city_eras": [
+                {{"id": "Antzinaroa", "name": "Antzinaroa", "next_era": "Erdi Aroa", "upgrade_cost": {{"gold": 200, "natural_resources": 100}}, "base_production": {{"food": 2, "gold": 1, "culture": 0, "science": 0, "natural_resources": 1}}, "building_limit": 5}},
+                {{"id": "Erdi Aroa", "name": "Erdi Aroa", "next_era": "Aro Modernoa", "upgrade_cost": {{"gold": 400, "natural_resources": 200}}, "base_production": {{"food": 4, "gold": 3, "culture": 1, "science": 1, "natural_resources": 2}}, "building_limit": 6}},
+                {{"id": "Aro Modernoa", "name": "Aro Modernoa", "next_era": null, "upgrade_cost": {{"gold": 0, "natural_resources": 0}}, "base_production": {{"food": 6, "gold": 5, "culture": 2, "science": 3, "natural_resources": 3}}, "building_limit": 7}}
+            ],
+            "units": [
+                {{"id": "militar", "type": "Militar", "health": 75, "strength": 15, "movement_points": 3, "range": 1, "civilization": null, "cost": {{"food": 10, "gold": 5}}}},
+                {{"id": "kolono", "type": "Kolono", "health": 50, "strength": 5, "movement_points": 4, "range": 1, "civilization": null, "cost": {{"food": 20, "gold": 15}}}},
+                {{"id": "langile", "type": "Langile", "health": 50, "strength": 5, "movement_points": 3, "range": 1, "civilization": null, "cost": {{"food": 15, "gold": 8}}}},
+                {{"id": "gudaria", "type": "Gudaria", "health": 150, "strength": 20, "movement_points": 3, "range": 1, "civilization": "euskaldunak", "cost": {{"food": 25, "gold": 20}}}},
+                {{"id": "arkari_zalduna", "type": "Arkari zalduna", "health": 125, "strength": 15, "movement_points": 4, "range": 3, "civilization": "mongolak", "cost": {{"food": 30, "gold": 20}}}},
+                {{"id": "atlatl_erabiltzailea", "type": "Atlatl erabiltzailea", "health": 100, "strength": 20, "movement_points": 2, "range": 3, "civilization": "mayak", "cost": {{"food": 18, "gold": 12}}}},
+                {{"id": "piromanoa", "type": "Piromanoa", "health": 80, "strength": 40, "movement_points": 2, "range": 1, "civilization": "bizantziarrak", "cost": {{"food": 22, "gold": 25}}}},
+                {{"id": "arkeroa", "type": "Arkeroa", "health": 60, "strength": 15, "movement_points": 2, "range": 4, "civilization": null, "cost": {{"food": 12, "gold": 10}}}},
+                {{"id": "tankea", "type": "Tankea", "health": 200, "strength": 50, "movement_points": 3, "range": 3, "civilization": null, "cost": {{"natural_resources": 50, "gold": 60}}}},
+                {{"id": "itsasontzia", "type": "Itsasontzia", "health": 200, "strength": 50, "movement_points": 3, "range": 3, "civilization": null, "cost": {{"natural_resources": 30, "gold": 50}}}}
+            ],
+            "resources": [
+                {{"id": "food", "name": "Janaria", "description": "Hiriko biztanleria hazten du"}},
+                {{"id": "gold", "name": "Urrea", "description": "Eraikinak erosteko"}},
+                {{"id": "natural_resources", "name": "Baliabide Naturalak", "description": "Eraikuntzarako"}},
+                {{"id": "science", "name": "Zientzia", "description": "Teknologia berriak garatzeko"}},
+                {{"id": "culture", "name": "Kultura", "description": "Garaipen baldintzetarako"}}
+            ],
+            "buildings": [
+                {{"id": "aletegia", "name": "Aletegia", "bonus": "+2 food", "requirement": "buztingintza", "cost": {{"gold": 5, "natural_resources": 3, "culture": 0}}}},
+                {{"id": "kuartela", "name": "Kuartela", "bonus": "Unitate militarren ekoizpena", "requirement": "burdina", "cost": {{"gold": 10, "natural_resources": 5, "culture": 2}}}},
+                {{"id": "eskola", "name": "Eskola", "bonus": "+1 culture (biztanleko)", "requirement": "idazketa", "cost": {{"gold": 8, "natural_resources": 4, "culture": 4}}}},
+                {{"id": "merkatua", "name": "Merkatua", "bonus": "+2 gold", "requirement": "merkataritza", "cost": {{"gold": 15, "natural_resources": 6, "culture": 3}}}},
+                {{"id": "harresia", "name": "Harresia", "bonus": "Hiriaren defentsa + 50", "requirement": null, "cost": {{"gold": 6, "natural_resources": 10, "culture": 1}}}},
+                {{"id": "unibertsitatea", "name": "Unibertsitatea", "bonus": "+2 culture (biztanleko)", "requirement": "ingeniaritza", "cost": {{"gold": 20, "natural_resources": 8, "culture": 8}}}}
+            ],
+            "technologies": [
+                {{"id": "nekazaritza", "name": "Nekazaritza", "bonus": "Janaria +100 eta baliabide naturalak lortu ahal", "cost": 3, "era": "Antzinaroa", "dependencies": [], "x": 100, "y": 100}},
+                {{"id": "idazketa", "name": "Idazketa", "bonus": "Eskolak desblokeatu", "cost": 8, "era": "Antzinaroa", "dependencies": ["nekazaritza"], "x": 300, "y": 100}},
+                {{"id": "penizilina", "name": "Penizilina", "bonus": "Unitate guztien bizitza +30", "cost": 15, "era": "Aro Modernoa", "dependencies": ["idazketa"], "x": 500, "y": 50}},
+                {{"id": "ekonomia", "name": "Ekonomia", "bonus": "Txanda bakoitzeko hirietatik lortzen en urre kopurua +5", "cost": 14, "era": "Erdi Aroa", "dependencies": ["idazketa"], "x": 500, "y": 170}},
+                {{"id": "merkataritza", "name": "Merkataritza", "bonus": "Merkatuak desblokeatu", "cost": 12, "era": "Aro Modernoa", "dependencies": ["ekonomia"], "x": 700, "y": 130}},
+                {{"id": "burdina", "name": "Burdina", "bonus": "+5 eraso zibilizazioaren unitate bakoitzeko eta kuartelak desblokeatu", "cost": 8, "era": "Antzinaroa", "dependencies": ["nekazaritza"], "x": 300, "y": 300}},
+                {{"id": "meatzaritza", "name": "Meatzaritza", "bonus": "Natural_resources +100", "cost": 4, "era": "Antzinaroa", "dependencies": ["burdina"], "x": 500, "y": 300}},
+                {{"id": "ingeniaritza", "name": "Ingeniaritza", "bonus": "Unibertsitateak desblokeatzen ditu", "cost": 12, "era": "Erdi Aroa", "dependencies": ["meatzaritza"], "x": 700, "y": 250}},
+                {{"id": "artilleria", "name": "Artilleria", "bonus": "Unitate militar hobeak (+10 eraso zibilizazioaren unitate bakoitzeko) eta tankeak desblokeatu", "cost": 16, "era": "Aro Modernoa", "dependencies": ["ingeniaritza"], "x": 900, "y": 250}},
+                {{"id": "espaziontzia", "name": "Espaziontzia", "bonus": "Espaziontzia eraiki eta partida irabazi", "cost": 1000, "era": "Aro Modernoa", "dependencies": [], "x": 1100, "y": 250}},
+                {{"id": "arkitektura", "name": "Arkitektura", "bonus": "Produkzio guztien txanda kopurua murriztu", "cost": 14, "era": "Erdi Aroa", "dependencies": ["meatzaritza"], "x": 700, "y": 370}},
+                {{"id": "buztingintza", "name": "Buztingintza", "bonus": "Aletegia desblokeatu", "cost": 5, "era": "Antzinaroa", "dependencies": [], "x": 100, "y": 400}},
+                {{"id": "industria", "name": "Industria", "bonus": "Produkzio guztien txanda kopurua murriztu", "cost": 14, "era": "Aro Modernoa", "dependencies": ["buztingintza"], "x": 300, "y": 420}},
+                {{"id": "arku_tiroa", "name": "Arku Tiroa", "bonus": "Distantziako oinarrizko unitatea desblokeatu", "cost": 15, "era": "Antzinaroa", "dependencies": [], "x": 100, "y": 520}},
+                {{"id": "gurpila", "name": "Gurpila", "bonus": "Unitate guztien mugimenduak +3", "cost": 10, "era": "Antzinaroa", "dependencies": [], "x": 100, "y": 640}},
+                {{"id": "nabigazioa", "name": "Nabigazioa", "bonus": "Ura zeharkatzea ahalbidetzen duen itsasontzia desblokeatzen du", "cost": 6, "era": "Erdi Aroa", "dependencies": [], "x": 100, "y": 760}}
+            ]
+        }}
+
+        Detalles a tener en cuenta:
+        - Solo los kolonos pueden fundar ciudades
+        - Solo los langiles pueden recolectar recursos y solo cuando la tecnnoloía neazaritza esta investigada
+        - Los barcos solo se pueden mover por tiles de 3 (Ura) y 6 (Itsasoa)
+        - Solo se pueden entrenar unidades en ciudades que tengan un kuartela y una unidad por cuartel. Si en una ciudad hay 2 cuarteles, puedes entrenar 2 unidades a la vez.
+        - Depsués de atacar una ciudad o unidad enemiga, la unidad atacante no puede moverse
+        - Para recolectar recursos a partir de los map_elements el langile tiene que estar a un tile de distancia
+        - Para atacar tienes que respetar el rango de ataque de la unidad
+        - Para poder investigar la tecnología del cohete espacial tienes que haber investigado antes
+        todas las tecnologías anteriores
+        - El coste de tecnologías se mide en puntos de ciencia
+        - Empizas la partida en la era Antzinaroa, cuando investigas 5 tecnologías pasas a la era Erdi Aroa y
+        cuando investigas 5 tecnologías mas pasas a la era Aro Modernoa
+        - Cada ciudadano consume 1 de comida por turno, así que tienes que asegurarte de tener comida suficiente porque sino
+        si no hay suficiente comida, se perdera un ciudadano por ciudad cada turno hasta que haya comida suficiente
+        - Ciertas unidades y edificios requieren haber investigado ciertas tecnologías para poder ser construidos o entrenados, esas dependencias
+        se encuentran en el campo dependencies de cada unidad y edificio
+        - Ten en cuenta los puntos de movimiento tuyos, de tus unidades y de los tiles
+        - Ten en cuenta que a medida que avanzas de era, las ciudades pueden tener un edificio mas
 
     Ahora, basandote en el estado del juego que te he dado, analiza la situación, formula una estrategia,
-    y genera tus acciones, razonamiento y análisis para este turno.
+    y genera tus acciones, razonamiento y análisis para este turno. Evita el uso de las tildes.
     """
 
     try:
