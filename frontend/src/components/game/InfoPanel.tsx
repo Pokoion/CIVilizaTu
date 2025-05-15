@@ -321,6 +321,8 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
 
   // --- Unidad seleccionada ---
   if (selectedUnit) {
+    console.log("selectedUnit:", selectedUnit, "isPlayerTurn:", isPlayerTurn);
+    console.log("isKolono", selectedUnit.type === 'Kolono');
     return (
       <div className="info-panel-root">
         <h3>Unitatea</h3>

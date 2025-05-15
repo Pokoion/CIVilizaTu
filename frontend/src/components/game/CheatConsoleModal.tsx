@@ -130,7 +130,7 @@ const CHEAT_CODES = [
                     ...r,
                     food: 9999,
                     gold: 9999,
-                    culture: 9999,
+                    culture: 5000,
                     science: 9999,
                     natural_resources: 9999
                 }));

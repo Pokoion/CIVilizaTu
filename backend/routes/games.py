@@ -8,6 +8,16 @@ from services.llm_service import create_map, send_ia_game_state, get_ai_visible_
 
 games_bp = Blueprint('games', __name__, url_prefix='/api/games')
 
+TERRAIN_IDS = [
+    "lautada",   # 0
+    "basoa",     # 1
+    "mendia",    # 2
+    "ura",       # 3
+    "desertua",  # 4
+    "pantano",   # 5
+    "itsasoa"    # 6
+]
+
 # POST /api/games - Create a new game
 @games_bp.route('', methods=['POST'])
 @jwt_required()
@@ -34,10 +44,16 @@ def create_game():
     player_starts = map_result.get("player_start", [])
     ai_starts = map_result.get("ai_start", [])
 
+    numeric_map = map_result["mapa"]
+    string_map = [
+        [TERRAIN_IDS[cell] for cell in row]
+        for row in numeric_map
+    ]
+
     # Inserta el mapa generado en el atributo tiles de GameMap
     if "map" not in game_state:
         game_state["map"] = {}
-    game_state["map"]["tiles"] = map_result["mapa"]
+    game_state["map"]["tiles"] = string_map
     game_state["map"]["visible_objects"] = map_result.get("visible_objects", [])
     game_state["map"]["fog_of_war_player"] = fog_player
     game_state["map"]["fog_of_war_ai"] = fog_ai
@@ -131,12 +147,16 @@ def get_ia_action():
     # Obtener solo la información visible para la IA
     ai_visible_json = get_ai_visible_state(game_state)
 
-    # Llamar al servicio LLM para obtener las acciones de la IA usando solo la información visible
-    ai_response = send_ia_game_state(ai_visible_json)
-    if "error" in ai_response:
-        return jsonify({"error": f"AI zerbitzuaren errorea: {ai_response['error']}"}), 500
+    import json
+    print("AI visible JSON:")
+    print(json.dumps(ai_visible_json, indent=2, ensure_ascii=False))
 
-    return jsonify(ai_response.get("action")), 200
+    # Llamar al servicio LLM para obtener las acciones de la IA usando solo la información visible
+    #ai_response = send_ia_game_state(ai_visible_json)
+    #if "error" in ai_response:
+    #    return jsonify({"error": f"AI zerbitzuaren errorea: {ai_response['error']}"}), 500
+
+    return jsonify(ai_visible_json), 200
 
 @games_bp.route('/<string:game_id>', methods=['DELETE'])
 @jwt_required()

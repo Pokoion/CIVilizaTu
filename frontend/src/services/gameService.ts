@@ -87,6 +87,7 @@ export const createGame = async ({
   if (player_positions && player_positions.length >= 2 && kolonoBase && militarBase) {
     playerUnits.push({
       ...kolonoBase,
+      type: kolonoBase.id.toLowerCase(),
       movement_points: kolonoBase.movementPoints,
       id: "kolono-start-player",
       position: player_positions[0],
@@ -95,6 +96,7 @@ export const createGame = async ({
     });
     playerUnits.push({
       ...militarBase,
+      type: militarBase.id.toLowerCase(),
       movement_points: militarBase.movementPoints,
       id: "militar-start-player",
       position: player_positions[1],
@@ -109,6 +111,7 @@ export const createGame = async ({
   if (ai_positions && ai_positions.length >= 2 && kolonoBase && militarBase) {
     aiUnits.push({
       ...kolonoBase,
+      type: kolonoBase.id.toLowerCase(),
       movement_points: kolonoBase.movementPoints,
       id: "kolono-start-ai",
       position: ai_positions[0],
@@ -117,6 +120,7 @@ export const createGame = async ({
     });
     aiUnits.push({
       ...militarBase,
+      type: militarBase.id.toLowerCase(),
       movement_points: militarBase.movementPoints,
       id: "militar-start-ai",
       position: ai_positions[1],
@@ -178,12 +182,22 @@ export const deleteGame = async (gameId: string) => {
 
 let aiActionStep = 0;
 const aiActionSequence: AiAction[] = [
-  { type: "foundCity", payload: { name: "CityEnemy", unitId: "kolono-start-ai" } },
-  { type: "trainUnit", payload: { cityId: "CityEnemy", unitType: "militar" } },
+  //{ type: "foundCity", payload: { name: "CityEnemy", unitId: "kolono-start-ai" } },
+  { type: "trainUnit", payload: { cityId: "city-1747307085315", unitType: "militar" } },
   { type: "endTurn", payload: {} }
 ];
 
 export const fetchNextAiAction = async (gameState: any): Promise<AiAction> => {
+
+  const token = localStorage.getItem("jwt_token");
+  console.log("Estado del juego enviado a la IA:", gameState);
+  const response = await axios.post(
+    `${API_URL}/api/games/getIAAction`,
+    { game_state: gameState },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  console.log("Respuesta del backend para IA:", response.data);
+  
   const action = aiActionSequence[aiActionStep] || { type: "endTurn", payload: {} };
   aiActionStep++;
   if (action.type === "endTurn") aiActionStep = 0;

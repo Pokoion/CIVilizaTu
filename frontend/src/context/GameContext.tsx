@@ -312,15 +312,25 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
 
     while (continueAi) {
       // Siempre usa los valores actuales de los refs
-      const gameState = {
-        units: unitsRef.current,
+      const gameState = gameManager.buildGameState({
+        turn,
+        currentSide: 'ai',
+        unlockedTechs,
+        aiUnlockedTechs,
+        civilization,
+        aiCivilization,
+        playerEra,
+        aiEra,
+        resources,
+        aiResources,
         cities: citiesRef.current,
+        units: unitsRef.current,
         mapState: mapStateRef.current,
         visibleObjects: visibleObjectsRef.current,
-        aiUnlockedTechs: aiUnlockedTechsRef.current,
-        aiResources: aiResourcesRef.current,
-        aiEra: aiEraRef.current,
-      };
+        cheatsUsed,
+        playerLeaderName,
+        aiLeaderName,
+      });
       const action = await fetchNextAiAction(gameState);
 
       if (action.type === "endTurn") {

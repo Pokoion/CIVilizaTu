@@ -227,6 +227,20 @@ const GameUI: React.FC = () => {
                                 <b>Teknologiak:</b> {sideUnlockedTechs.length} / {TECHS.length}
                             </div>
                         </div>
+                        <div style={{
+                            marginTop: 16,
+                            background: "rgba(0,0,0,0.7)",
+                            color: "#fff",
+                            padding: "6px 16px",
+                            borderRadius: 8,
+                            fontSize: "1em",
+                            textAlign: "center",
+                            width: 180,
+                            marginLeft: "auto",
+                            marginRight: "auto"
+                        }}>
+                            <b>F1</b> - Ireki trikimailu-kontsola
+                        </div>
                     </div>
                     <div className="ui-center">
                         <Map2

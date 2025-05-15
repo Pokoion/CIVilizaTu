@@ -202,12 +202,17 @@ export function applyAiAction(
                 if (aiLog) aiLog("trainUnit: cityId o unitType indefinido");
                 return gameState;
             }
-            const city = gameState.cities.find((c: any) => c.id === cityId);
+            console.log("aaaaaaaa");
+            console.log("el GameState en trainUnit", gameState);
+            console.log("cities", gameState.ai.cities);
+            const city = gameState.ai.cities.find((c: any) => c.id === cityId);
             if (!city) {
-                if (aiLog) aiLog("trainUnit: ciudad no encontrada");
+                if (aiLog) aiLog(`trainUnit: ciudad no encontrada (${cityId})`);
                 return gameState;
             }
-            const barracksCount = city.buildings.filter((b: string) => b === "kuartela").length;
+            const barracksCount = Array.isArray(city.buildings)
+                ? city.buildings.filter((b: string) => b === "kuartela").length
+                : 0;
             if (barracksCount === 0) {
                 if (aiLog) aiLog("trainUnit: la ciudad no tiene cuarteles");
                 return gameState;
