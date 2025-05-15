@@ -16,37 +16,23 @@ TERRAIN_IDS = [
     "itsasoa"    # 6
 ]
 
-def generate_random_map(width=50, height=50):
-    return [[random.randint(0, 6) for _ in range(width)] for _ in range(height)]
-
 def create_map(width, height):
-    # MOCK: genera un mapa aleatorio de ids de terrenos válidos
-    mapa = generate_random_map(width, height)
-    visible_objects = []
-
-    # Posiciones iniciales fijas para cada civilización (puedes ajustar las coordenadas)
-    player_start = [{"x": 4, "y": 3}, {"x": 5, "y": 3}]
-    ai_start = [{"x": 4, "y": 4}, {"x": 5, "y": 4}]
-
-    return {
-        "mapa": mapa,
-        "visible_objects": visible_objects,
-        "player_start": player_start,   
-        "ai_start": ai_start
-    }
-    # --- Código real abajo ---
-    # url = f"{LLM_SERVICE_URL}/eskuratuMapa"
-    # payload = {"width": width, "height": height}
-    # try:
-    #     resp = requests.get(url, params=payload, timeout=60)  
-    #     resp.raise_for_status()
-    #     data = resp.json()
-    #     return {
-    #         "mapa": data.get("terrain", []),  
-    #         "visible_objects": data.get("visible_objects", [])  
-    #     }
-    # except Exception as e:
-    #     return {"error": str(e)}
+    url = f"{LLM_SERVICE_URL}/eskuratuMapa"
+    payload = {"width": width, "height": height}
+    try:
+        resp = requests.post(url, json=payload, timeout=60)
+        resp.raise_for_status()
+        data = resp.json()
+        # Devuelve el JSON con las claves correctas
+        return {
+            "mapa": data.get("terrain", []),
+            "visible_objects": data.get("visible-objects", []),
+            "player_start": data.get("player_start", []),
+            "ai_start": data.get("ai_start", [])
+        }
+    except Exception as e:
+        print(f"Error llamando a /eskuratuMapa: {e}")
+        return {"error": str(e)}
 
 def send_ia_game_state(game_state_visible):
     print("Enviando game_state_visible a IA:")

@@ -27,8 +27,17 @@ export const createGame = async ({
 }) => {
   const token = localStorage.getItem("jwt_token");
 
+  // 1. LOG: Parámetros recibidos
+  console.log("===> [createGame] Parámetros recibidos:", {
+    name, scenario_id, playerCiv, aiCiv, playerName, aiName, difficulty, map_size
+  });
+
   const playerInitialResources = CIVILIZATIONS_BY_ID[playerCiv]?.initial_resources || { food: 0, natural_resources: 0, science: 0, gold: 0, culture: 0 };
   const aiInitialResources = CIVILIZATIONS_BY_ID[aiCiv]?.initial_resources || { food: 0, natural_resources: 0, science: 0, gold: 0, culture: 0 };
+
+  // 2. LOG: Recursos iniciales
+  console.log("===> [createGame] playerInitialResources:", playerInitialResources);
+  console.log("===> [createGame] aiInitialResources:", aiInitialResources);
 
   const game_state = {
     turn: 1,
@@ -61,6 +70,9 @@ export const createGame = async ({
     },
   };
 
+  // 3. LOG: Estado inicial del juego
+  console.log("===> [createGame] game_state inicial:", JSON.stringify(game_state, null, 2));
+
   const body = {
     name,
     scenario_id,
@@ -69,18 +81,60 @@ export const createGame = async ({
     map_height: map_size.height,
   };
 
+  // 4. LOG: Body enviado al backend
+  console.log("===> [createGame] Body enviado al backend:", JSON.stringify(body, null, 2));
+
   const response = await axios.post(`${API_URL}/api/games`, body, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  // Extrae posiciones del backend
+  // 5. LOG: Respuesta del backend
+  console.log("===> [createGame] Respuesta del backend:", response.data);
+
   const { game, player_positions, ai_positions } = response.data;
 
-  console.log("Respuesta del backend:", response.data);
+  // --- AJUSTE DE MAPA ---
+  // Asegura que el mapa sea 50x50 (recorta o rellena si es necesario)
+  const TARGET_SIZE = 50;
+  let tiles = game.game_state.map.tiles;
+
+  if (!Array.isArray(tiles)) tiles = [];
+  // Ajusta filas
+  if (tiles.length > TARGET_SIZE) {
+    tiles = tiles.slice(0, TARGET_SIZE);
+  } else if (tiles.length < TARGET_SIZE) {
+    const emptyRow = new Array(TARGET_SIZE).fill(0);
+    while (tiles.length < TARGET_SIZE) {
+      tiles.push([...emptyRow]);
+    }
+  }
+  // Ajusta columnas en cada fila
+  tiles = tiles.map((row: number[] = []) => {
+    if (!Array.isArray(row)) row = [];
+    if (row.length > TARGET_SIZE) {
+      return row.slice(0, TARGET_SIZE);
+    } else if (row.length < TARGET_SIZE) {
+      return [...row, ...new Array(TARGET_SIZE - row.length).fill(0)];
+    }
+    return row;
+  });
+
+  // LOG: Mapa ajustado
+  console.log("===> [createGame] tiles ajustados a 50x50:", tiles);
+
+  game.game_state.map.tiles = tiles;
+
+  // 6. LOG: Posiciones iniciales recibidas
+  console.log("===> [createGame] player_positions:", player_positions);
+  console.log("===> [createGame] ai_positions:", ai_positions);
 
   // Busca los datos base de las unidades
   const kolonoBase = UNITS.find(u => u.id === "kolono");
   const militarBase = UNITS.find(u => u.id === "militar");
+
+  // 7. LOG: Datos base de unidades
+  console.log("===> [createGame] kolonoBase:", kolonoBase);
+  console.log("===> [createGame] militarBase:", militarBase);
 
   // Crea las unidades iniciales con owner para el frontend
   const playerUnits: Unit[] = [];
@@ -105,7 +159,8 @@ export const createGame = async ({
     });
   }
 
-  console.log("playerUnits creados:", playerUnits);
+  // 8. LOG: Unidades jugador creadas
+  console.log("===> [createGame] playerUnits creados:", playerUnits);
 
   const aiUnits: Unit[] = [];
   if (ai_positions && ai_positions.length >= 2 && kolonoBase && militarBase) {
@@ -129,23 +184,27 @@ export const createGame = async ({
     });
   }
 
-  console.log("aiUnits creados:", aiUnits);
+  // 9. LOG: Unidades IA creadas
+  console.log("===> [createGame] aiUnits creados:", aiUnits);
 
   // Inserta las unidades en el game_state antes de guardar, LIMPIANDO los campos extra
   game.game_state.player.units = playerUnits.map(cleanUnit);
   game.game_state.ai.units = aiUnits.map(cleanUnit);
 
-  console.log("game.game_state.player.units FINAL:", game.game_state.player.units);
-  console.log("game.game_state.ai.units FINAL:", game.game_state.ai.units);
+  // 10. LOG: Unidades finales en game_state
+  console.log("===> [createGame] game.game_state.player.units FINAL:", game.game_state.player.units);
+  console.log("===> [createGame] game.game_state.ai.units FINAL:", game.game_state.ai.units);
 
   try {
     await saveGame(game.game_id || game._id, game.game_state);
-    console.log("Partida guardada automáticamente tras crearla.");
+    console.log("===> [createGame] Partida guardada automáticamente tras crearla.");
   } catch (err) {
-    console.error("Error al guardar la partida automáticamente:", err);
+    console.error("===> [createGame] Error al guardar la partida automáticamente:", err);
   }
 
-  // Devuelve el objeto game modificado
+  // 11. LOG: Devuelve el objeto game modificado
+  console.log("===> [createGame] Objeto game devuelto:", game);
+
   return game;
 };
 
@@ -197,7 +256,7 @@ export const fetchNextAiAction = async (gameState: any): Promise<AiAction> => {
     { headers: { Authorization: `Bearer ${token}` } }
   );
   console.log("Respuesta del backend para IA:", response.data);
-  
+
   const action = aiActionSequence[aiActionStep] || { type: "endTurn", payload: {} };
   aiActionStep++;
   if (action.type === "endTurn") aiActionStep = 0;

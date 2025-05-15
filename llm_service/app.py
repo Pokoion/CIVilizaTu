@@ -138,12 +138,14 @@ def eskuratu_mapa():
     
     data = request.json
     if not data:
+        print("[eskuratuMapa] ❌ No se recibieron datos", flush=True)
         return jsonify({'error': 'No se recibieron datos'}), 400
     
     width = data.get('width')
     height = data.get('height')
     
     if not width or not height:
+        print("[eskuratuMapa] ❌ Faltan parámetros width/height", flush=True)
         return jsonify({'error': 'Se requieren los parámetros "width" y "height"'}), 400
     
     # Crear un prompt para generar el mapa
@@ -253,6 +255,7 @@ QUIERO QUE SOLAMENTE DEVUELVAS UN JSON DONDE SE GUARDA terrain, visible-objects 
                    "visible-objects" in map_data and isinstance(map_data["visible-objects"], list) and \
                    "player_start" in map_data and isinstance(map_data["player_start"], list) and \
                    "ai_start" in map_data and isinstance(map_data["ai_start"], list):
+                    print(f"[eskuratuMapa] ✅ Mapa generado por LLM (modelo: {current_model})", flush=True)
                     # Devolver un único JSON con los datos
                     return jsonify({
                         "terrain": map_data["terrain"],
@@ -261,15 +264,18 @@ QUIERO QUE SOLAMENTE DEVUELVAS UN JSON DONDE SE GUARDA terrain, visible-objects 
                         "ai_start": map_data["ai_start"],
                     })
                 else:
+                    print("[eskuratuMapa] ❌ El JSON del modelo no contiene los datos esperados", flush=True)
                     return jsonify({"error": "La respuesta del modelo no contiene los datos esperados (terrain, visible-objects, start)"}), 500
             else:
+                print("[eskuratuMapa] ❌ No se encontró un bloque JSON válido en la respuesta del modelo", flush=True)
                 return jsonify({"error": "No se encontró un bloque JSON válido en la respuesta del modelo"}), 500
         except json.JSONDecodeError:
+            print("[eskuratuMapa] ❌ La respuesta del modelo no es un JSON válido", flush=True)
             return jsonify({"error": "La respuesta del modelo no es un JSON valido"}), 500
     
     except Exception as e:
         error_str = str(e)
-        print(f"Error al generar mapa: {error_str}")
+        print(f"[eskuratuMapa] ⚠️ Error al generar mapa: {error_str}", flush=True)
         
         # Manejar el error 429 (Rate limit exceeded)
         if "429" in error_str or "rate limit" in error_str.lower():
@@ -280,6 +286,7 @@ QUIERO QUE SOLAMENTE DEVUELVAS UN JSON DONDE SE GUARDA terrain, visible-objects 
             
             # Generar un mapa predeterminado
             basic_terrain = [[2 for _ in range(width)] for _ in range(height)]
+            print(f"[eskuratuMapa] 🚧 Rate limit: devolviendo mapa DEFAULT (modelo cambiado a {current_model})", flush=True)
             return jsonify({
                 "terrain": basic_terrain,
                 "model_switched": True,
@@ -290,6 +297,7 @@ QUIERO QUE SOLAMENTE DEVUELVAS UN JSON DONDE SE GUARDA terrain, visible-objects 
         
         # Para otros errores, generar un mapa predeterminado
         basic_terrain = [[3 for _ in range(width)] for _ in range(height)]
+        print("[eskuratuMapa] 🚧 Error inesperado: devolviendo mapa DEFAULT", flush=True)
         return jsonify({"terrain": basic_terrain, "error": error_str}), 500
     
 @app.route('/eskuratuEkintza', methods=['POST'])

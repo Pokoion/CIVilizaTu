@@ -63,6 +63,7 @@ const MainMenu: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [savedGames, setSavedGames] = useState<any[]>([]);
   const [loadingGames, setLoadingGames] = useState(false);
+  const [creatingGame, setCreatingGame] = useState(false);
 
   // Info de civilización seleccionada
   const playerCivInfo = civilizations.find(c => c.id === playerCiv)!;
@@ -76,22 +77,27 @@ const MainMenu: React.FC = () => {
   const handleCreateGame = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setCreatingGame(true);
 
-    // Validaciones
+    // Validaciones...
     if (!gameName.trim()) {
       setError("Idatzi partidaren izena.");
+      setCreatingGame(false);
       return;
     }
     if (!playerName.trim()) {
       setError("Idatzi zure lider izena.");
+      setCreatingGame(false);
       return;
     }
     if (!aiName.trim()) {
       setError("Idatzi AI-ren lider izena.");
+      setCreatingGame(false);
       return;
     }
     if (playerCiv === aiCiv) {
       setError("Ezin dira bi aldeek zibilizazio berdina aukeratu.");
+      setCreatingGame(false);
       return;
     }
 
@@ -107,12 +113,12 @@ const MainMenu: React.FC = () => {
         map_size: { width: 50, height: 50 },
       });
       console.log("JSON recibido al CREAR partida:", result);
-      // Solo navega si el JSON es correcto
       navigate('/game', { state: { partida: result, loaded: true } });
     } catch (err: any) {
       console.error("Errorea partida sortzean:", err?.response?.data || err.message);
-      setError("Errorea partida sortzean.");
+      setError("Errorea partida sortzean. Saiatu berriro.");
     }
+    setCreatingGame(false);
   };
 
   const handleDeleteGame = async (gameId: string) => {
@@ -262,7 +268,28 @@ const MainMenu: React.FC = () => {
               Mapa tamaina:
               <input type="text" value="50 x 50" disabled className="mainmenu-input" />
             </label>
-            <button type="submit" className="main-menu-btn">Hasi Partida</button>
+            {creatingGame && (
+              <div style={{ color: "#ffd700", fontWeight: "bold", marginTop: 12 }}>
+                Partida sortzen... Itxaron mesedez.
+              </div>
+            )}
+            {error && (
+              <div style={{ color: "#ffb3b3", fontWeight: "bold", marginBottom: 8 }}>
+                {error}
+                <button
+                  type="button"
+                  className="main-menu-btn secondary"
+                  style={{ marginLeft: 8, padding: "2px 10px", fontSize: "0.95em" }}
+                  onClick={handleCreateGame}
+                  disabled={creatingGame}
+                >
+                  Saiatu berriro
+                </button>
+              </div>
+            )}
+            <button type="submit" className="main-menu-btn" disabled={creatingGame}>
+              {creatingGame ? "Kargatzen..." : "Hasi Partida"}
+            </button>
             <button type="button" className="main-menu-btn secondary" onClick={() => setShowSetup(false)}>Atzera</button>
           </form>
         )}
@@ -273,7 +300,7 @@ const MainMenu: React.FC = () => {
             {loadingGames ? (
               <div>Kargatzen...</div>
             ) : savedGames.length === 0 ? (
-              <div style={{ color: "#ffd700", margin: "1rem" }}>Ez dago partida gordetarik.</div>
+              <div style={{ color: "#ffd700", margin: "1rem" }}>Ez dago partidarik gordeta.</div>
             ) : (
               <div className="saved-games-list">
                 {savedGames.map(game => (

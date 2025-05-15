@@ -22,7 +22,10 @@ TERRAIN_IDS = [
 @games_bp.route('', methods=['POST'])
 @jwt_required()
 def create_game():
+    import sys
+    print("===> [POST /api/games] Nueva petición recibida", file=sys.stderr)
     data = request.get_json()
+    print("===> Datos recibidos:", data, file=sys.stderr)
     name = data.get('name')
     scenario_id = data.get('scenario_id')
     game_state = data.get('game_state')
@@ -30,27 +33,42 @@ def create_game():
     map_height = data.get('map_height')
 
     # Generar el mapa y posiciones iniciales usando el servicio LLM
+    print(f"===> Llamando a create_map({map_width}, {map_height})", file=sys.stderr)
     map_result = create_map(map_width, map_height)
+    print("===> Resultado de create_map:", map_result, file=sys.stderr)
     if "error" in map_result:
+        print("===> Error al crear el mapa:", map_result["error"], file=sys.stderr)
         return jsonify({"error": f"Mapa sortzean errorea: {map_result['error']}"}), 500
 
-    # Matriz de niebla de guerra inicial (todo oculto)
-    fog_player = [[False for _ in range(map_width)] for _ in range(map_height)]
-    fog_ai = [[False for _ in range(map_width)] for _ in range(map_height)]
+    fog_player = [[False for _ in range(50)] for _ in range(50)]
+    fog_ai = [[False for _ in range(50)] for _ in range(50)]
 
-    # Unidades iniciales para cada bando usando las posiciones de player_start y ai_start
-    player_units = []
-    ai_units = []
     player_starts = map_result.get("player_start", [])
     ai_starts = map_result.get("ai_start", [])
 
     numeric_map = map_result["mapa"]
-    string_map = [
-        [TERRAIN_IDS[cell] for cell in row]
-        for row in numeric_map
-    ]
+    print("===> numeric_map (original):", numeric_map, file=sys.stderr)
 
-    # Inserta el mapa generado en el atributo tiles de GameMap
+    TARGET_SIZE = 50
+    string_map = []
+
+    for i in range(TARGET_SIZE):
+        # Usa la fila si existe, si no, crea una nueva de ceros
+        row = numeric_map[i] if (isinstance(numeric_map, list) and i < len(numeric_map)) else []
+        if not isinstance(row, list):
+            row = []
+        # Ajusta la longitud de la fila y convierte a string
+        string_row = []
+        for j in range(TARGET_SIZE):
+            val = row[j] if j < len(row) and isinstance(row[j], int) else 0
+            # Si el índice no es válido, pon lautada
+            if not (0 <= val < len(TERRAIN_IDS)):
+                val = 0
+            string_row.append(TERRAIN_IDS[val])
+        string_map.append(string_row)
+
+    print("===> string_map (ajustado 50x50, limpio):", string_map, file=sys.stderr)
+
     if "map" not in game_state:
         game_state["map"] = {}
     game_state["map"]["tiles"] = string_map
@@ -58,11 +76,7 @@ def create_game():
     game_state["map"]["fog_of_war_player"] = fog_player
     game_state["map"]["fog_of_war_ai"] = fog_ai
 
-    # Asigna las unidades iniciales
-    if "player" in game_state:
-        game_state["player"]["units"] = player_units
-    if "ai" in game_state:
-        game_state["ai"]["units"] = ai_units
+    print("===> game_state final:", game_state, file=sys.stderr)
 
     user_id = get_jwt_identity()
     try:
@@ -75,6 +89,7 @@ def create_game():
             game_state=game_state
         )
         game.save()
+        print("===> Partida guardada correctamente", file=sys.stderr)
         return jsonify({
             "game": partida_to_dict(game),
             "player_positions": player_starts,
@@ -82,6 +97,9 @@ def create_game():
             "message": "Partida arrakastaz sortu da"
         }), 201
     except Exception as e:
+        import traceback
+        print("===> ERROR al guardar la partida:", str(e), file=sys.stderr)
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 # GET /api/games - List saved games

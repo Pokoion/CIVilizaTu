@@ -9,30 +9,45 @@ const MiniMap: React.FC = () => {
   const { mapState, units, cities, currentSide } = useGame();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  useEffect(() => {
-    // Selecciona el fog según el bando activo
-    const fog_of_war =
-      currentSide === 'player'
-        ? mapState.fog_of_war_player
-        : mapState.fog_of_war_ai;
+useEffect(() => {
+  // Selecciona el fog según el bando activo
+  const fog_of_war =
+    currentSide === 'player'
+      ? mapState.fog_of_war_player
+      : mapState.fog_of_war_ai;
 
-    const { tiles, size } = mapState;
-    const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx) return;
+  const { tiles, size } = mapState;
+  const ctx = canvasRef.current?.getContext('2d');
+  if (!ctx) return;
 
+  // Protege si el mapa aún no está listo
+  if (
+    !tiles ||
+    !size ||
+    !Array.isArray(tiles) ||
+    tiles.length === 0 ||
+    !size.width ||
+    !size.height
+  ) {
     ctx.clearRect(0, 0, MINIMAP_SIZE, MINIMAP_SIZE);
+    return;
+  }
 
-    // Dibuja terreno y niebla
-    for (let y = 0; y < size.height; y++) {
-      for (let x = 0; x < size.width; x++) {
-        const tileType = tiles[y][x];
-        const color = fog_of_war?.[y]?.[x]
-          ? TILE_TYPES[tileType]?.color || '#888'
-          : '#222';
-        ctx.fillStyle = color;
-        ctx.fillRect(x * TILE_PIXELS, y * TILE_PIXELS, TILE_PIXELS, TILE_PIXELS);
-      }
+  ctx.clearRect(0, 0, MINIMAP_SIZE, MINIMAP_SIZE);
+
+  // Dibuja terreno y niebla
+  for (let y = 0; y < size.height; y++) {
+    if (!tiles[y]) continue;
+    for (let x = 0; x < size.width; x++) {
+      if (typeof tiles[y][x] === "undefined") continue;
+      const tileType = tiles[y][x];
+      const color = fog_of_war?.[y]?.[x]
+        ? TILE_TYPES[tileType]?.color || '#888'
+        : '#222';
+      ctx.fillStyle = color;
+      ctx.fillRect(x * TILE_PIXELS, y * TILE_PIXELS, TILE_PIXELS, TILE_PIXELS);
     }
+  }
 
     // Dibuja ciudades solo si el tile es visible para el bando activo
     cities.forEach(city => {
