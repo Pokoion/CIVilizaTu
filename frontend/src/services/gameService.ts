@@ -183,7 +183,7 @@ export const deleteGame = async (gameId: string) => {
 let aiActionStep = 0;
 const aiActionSequence: AiAction[] = [
   //{ type: "foundCity", payload: { name: "CityEnemy", unitId: "kolono-start-ai" } },
-  { type: "trainUnit", payload: { cityId: "city-1747307085315", unitType: "militar" } },
+  //{ type: "trainUnit", payload: { cityId: "city-1747307085315", unitType: "militar" } },
   { type: "endTurn", payload: {} }
 ];
 

@@ -328,7 +328,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
         <h3>Unitatea</h3>
         <div className="info-panel-section">
           <span className="info-panel-label">Mota:</span>
-          <span className="info-panel-value">{selectedUnit.type} - {selectedUnit.id}</span>
+          <span className="info-panel-value">{selectedUnit.type}</span>
         </div>
         <div className="info-panel-section">
           <span className="info-panel-label">Mugimendu Puntuak:</span>

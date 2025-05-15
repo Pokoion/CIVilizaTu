@@ -126,6 +126,17 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
       building.id
     ]);
 
+    if (building.id === "harresia") {
+      updateCity(cityId, {
+        buildings: [...constructedBuildings, building.id],
+        defense: (city.defense ?? 20) + 50,
+      });
+    } else {
+      updateCity(cityId, {
+        buildings: [...constructedBuildings, building.id]
+      });
+    }
+
     updateCity(cityId, {
       buildings: [...constructedBuildings, building.id]
     });

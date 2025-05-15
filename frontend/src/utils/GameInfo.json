@@ -569,7 +569,7 @@
     {
       "id": "meatzaritza",
       "name": "Meatzaritza",
-      "bonus": "Mapatik natural_resources eskuratzea desblokeatzen du",
+      "bonus": "+ 100 errekurtso natural",
       "cost": 5,
       "era": "Antzinaroa",
       "dependencies": [

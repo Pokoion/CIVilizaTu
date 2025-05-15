@@ -398,6 +398,9 @@ export function applyAiAction(
             if (tech.id === "nekazaritza") {
                 updatedAiResources.food += 100;
             }
+            if (tech.id === "meatzaritza") {
+                updatedAiResources.natural_resources += 100;
+            }
             if (tech.id === "penizilina") {
                 updatedUnits = updatedUnits.map((u: any) => ({
                     ...u,

@@ -160,6 +160,9 @@ const TechDetailView: React.FC<{
         science: prev.science - tech.cost.science,
         // Si la tecnología es nekazaritza, sumamos 100 de comida
         ...(tech.id === "nekazaritza" ? { food: prev.food + 100 } : {}),
+        // Si la tecnología es meatzaritza, sumamos 100 de natural_resources
+        ...(tech.id === "meatzaritza" ? { natural_resources: (prev.natural_resources ?? 0) + 100 } : {}),
+        
       }));
 
       // Si la tecnología es penizilina, +30 vida a todas las unidades existentes
