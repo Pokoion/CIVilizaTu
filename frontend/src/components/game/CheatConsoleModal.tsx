@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useGame } from "../../context/GameContext";
 import { BUILDINGS, TECHS } from "../../utils/Constants";
+import "../../styles/CheatConsoleModal.css";
 
 const CHEAT_CODES = [
     {
@@ -258,102 +259,31 @@ const CheatConsoleModal: React.FC<CheatConsoleModalProps> = ({ open, onClose }) 
     if (!open) return null;
 
     return (
-        <div
-            style={{
-                position: "fixed",
-                inset: 0,
-                zIndex: 99999,
-                background: "rgba(0,0,0,0.65)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-            }}
-            onClick={onClose}
-        >
+        <div className="cheat-console-backdrop" onClick={onClose}>
             <form
                 className="cheat-console-modal"
                 onSubmit={handleCheatInput}
-                style={{
-                    minWidth: 340,
-                    background: "#232526",
-                    borderRadius: 16,
-                    boxShadow: "0 4px 32px #000a",
-                    padding: "32px 32px 24px 32px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    position: "relative"
-                }}
                 onClick={e => e.stopPropagation()}
             >
                 <button
                     type="button"
                     onClick={onClose}
-                    style={{
-                        position: "absolute",
-                        top: 12,
-                        right: 12,
-                        background: "none",
-                        border: "none",
-                        color: "#ffe066",
-                        fontSize: 28,
-                        fontWeight: 900,
-                        cursor: "pointer",
-                        lineHeight: 1,
-                        padding: 0,
-                        width: 36,
-                        height: 36,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center"
-                    }}
                     aria-label="Cerrar"
                     tabIndex={0}
+                // ...styles...
                 >
                     ×
                 </button>
-                <span style={{ color: "#ffe066", fontWeight: 700, fontSize: 22, marginBottom: 16 }}>
-                    CHEAT CONSOLE
-                </span>
+                <span>CHEAT CONSOLE</span>
                 <input
                     ref={inputRef}
                     type="text"
                     value={cheatInput}
                     onChange={e => setCheatInput(e.target.value)}
                     placeholder="Escribe un cheat code..."
-                    style={{
-                        background: "#111",
-                        color: "#ffe066",
-                        border: "none",
-                        borderRadius: 6,
-                        padding: "10px 16px",
-                        fontFamily: "monospace",
-                        fontSize: 18,
-                        width: 220,
-                        marginBottom: 18,
-                        outline: "none",
-                        textAlign: "center"
-                    }}
                 />
-                <button
-                    type="submit"
-                    style={{
-                        background: "#ffe066",
-                        color: "#222",
-                        border: "none",
-                        borderRadius: 6,
-                        padding: "8px 28px",
-                        fontWeight: 700,
-                        fontSize: 18,
-                        cursor: "pointer",
-                        marginBottom: 8
-                    }}
-                >
-                    OK
-                </button>
-                <span style={{ color: "#aaa", fontSize: 13, marginTop: 8 }}>
-                    (ESC sakatu edo kanpoan itzuli isteko)
-                </span>
+                <button type="submit">OK</button>
+                <span className="hint">(ESC sakatu edo kanpoan itzuli isteko)</span>
             </form>
         </div>
     );

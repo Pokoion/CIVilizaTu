@@ -9,24 +9,23 @@ import time
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 
 # Configuración de Groq
-GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+GROQ_API_KEYS = os.getenv('GROQ_API_KEYS')
 GROQ_BASE_URL = os.getenv('GROQ_BASE_URL')
-if not GROQ_API_KEY:
-    raise ValueError("No se ha configurado GROQ_API_KEY. Asegúrate de que esté en el archivo .env")
+DEFAULT_MODEL = os.getenv('GROQ_DEFAULT_MODEL')
+if not GROQ_API_KEYS:
+    raise ValueError("No se ha configurado GROQ_API_KEYS. Asegúrate de que esté en el archivo .env")
 
 # Configuración de modelos
-DEFAULT_MODEL = os.getenv('GROQ_DEFAULT_MODEL')
-ALTERNATIVE_MODELS = os.getenv('GROQ_AVAILABLE_MODELS')
+GROQ_API_KEYS = os.getenv('GROQ_API_KEYS')
+if not GROQ_API_KEYS:
+    raise ValueError("No se ha configurado GROQ_API_KEYS. Asegúrate de que esté en el archivo .env")
+API_KEYS_LIST = [k.strip() for k in GROQ_API_KEYS.split(",") if k.strip()]
+current_api_key_index = 0
 TEMPERATURE = os.getenv('GROQ_TEMPERATURE')
 MAX_TOKENS = os.getenv('GROQ_MAX_TOKENS')
-
-# Estado del servicio
-current_model = DEFAULT_MODEL
-model_switch_count = 0
-last_error_time = 0
 
 default_map = {
     "terrain": [
@@ -122,8 +121,8 @@ default_visible_objects = {
     },
     {
       "position": {
-        "x": 4,
-        "y": 16
+        "x": 31,
+        "y": 44
       },
       "type": "harria"
     },
@@ -341,125 +340,46 @@ default_ai_start = {
     "ai_start": [{"x": 44, "y": 37}, {"x": 45, "y": 37}]
 }
 
-# Inicializar el cliente Groq
-try:
-    groq_client = groq.Groq(api_key=GROQ_API_KEY)
-except TypeError as e:
-    print(f"Error al inicializar Groq client: {e}")
-    
-    groq_client = groq.Groq(
-        api_key=GROQ_API_KEY,
-        base_url=GROQ_BASE_URL,
-        timeout=60
-    )
+def get_next_api_key():
+    global current_api_key_index
+    current_api_key_index = (current_api_key_index + 1) % len(API_KEYS_LIST)
+    return API_KEYS_LIST[current_api_key_index]
 
-def get_next_model(current_model):
-    """Obtiene el siguiente modelo de la lista de modelos alternativos"""
+def create_groq_client(api_key):
     try:
-        current_index = ALTERNATIVE_MODELS.index(current_model)
-        next_index = (current_index + 1) % len(ALTERNATIVE_MODELS)
-        return ALTERNATIVE_MODELS[next_index]
-    except ValueError:
-        # Si el modelo actual no está en la lista, volver al primero
-        return ALTERNATIVE_MODELS[0]
-
-@app.route('/api/groq', methods=['POST'])
-def query_groq():
-    global current_model, model_switch_count, last_error_time
+        return groq.Groq(api_key=api_key)
+    except TypeError:
+        return groq.Groq(api_key=api_key, base_url=GROQ_BASE_URL, timeout=60)
     
-    data = request.json
-    if not data or 'query' not in data:
-        return jsonify({'error': 'Se requiere el campo "query"'}), 400
-    
-    query = data['query']
-    forced_error = data.get('force_error', False)  # Para pruebas de error
-    model_id = data.get('model_id', current_model)
-    
-    # Si se está forzando un error, simular un 429
-    if forced_error:
-        print("Forzando un error 429 para pruebas")
-        previous_model = current_model
-        current_model = get_next_model(current_model)
-        model_switch_count += 1
-        
-        return jsonify({
-            'response': f"Se ha excedido el límite de tokens para el modelo {previous_model}. Cambiando automáticamente al modelo {current_model}.",
-            'model': current_model,
-            'model_switched': True,
-            'previous_model': previous_model,
-            'switch_count': model_switch_count,
-            'error_type': 'rate_limit_simulated'
-        })
-    
-    try:
-        # Realizar la consulta a Groq
-        completion = groq_client.chat.completions.create(
-            model=model_id,
-            messages=[
-                {"role": "system", "content": "Eres un asistente útil para el juego CIVilizaTu, un juego de estrategia por turnos inspirado en Civilization."},
-                {"role": "user", "content": query}
-            ],
-            temperature=TEMPERATURE,
-            max_tokens=MAX_TOKENS
-        )
-        
-        # Extraer la respuesta
-        response_text = completion.choices[0].message.content
-        
-        return jsonify({
-            'response': response_text,
-            'model': completion.model,
-            'model_switched': False,
-            'current_model': current_model
-        })
-    
-    except Exception as e:
-        error_str = str(e)
-        print(f"Error al consultar Groq API: {error_str}")
-        
-        # Detectar error 429 (Rate limit exceeded)
-        if "429" in error_str or "rate limit" in error_str.lower():
-            previous_model = current_model
-            current_model = get_next_model(current_model)
-            model_switch_count += 1
-            last_error_time = time.time()
-            
-            return jsonify({
-                'response': f"Se ha excedido el límite de tokens para el modelo {previous_model}. Cambiando automáticamente al modelo {current_model}.",
-                'model': current_model,
-                'model_switched': True,
-                'previous_model': previous_model,
-                'switch_count': model_switch_count,
-                'error_type': 'rate_limit'
-            })
-        
-        return jsonify({'error': error_str}), 500
-
-@app.route('/api/groq/status', methods=['GET'])
-def get_status():
-    """Devuelve el estado actual del servicio LLM"""
-    return jsonify({
-        'current_model': current_model,
-        'available_models': ALTERNATIVE_MODELS,
-        'model_switch_count': model_switch_count,
-        'last_error_time': last_error_time
-    })
+groq_client = create_groq_client(API_KEYS_LIST[current_api_key_index])
 
 @app.route('/eskuratuMapa', methods=['POST'])
 def eskuratu_mapa():
-    global current_model, model_switch_count, last_error_time
-    
+    global groq_client, current_api_key_index
+
     data = request.json
     if not data:
         print("[eskuratuMapa] ❌ No se recibieron datos", flush=True)
         return jsonify({'error': 'No se recibieron datos'}), 400
-    
+
     width = data.get('width')
     height = data.get('height')
-    
+    map_type = data.get('map_type', 0)  # Por defecto 0 (default map)
+
     if not width or not height:
         print("[eskuratuMapa] ❌ Faltan parámetros width/height", flush=True)
-        return jsonify({'error': 'Se requieren los parámetros "width" y "height"'}), 400
+        return jsonify({'error': 'Se requieren los parámetros \"width\" y \"height\"'}), 400
+
+    print(f"[eskuratuMapa] Solicitado mapa de {width}x{height} con tipo {map_type}", flush=True)
+    # --- NUEVO: Si type == 0, devolver el mapa default directamente ---
+    if map_type == 0:
+        print("[eskuratuMapa] Solicitado mapa default", flush=True)
+        return jsonify({
+            "terrain": default_map["terrain"],
+            "visible-objects": default_visible_objects["visible-objects"],
+            "player_start": default_player_start["player_start"],
+            "ai_start": default_ai_start["ai_start"]
+        })
     
     # Crear un prompt para generar el mapa
     prompt = f"""
@@ -480,58 +400,59 @@ Genera los siguientes JSON:
    - Distribución coherente: masas de agua conectadas, cadenas montañosas, bosques en zonas apropiadas.
 Aquí tienes un ejemplo de como deberia de ser el JSON del mapa generado, con exactamente 50 filas y 50 columnas:
 {{
-    "terrain": [
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 1, 1, 1, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 1, 0, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 1, 0, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 3, 3, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 3, 0, 0, 3, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0],
-        [0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0],
-        [0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0],
-        [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0],
-        [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
-        [0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0],
-        [0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
-        [0, 0, 0, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0],
-        [0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ]
+  "terrain": [
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 1, 1, 1, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 1, 0, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 1, 0, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [6, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 3, 3, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 3, 0, 0, 3, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0],
+          [0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0],
+          [0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 5, 5, 3, 0, 0, 0, 0],
+          [0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0],
+          [0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 4, 4, 0, 0, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 4, 4, 4, 4, 4, 0, 0, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 0, 3, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0],
+          [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
+          [0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0],
+          [0, 0, 4, 4, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
+          [0, 0, 0, 4, 4, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+          [0, 0, 0, 0, 4, 4, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    RECUERDA QUE ESTE MAPA ES SOLO UN EJEMPLO, AL CREAR EL MAPA NO LO COPIES, SOLO USA UN ESTILO PARECIDO.
+    50 filas y 50 columnas, SIEMPRE, ES MUY IMPORTANTE QUE LO TENGAS EN CUENTA, SIMEPRE 50 FILAS Y 50 COLUMNAS.
 }}
 
 2. Un objeto llamado visible-objects en el que se van a almacenar los distintos objetos que habrá repartidos por el mapa
@@ -563,10 +484,10 @@ y siempre y cuando la posición no coincida con un tile 3 (Ura) ni tampoco 6 (It
 - ES IMPOSIBLE QUE LAS COORDENADAS SEAN SUPERIORES A 50 TANTO EN X COMO EN Y, PORQUE EL MAPA ES DE 50X50
 
 3. Dos objetos llamados player_start y ai_start que contienen los puntos de aparición de las unidades del jugador y del agente IA, es decir, tú. 
-- Los objetos start los tienes que generar de la siguiente manera: 
+- Los objetos start los tienes que generar de la siguiente manera, SOLO ES UN EJEMPLO, LUEGO SEGUN EL MAPA CAMBIA LAS COORDENADAS: 
 {{
-        player_start: [{{"x": 2, "y": 2}}, {{"x": 3, "y": 3}}], 
-        ai_start: [{{"x": 30, "y": 30}}, {{"x": 31, "y": 31}}]
+        player_start: [{{"x": 5, "y": 40}}, {{"x": 6, "y": 40}}], 
+        ai_start: [{{"x": 40, "y": 30}}, {{"x": 40, "y": 31}}]
 }}
 Debes tener en cuenta: 
 - La primera fila indica las coordenadas dentro del mapa terrain de las unidades settler (colono) y soldier (soldado) del jugador
@@ -581,12 +502,22 @@ y siempre y cuando la posición no coincida con un tile 3 (Ura) ni tamoco 6 (Its
 - ES IMPOSIBLE QUE LAS COORDENADAS SEAN SUPERIORES A 50 TANTO EN X COMO EN Y, PORQUE EL MAPA ES DE 50X50
 
 QUIERO QUE SOLAMENTE DEVUELVAS UN JSON DONDE SE GUARDA terrain, visible-objects y ambost start. LOS JSON, NADA MAS. NO QUIERO NINGUN TEXTO EXPLICATIVO NI NINGUN TIPO DE COMENTARIO.
+
+RECUERDA QUE ESTE MAPA ES SOLO UN EJEMPLO, AL CREAR EL MAPA NO LO COPIES, SOLO USA UN ESTILO PARECIDO.
+50 filas y 50 columnas, SIEMPRE, ES MUY IMPORTANTE QUE LO TENGAS EN CUENTA, SIMEPRE 50 FILAS Y 50 COLUMNAS.
+
+ASEGURATE QUE EL MAPA SEA DISTINTO AL EJEMPLO PROPORCIONADO, NO LO COPIES, USA UN ESTILO PARECIDO, ANTES DE CREAR
+EL MAPA ASEGURATE DE QUE EL MAPA SEA DISTINTO AL EJEMPLO PROPORCIONADO, NO LO COPIES, USA UN ESTILO PARECIDO.
+
+ASEGURATE DE QUE LAS COORDENADAS INICIALES DE LOS player_start Y ai_start NO SE SOLAPEN, Y NO ESTÉN ENCIMA DE UN TILE QUE SEA NI 
+MAR NI AGUA, ES DECIR, NI 3 NI 6 ASEGURATE SI O SI DE ESTO, ES MUY IMPORTANTE, ES DECIR, MIRA LAS POSICIONES INICIALES QUE HAS CREADO
+PARA CADA player_start o ai_start, COGE LAS COORDENADAS X E Y, Y MIRA ESAS COORDENADAS EN EL MAPA CREADO, USANDO COLUMAS/FILAS.
+SI ESTÁN EN UN TILE QUE SEA 3 O 6, CAMBIALOS A UNOS DISTINTOS, NUNCA 3 O 6 PARA LAS COORDENADAS DE player_start, ai_start O VISIBLE OBJECTS.
     """
  
     try:
-        # Usar el cliente directo de Groq para enviar el prompt
         completion = groq_client.chat.completions.create(
-            model=current_model,
+            model=DEFAULT_MODEL,
             messages=[
                 {"role": "system", "content": "Eres un generador de mapas para juegos de estrategia por turnos."},
                 {"role": "user", "content": prompt}
@@ -594,47 +525,26 @@ QUIERO QUE SOLAMENTE DEVUELVAS UN JSON DONDE SE GUARDA terrain, visible-objects 
             temperature=float(TEMPERATURE),
             max_tokens=int(MAX_TOKENS)
         )
-        
-        # Extraer la respuesta del modelo
+
         response_text = completion.choices[0].message.content
-        #return jsonify(response_text)
-        # Procesar la respuesta para extraer el JSON
         import json
         import re
 
         try:
-            # Buscar el bloque JSON en el texto
             json_match = re.search(r'```json\s*([\s\S]*?)\s*```', response_text)
             if json_match:
                 json_text = json_match.group(1)
                 map_data = json.loads(json_text)
 
-                # Validar que los datos contengan terrain, visible-objects y start
-                if "terrain" in map_data and isinstance(map_data["terrain"], list) and \
-                   "visible-objects" in map_data and isinstance(map_data["visible-objects"], list) and \
-                   "player_start" in map_data and isinstance(map_data["player_start"], list) and \
-                   "ai_start" in map_data and isinstance(map_data["ai_start"], list):
-                    print(f"[eskuratuMapa] ✅ Mapa generado por LLM (modelo: {current_model})", flush=True)
-                    # Devolver un único JSON con los datos
-                    terrain = map_data["terrain"]
-                    num_filas = len(terrain)
-                    num_columnas = [len(fila) for fila in terrain]
-                    print(f"Filas en terrain: {num_filas}")
-                    print(f"Elementos por fila: {num_columnas}")
+                # Imprimir dimensiones del mapa generado
+                if "terrain" in map_data and isinstance(map_data["terrain"], list):
+                    filas = len(map_data["terrain"])
+                    columnas = len(map_data["terrain"][0]) if filas > 0 and isinstance(map_data["terrain"][0], list) else 0
+                    print(f"[eskuratuMapa] Mapa generado: {filas}x{columnas}", flush=True)
 
-                    # SI la matriz no es de 50x50 devolver mapa predefinido
-                    if num_filas != 50 and num_columnas != [50, 50, 50, 50, 50, 50, 50, 50, 50, 50,
-                                                            50, 50, 50, 50, 50, 50, 50, 50, 50, 50,
-                                                            50, 50, 50, 50, 50, 50, 50, 50, 50, 50,
-                                                            50, 50, 50, 50, 50, 50, 50, 50, 50, 50,
-                                                            50, 50, 50, 50, 50, 50, 50, 50, 50, 50]:
-                        print("Devolviendo mapa predefinido")
-                        return jsonify({
-                        "terrain": default_map["terrain"],
-                        "visible-objects": default_visible_objects["visible-objects"],
-                        "player_start": default_player_start["player_start"],
-                        "ai_start": default_ai_start["ai_start"]
-                    })
+                # Devuelve SIEMPRE lo que haya generado el modelo, aunque no sea 50x50
+                if "terrain" in map_data and "visible-objects" in map_data and "player_start" in map_data and "ai_start" in map_data:
+                    print(f"[eskuratuMapa] ✅ Mapa generado por LLM", flush=True)
                     return jsonify({
                         "terrain": map_data["terrain"],
                         "visible-objects": map_data["visible-objects"],
@@ -643,44 +553,64 @@ QUIERO QUE SOLAMENTE DEVUELVAS UN JSON DONDE SE GUARDA terrain, visible-objects 
                     })
                 else:
                     print("[eskuratuMapa] ❌ El JSON del modelo no contiene los datos esperados", flush=True)
-                    return jsonify({"error": "La respuesta del modelo no contiene los datos esperados (terrain, visible-objects, start)"}), 500
+                    # Si falta algún campo, manda el default
+                    return jsonify({
+                        "terrain": default_map["terrain"],
+                        "visible-objects": default_visible_objects["visible-objects"],
+                        "player_start": default_player_start["player_start"],
+                        "ai_start": default_ai_start["ai_start"]
+                    })
             else:
                 print("[eskuratuMapa] ❌ No se encontró un bloque JSON válido en la respuesta del modelo", flush=True)
-                return jsonify({"error": "No se encontró un bloque JSON válido en la respuesta del modelo"}), 500
-        except json.JSONDecodeError:
+                # Si no hay JSON válido, manda el default
+                return jsonify({
+                    "terrain": default_map["terrain"],
+                    "visible-objects": default_visible_objects["visible-objects"],
+                    "player_start": default_player_start["player_start"],
+                    "ai_start": default_ai_start["ai_start"]
+                })
+        except Exception as ex:
             print("[eskuratuMapa] ❌ La respuesta del modelo no es un JSON válido", flush=True)
-            return jsonify({"error": "La respuesta del modelo no es un JSON valido"}), 500
-    
+            # Si hay cualquier error parseando, manda el default
+            return jsonify({
+                "terrain": default_map["terrain"],
+                "visible-objects": default_visible_objects["visible-objects"],
+                "player_start": default_player_start["player_start"],
+                "ai_start": default_ai_start["ai_start"]
+            })
+
     except Exception as e:
         error_str = str(e)
         print(f"[eskuratuMapa] ⚠️ Error al generar mapa: {error_str}", flush=True)
-        
+
         # Manejar el error 429 (Rate limit exceeded)
         if "429" in error_str or "rate limit" in error_str.lower():
-            previous_model = current_model
-            current_model = get_next_model(current_model)
-            model_switch_count += 1
-            last_error_time = time.time()
-            
-            # Generar un mapa predeterminado
-            basic_terrain = [[2 for _ in range(width)] for _ in range(height)]
-            print(f"[eskuratuMapa] 🚧 Rate limit: devolviendo mapa DEFAULT (modelo cambiado a {current_model})", flush=True)
+            previous_key = API_KEYS_LIST[current_api_key_index]
+            new_key = get_next_api_key()
+            groq_client = create_groq_client(new_key)
+            print(f"[eskuratuMapa] 🔑 Cambiando API KEY: {previous_key[:10]}... -> {new_key[:10]}...")
+
+            # Aquí deberías devolver el error 429 explícitamente:
             return jsonify({
-                "terrain": basic_terrain,
-                "model_switched": True,
-                "previous_model": previous_model,
-                "current_model": current_model,
+                "error": "Rate limit",
+                "api_key_switched": True,
+                "previous_api_key": previous_key[:10],
+                "current_api_key": new_key[:10],
                 "error_type": "rate_limit"
             }), 429
-        
-        # Para otros errores, generar un mapa predeterminado
-        basic_terrain = [[3 for _ in range(width)] for _ in range(height)]
-        print("[eskuratuMapa] 🚧 Error inesperado: devolviendo mapa DEFAULT", flush=True)
-        return jsonify({"terrain": basic_terrain, "error": error_str}), 500
+
+        # Para cualquier otro error, manda el default y código 500
+        return jsonify({
+            "terrain": default_map["terrain"],
+            "visible-objects": default_visible_objects["visible-objects"],
+            "player_start": default_player_start["player_start"],
+            "ai_start": default_ai_start["ai_start"],
+            "error": error_str
+        }), 500
     
 @app.route('/eskuratuEkintza', methods=['POST'])
 def eskuratu_ekintza():
-    global current_model, model_switch_count, last_error_time
+    global groq_client, current_api_key_index
 
     data = request.json
     if not data:
@@ -689,6 +619,8 @@ def eskuratu_ekintza():
     game_state = data.get('game_state_visible')
     if not game_state:
         return jsonify({'error': 'El campo "game_state" es obligatorio'}), 400
+    
+    print(f"[eskuratuEkintza] Recibido game state: {game_state}", flush=True)
 
     # Crear un prompt para generar las acciones
     prompt = f"""
@@ -945,6 +877,9 @@ def eskuratu_ekintza():
     - Siempre termina el turno con la acción endTurn
     - Da un razonamiento detallado de tus acciones
     - Respeta las reglas y mecanicas del juego
+    TEN EN CUENTA EN TODO MOMENTO LO QUE PUEDES HACER Y LO QUE NO PUEDE HACER, LAS UNIDADES QUE TIENES,
+    LOS RECURSOS QUE TIENES, LOS EDIFICIOS QUE TIENES, LAS TECNOLOGÍAS QUE TIENES, LAS TECNOLOGÍAS QUE PUEDES INVESTIGAR,
+    LOS EDIFICIOS QUE PUEDES HACER, LAS UNIDADES QUE PUEDES HACER, LOS RECURSOS QUE PUEDES RECOLECTAR Y LO QUE PUEDES HACER CON CADA ÚNICA ACCIÓN.
         -He aquí un todas los objetos, unidades, edificios y recursos que hay en el juego:
         {{
             "map_elements": [
@@ -1031,12 +966,19 @@ def eskuratu_ekintza():
 
     Ahora, basandote en el estado del juego que te he dado, analiza la situación, formula una estrategia,
     y genera tu ÚNICA acción, 1 ACCIÓN, SOLO 1, razonamiento y análisis. NO USES TILDES.
+    TEN EN CUENTA EN TODO MOMENTO LO QUE PUEDES HACER Y LO QUE NO PUEDE HACER, LAS UNIDADES QUE TIENES, LOS RECURSOS QUE TIENES,
+    LOS EDIFICIOS QUE TIENES, LAS TECNOLOGÍAS QUE TIENES, LAS TECNOLOGÍAS QUE PUEDES INVESTIGAR, LOS EDIFICIOS QUE PUEDES HACER,
+    LAS UNIDADES QUE PUEDES HACER, LOS RECURSOS QUE PUEDES RECOLECTAR Y LO QUE PUEDES HACER CON CADA ÚNICA ACCIÓN.
+
+    IMPORTANTE: AL PRINCIPIO ES IMPORTANTE QUE CREES UNA CIUDAD, YA QUE NO TENDRAS RECURSOS SUFICIENTES PARA HACER NADA.
+    NO SOLO USES moveUnit, TAMBIEN PUEDES HACER FOUND CITY, Y DEMAS ACCIONES LISTADAS ANTES. ANALIZA CADA UNA ATENTAMENTE
+    PARA SABER QUE HACER EN TODO MOMENTO.
     """
 
     try:
         # Usar el cliente directo de Groq para enviar el prompt
         completion = groq_client.chat.completions.create(
-            model=current_model,
+            model=DEFAULT_MODEL,
             messages=[
                 {"role": "system", "content": "Eres un generador de acciones para un agente IA en un juego de estrategia por turnos."},
                 {"role": "user", "content": prompt}
@@ -1047,8 +989,6 @@ def eskuratu_ekintza():
 
         # Extraer la respuesta del modelo
         response_text = completion.choices[0].message.content
-        #return (jsonify(response_text))
-        # Procesar la respuesta para extraer el JSON
         import json
         import re
         try:
@@ -1062,36 +1002,21 @@ def eskuratu_ekintza():
                 if json_match:
                     json_text = json_match.group(1)
                 else:
+                    print(f"[eskuratuEkintza] 🚧 Error: No se encontró un bloque JSON válido en la respuesta del modelo", flush=True)
                     return jsonify({"error": "No se encontró un bloque JSON válido en la respuesta del modelo"}), 500
 
             action_data = json.loads(json_text)
 
             # 3. Validar que los datos contengan "action"
             if "action" in action_data:
+                print(f"[eskuratuEkintza] 🏁 Acción generada: {action_data}", flush=True)
                 return jsonify(action_data)
             else:
+                print(f"[eskuratuEkintza] 🚧 Error: La respuesta del modelo no contiene el objeto esperado 'action'", flush=True)
                 return jsonify({"error": "La respuesta del modelo no contiene el objeto esperado 'action'"}), 500
         except json.JSONDecodeError:
+            print(f"[eskuratuEkintza] 🚧 Error de JSON: {response_text}", flush=True)
             return jsonify({"error": "La respuesta del modelo no es un JSON válido"}), 500
-
-        
-        '''
-        try:
-            # Buscar el bloque JSON en el texto
-            json_match = re.search(r'```json\s*([\s\S]*?)\s*```', response_text)
-            if json_match:
-                json_text = json_match.group(1)
-                action_data = json.loads(json_text)
-
-                # Validar que los datos contengan "action"
-                if "action" in action_data and isinstance(action_data["action"], list):
-                    # Devolver un único JSON con las acciones
-                    return jsonify(action_data)
-                else:
-                    return jsonify({"error": "La respuesta del modelo no contiene el objeto esperado 'actions'"}), 500
-            else:
-                return jsonify({"error": "No se encontró un bloque JSON válido en la respuesta del modelo"}), 500
-        '''
         
     except Exception as e:
         error_str = str(e)
@@ -1099,20 +1024,21 @@ def eskuratu_ekintza():
         
         # Manejar el error 429 (Rate limit exceeded)
         if "429" in error_str or "rate limit" in error_str.lower():
-            previous_model = current_model
-            current_model = get_next_model(current_model)
-            model_switch_count += 1
-            last_error_time = time.time()
-            
+            previous_key = API_KEYS_LIST[current_api_key_index]
+            new_key = get_next_api_key()
+            groq_client = create_groq_client(new_key)
+            print(f"[eskuratuEkintza] 🔑 Cambiando API KEY: {previous_key[:10]}... -> {new_key[:10]}...")
+
             return jsonify({
-                "actions": [],
-                "model_switched": True,
-                "previous_model": previous_model,
-                "current_model": current_model,
+                "action": [],
+                "api_key_switched": True,
+                "previous_api_key": previous_key[:10],
+                "current_api_key": new_key[:10],
                 "error_type": "rate_limit"
             }), 429
         
         # Para otros errores, devolver un mensaje de error
+        print(f"[eskuratuEkintza] 🚧 Error inesperado: {error_str}.", flush=True)
         return jsonify({"error": error_str}), 500
 
 if __name__ == '__main__':

@@ -13,7 +13,6 @@ class Erabiltzaile(Document):
 class Eszenatoki(Document):
     name = StringField(required=True)
     description = StringField(required=True)
-    difficulty = StringField(required=True)
     map_size = DictField(required=True)
     initial_state = DictField(required=True)
 

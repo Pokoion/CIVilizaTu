@@ -7,24 +7,28 @@ export function applyAiAction(
     action: AiAction,
     aiLog?: (msg: string) => void
 ): any {
+    console.log("gameState en applyAiAction", gameState);
+    console.log("action en applyAiAction", action);
     switch (action.type) {
         case "moveUnit": {
             const pos = action.payload.position;
             const unitId = action.payload.unitId;
-            if (!unitId) return gameState;
-            if (!pos) return gameState;
-
-            const unit = gameState.units.find((u: any) => u.id === unitId);
+            if (!unitId || !pos) return gameState;
+            const unit = gameState.ai.units?.find((u: any) => u.id === unitId);
+            if (!unit) {
+                if (aiLog) aiLog("moveUnit: unidad no encontrada");
+                return gameState;
+            }
             const { updatedUnits, path, error } = moveUnitLogic({
-                units: gameState.units,
+                units: gameState.ai.units,
                 unitId,
                 to: pos,
-                mapTiles: gameState.mapState?.tiles,
-                cities: gameState.cities,
-                visibleObjects: gameState.visibleObjects,
+                mapTiles: gameState.map.tiles,
+                cities: gameState.ai.cities,
+                visibleObjects: gameState.map.visible_objects,
                 movementPointsLeft: unit?.movement_points_left,
                 unitType: unit?.type,
-                discoveredTiles: gameState.mapState?.fog_of_war_ai,
+                discoveredTiles: gameState.map.fog_of_war_ai,
             });
             if (error) {
                 if (aiLog) aiLog(`No puede mover la unidad: ${error}`);
@@ -32,52 +36,54 @@ export function applyAiAction(
             }
             return {
                 ...gameState,
-                units: updatedUnits,
+                ai: {
+                    ...gameState.ai,
+                    units: updatedUnits,
+                },
                 aiMovePath: path,
             };
         }
         case "attackUnit": {
-            const attackerId = action.payload.attackerId;
-            const defenderId = action.payload.defenderId;
+            const { attackerId, defenderId } = action.payload;
             if (!attackerId || !defenderId) {
-                if (aiLog) aiLog("ERROR: attackerId o defenderId indefinido en attackUnit");
+                if (aiLog) aiLog("attackUnit: attackerId o defenderId indefinido");
                 return gameState;
             }
-            const attacker = gameState.units.find((u: any) => u.id === attackerId);
-            const defender = gameState.units.find((u: any) => u.id === defenderId);
-
+            const attacker = gameState.ai.units?.find((u: any) => u.id === attackerId);
+            const defender = gameState.player.units?.find((u: any) => u.id === defenderId);
             if (!attacker || !defender) {
-                if (aiLog) aiLog("ERROR: No se encontró attacker o defender en units");
+                if (aiLog) aiLog("attackUnit: No se encontró attacker o defender");
                 return gameState;
             }
-
             const dx = Math.abs(attacker.position.x - defender.position.x);
             const dy = Math.abs(attacker.position.y - defender.position.y);
             const distance = Math.max(dx, dy);
             const attackerRange = attacker.range ?? 1;
-
             if (distance > attackerRange) {
-                if (aiLog) aiLog("NO puede atacar: objetivo fuera de rango");
+                if (aiLog) aiLog("attackUnit: objetivo fuera de rango");
                 return gameState;
             }
-
             const damage = attacker.strength ?? 10;
             const newHealth = (defender.health ?? 100) - damage;
-
-            const updatedUnits = gameState.units.map((u: any) => {
-                if (u.id === defenderId) {
-                    return { ...u, health: newHealth };
-                }
-                if (u.id === attackerId) {
-                    return { ...u, hasAttackedThisTurn: true, movement_points_left: 0 };
-                }
-                return u;
-            }).filter((u: any) => u.health === undefined || u.health > 0);
-
+            const updatedPlayerUnits = gameState.player.units
+                .map((u: any) => u.id === defenderId ? { ...u, health: newHealth } : u)
+                .filter((u: any) => u.health === undefined || u.health > 0);
+            const updatedAiUnits = gameState.ai.units.map((u: any) =>
+                u.id === attackerId
+                    ? { ...u, hasAttackedThisTurn: true, movement_points_left: 0 }
+                    : u
+            );
             if (aiLog) aiLog(`Ataca la unidad ${defenderId} con ${attackerId}`);
             return {
                 ...gameState,
-                units: updatedUnits,
+                ai: {
+                    ...gameState.ai,
+                    units: updatedAiUnits,
+                },
+                player: {
+                    ...gameState.player,
+                    units: updatedPlayerUnits,
+                }
             };
         }
         case "attackCity": {
@@ -95,7 +101,7 @@ export function applyAiAction(
                 if (aiLog) aiLog("changeCityPopulationProduction: cityId o change inválido");
                 return gameState;
             }
-            const updatedCities = gameState.cities.map((city: any) =>
+            const updatedCities = gameState.ai.cities.map((city: any) =>
                 city.id === cityId
                     ? { ...city, allowPopulationGrowth: change }
                     : city
@@ -103,7 +109,10 @@ export function applyAiAction(
             if (aiLog) aiLog(`Cambia el modo de crecimiento de población en la ciudad ${cityId}`);
             return {
                 ...gameState,
-                cities: updatedCities,
+                ai: {
+                    ...gameState.ai,
+                    cities: updatedCities,
+                }
             };
         }
         case "collectResource": {
@@ -112,7 +121,7 @@ export function applyAiAction(
                 if (aiLog) aiLog("collectResource: posición no definida");
                 return gameState;
             }
-            const unit = gameState.units.find((u: any) => u.id === unitId);
+            const unit = gameState.ai.units?.find((u: any) => u.id === unitId);
             if (!unit) {
                 if (aiLog) aiLog("collectResource: unidad no encontrada");
                 return gameState;
@@ -121,11 +130,11 @@ export function applyAiAction(
                 if (aiLog) aiLog("collectResource: la unidad no es un langile");
                 return gameState;
             }
-            if (!gameState.aiUnlockedTechs?.includes("nekazaritza")) {
+            if (!gameState.ai.technologies?.includes("nekazaritza")) {
                 if (aiLog) aiLog("collectResource: la IA no tiene la tecnología nekazaritza");
                 return gameState;
             }
-            const resourceObj = gameState.visibleObjects?.find(
+            const resourceObj = gameState.map.visible_objects?.find(
                 (obj: any) => obj.position.x === position.x && obj.position.y === position.y
             );
             if (!resourceObj) {
@@ -138,13 +147,16 @@ export function applyAiAction(
                 if (aiLog) aiLog("collectResource: el recurso no está adyacente al langile");
                 return gameState;
             }
-            const updatedVisibleObjects = gameState.visibleObjects.filter(
+            const updatedVisibleObjects = gameState.map.visible_objects.filter(
                 (obj: any) => !(obj.position.x === position.x && obj.position.y === position.y)
             );
             if (aiLog) aiLog(`Recolecta recurso con unidad ${unitId} en (${position.x}, ${position.y})`);
             return {
                 ...gameState,
-                visibleObjects: updatedVisibleObjects,
+                map: {
+                    ...gameState.map,
+                    visible_objects: updatedVisibleObjects,
+                }
             };
         }
         case "buildBuilding": {
@@ -153,7 +165,7 @@ export function applyAiAction(
                 if (aiLog) aiLog("buildBuilding: cityId o buildingType indefinido");
                 return gameState;
             }
-            const city = gameState.cities.find((c: any) => c.id === cityId);
+            const city = gameState.ai.cities?.find((c: any) => c.id === cityId);
             if (!city) {
                 if (aiLog) aiLog("buildBuilding: ciudad no encontrada");
                 return gameState;
@@ -163,12 +175,12 @@ export function applyAiAction(
                 if (aiLog) aiLog("buildBuilding: edificio no encontrado");
                 return gameState;
             }
-            if (building.requirement && !gameState.aiUnlockedTechs?.includes(building.requirement)) {
+            if (building.requirement && !gameState.ai.technologies?.includes(building.requirement)) {
                 if (aiLog) aiLog("buildBuilding: la IA no tiene la tecnología requerida");
                 return gameState;
             }
             const cost = building.cost || {};
-            const aiResources = gameState.aiResources || {};
+            const aiResources = gameState.ai.resources || {};
             const resourceKeys = ["food", "gold", "culture", "science", "natural_resources"] as const;
             for (const key of resourceKeys) {
                 const value = (cost as Record<typeof key, number | undefined>)[key];
@@ -184,16 +196,19 @@ export function applyAiAction(
                     updatedAiResources[key] = (updatedAiResources[key] ?? 0) - value;
                 }
             }
-            const updatedCities = gameState.cities.map((c: any) =>
+            const updatedCities = gameState.ai.cities.map((c: any) =>
                 c.id === cityId
-                    ? { ...c, buildings: [...c.buildings, buildingType] }
+                    ? { ...c, buildings: [...(c.buildings || []), buildingType] }
                     : c
             );
             if (aiLog) aiLog(`Construye el edificio ${buildingType} en la ciudad ${cityId}`);
             return {
                 ...gameState,
-                cities: updatedCities,
-                aiResources: updatedAiResources,
+                ai: {
+                    ...gameState.ai,
+                    cities: updatedCities,
+                    resources: updatedAiResources,
+                }
             };
         }
         case "trainUnit": {
@@ -202,10 +217,7 @@ export function applyAiAction(
                 if (aiLog) aiLog("trainUnit: cityId o unitType indefinido");
                 return gameState;
             }
-            console.log("aaaaaaaa");
-            console.log("el GameState en trainUnit", gameState);
-            console.log("cities", gameState.ai.cities);
-            const city = gameState.ai.cities.find((c: any) => c.id === cityId);
+            const city = gameState.ai.cities?.find((c: any) => c.id === cityId);
             if (!city) {
                 if (aiLog) aiLog(`trainUnit: ciudad no encontrada (${cityId})`);
                 return gameState;
@@ -226,13 +238,13 @@ export function applyAiAction(
                 if (aiLog) aiLog("trainUnit: unidad no encontrada");
                 return gameState;
             }
-            if (unitInfo.civilization && unitInfo.civilization !== gameState.aiCivilization) {
+            if (unitInfo.civilization && unitInfo.civilization !== gameState.ai.civilization) {
                 if (aiLog) aiLog("trainUnit: la unidad requiere otra civilización");
                 return gameState;
             }
             if (Array.isArray(unitInfo.requirement) && unitInfo.requirement.length > 0) {
                 const hasAllTechs = unitInfo.requirement.every((techId: string) =>
-                    gameState.aiUnlockedTechs?.includes(techId)
+                    gameState.ai.technologies?.includes(techId)
                 );
                 if (!hasAllTechs) {
                     if (aiLog) aiLog("trainUnit: la IA no tiene todas las tecnologías requeridas");
@@ -245,14 +257,15 @@ export function applyAiAction(
             let trainingTime = unitInfo.training_time ?? 3;
             let cost = { ...unitInfo.cost };
 
-            if (gameState.aiUnlockedTechs?.includes("penizilina")) health += 30;
-            if (gameState.aiUnlockedTechs?.includes("burdina")) strength += 5;
-            if (gameState.aiUnlockedTechs?.includes("artilleria")) strength += 10;
-            if (gameState.aiUnlockedTechs?.includes("gurpila")) movementPoints += 3;
-            if (gameState.aiUnlockedTechs?.includes("arkitektura")) trainingTime = Math.max(1, trainingTime - 1);
-            if (gameState.aiUnlockedTechs?.includes("industria")) trainingTime = Math.max(1, trainingTime - 1);
+            // Aplica mejoras por tecnologías desbloqueadas
+            if (gameState.ai.technologies?.includes("penizilina")) health += 30;
+            if (gameState.ai.technologies?.includes("burdina")) strength += 5;
+            if (gameState.ai.technologies?.includes("artilleria")) strength += 10;
+            if (gameState.ai.technologies?.includes("gurpila")) movementPoints += 3;
+            if (gameState.ai.technologies?.includes("arkitektura")) trainingTime = Math.max(1, trainingTime - 1);
+            if (gameState.ai.technologies?.includes("industria")) trainingTime = Math.max(1, trainingTime - 1);
 
-            const aiResources = gameState.aiResources || {};
+            const aiResources = gameState.ai.resources || {};
             const resourceKeys = ["food", "gold", "culture", "science", "natural_resources"] as const;
             for (const key of resourceKeys) {
                 const value = (cost as Record<typeof key, number | undefined>)[key];
@@ -279,7 +292,7 @@ export function applyAiAction(
                     movementPoints,
                 }
             ];
-            const updatedCities = gameState.cities.map((c: any) =>
+            const updatedCities = gameState.ai.cities.map((c: any) =>
                 c.id === cityId
                     ? { ...c, training: newTraining }
                     : c
@@ -287,8 +300,11 @@ export function applyAiAction(
             if (aiLog) aiLog(`Entrena la unidad ${unitType} en la ciudad ${cityId} (${trainingTime} turnos, vida ${health}, fuerza ${strength}, movimiento ${movementPoints})`);
             return {
                 ...gameState,
-                cities: updatedCities,
-                aiResources: updatedAiResources,
+                ai: {
+                    ...gameState.ai,
+                    cities: updatedCities,
+                    resources: updatedAiResources,
+                }
             };
         }
         case "deployUnit": {
@@ -297,7 +313,7 @@ export function applyAiAction(
                 if (aiLog) aiLog("deployUnit: cityId, unitType o position indefinido");
                 return gameState;
             }
-            const city = gameState.cities.find((c: any) => c.id === cityId);
+            const city = gameState.ai.cities?.find((c: any) => c.id === cityId);
             if (!city) {
                 if (aiLog) aiLog("deployUnit: ciudad no encontrada");
                 return gameState;
@@ -314,14 +330,14 @@ export function applyAiAction(
                 return gameState;
             }
             const occupied =
-                gameState.units.some((u: any) => u.position.x === position.x && u.position.y === position.y) ||
-                gameState.cities.some((c: any) => c.position.x === position.x && c.position.y === position.y) ||
-                gameState.visibleObjects?.some((obj: any) => obj.position.x === position.x && obj.position.y === position.y);
+                gameState.ai.units.some((u: any) => u.position.x === position.x && u.position.y === position.y) ||
+                gameState.ai.cities.some((c: any) => c.position.x === position.x && c.position.y === position.y) ||
+                gameState.map.visible_objects?.some((obj: any) => obj.position.x === position.x && obj.position.y === position.y);
             if (occupied) {
                 if (aiLog) aiLog("deployUnit: la casilla está ocupada");
                 return gameState;
             }
-            const tileType = gameState.mapState?.tiles?.[position.y]?.[position.x];
+            const tileType = gameState.map.tiles?.[position.y]?.[position.x];
             const unitDef = UNITS.find(u => u.id === unitType);
             if (!unitDef) {
                 if (aiLog) aiLog("deployUnit: definición de unidad no encontrada");
@@ -337,6 +353,7 @@ export function applyAiAction(
                 if (aiLog) aiLog("deployUnit: unidad terrestre solo en tierra");
                 return gameState;
             }
+            // Extrae la unidad de training
             const [trainingUnit] = city.training.splice(trainingIdx, 1);
             const newUnit = {
                 id: `unit_${Date.now()}`,
@@ -350,17 +367,21 @@ export function applyAiAction(
                 strength: trainingUnit.strength ?? unitDef.strength ?? 10,
                 direction: "default",
             };
-            const updatedCities = gameState.cities.map((c: any) =>
+            // Actualiza ciudades y unidades IA
+            const updatedCities = gameState.ai.cities.map((c: any) =>
                 c.id === cityId
                     ? { ...c, training: [...city.training] }
                     : c
             );
-            const updatedUnits = [...gameState.units, newUnit];
+            const updatedUnits = [...gameState.ai.units, newUnit];
             if (aiLog) aiLog(`Despliega la unidad ${unitType} de la ciudad ${cityId} en (${position.x}, ${position.y})`);
             return {
                 ...gameState,
-                cities: updatedCities,
-                units: updatedUnits,
+                ai: {
+                    ...gameState.ai,
+                    cities: updatedCities,
+                    units: updatedUnits,
+                }
             };
         }
         case "researchTech": {
@@ -370,30 +391,31 @@ export function applyAiAction(
                 if (aiLog) aiLog("researchTech: tecnología no encontrada");
                 return gameState;
             }
-            if (gameState.aiUnlockedTechs?.includes(techId)) {
+            if (gameState.ai.technologies?.includes(techId)) {
                 if (aiLog) aiLog("researchTech: tecnología ya desbloqueada");
                 return gameState;
             }
             const parentTechs = tech.parents.map((pid: string) => TECHS.find(t => t.id === pid)).filter(Boolean);
-            const allParentsUnlocked = parentTechs.every(parent => gameState.aiUnlockedTechs?.includes(parent!.id));
+            const allParentsUnlocked = parentTechs.every(parent => gameState.ai.technologies?.includes(parent!.id));
             const isSpaceship = tech.id === "espaziontzia";
-            const allOtherTechsUnlocked = TECHS.filter(t => t.id !== "espaziontzia").every(t => gameState.aiUnlockedTechs?.includes(t.id));
+            const allOtherTechsUnlocked = TECHS.filter(t => t.id !== "espaziontzia").every(t => gameState.ai.technologies?.includes(t.id));
             if (!allParentsUnlocked || (isSpaceship && !allOtherTechsUnlocked)) {
                 if (aiLog) aiLog("researchTech: requisitos de tecnologías padres no cumplidos");
                 return gameState;
             }
             const ERA_ORDER = ["Antzinaroa", "Erdi Aroa", "Aro Modernoa"] as const;
             const eraIndex = (era: string) => ERA_ORDER.indexOf(era as typeof ERA_ORDER[number]);
-            if (eraIndex(tech.era) > eraIndex(gameState.aiEra)) {
+            if (eraIndex(tech.era) > eraIndex(gameState.ai.era)) {
                 if (aiLog) aiLog("researchTech: la era de la tecnología es futura");
                 return gameState;
             }
-            const aiResources = gameState.aiResources || {};
+            const aiResources = gameState.ai.resources || {};
             if ((aiResources.science ?? 0) < tech.cost.science) {
                 if (aiLog) aiLog("researchTech: no hay suficiente ciencia");
                 return gameState;
             }
-            let updatedUnits = gameState.units;
+            // Aplica efectos de la tecnología
+            let updatedUnits = gameState.ai.units;
             let updatedAiResources = { ...aiResources, science: aiResources.science - tech.cost.science };
             if (tech.id === "nekazaritza") {
                 updatedAiResources.food += 100;
@@ -426,23 +448,26 @@ export function applyAiAction(
                     movement_points_left: (u.movement_points_left ?? u.movement_points ?? 1) + 3,
                 }));
             }
-            const newUnlockedTechs = [...(gameState.aiUnlockedTechs || []), tech.id];
-            let newEra = gameState.aiEra;
+            const newUnlockedTechs = [...(gameState.ai.technologies || []), tech.id];
+            let newEra = gameState.ai.era;
             if (newUnlockedTechs.length === 5) newEra = "Erdi Aroa";
             else if (newUnlockedTechs.length === 10) newEra = "Aro Modernoa";
 
             if (aiLog) aiLog(`Investiga la tecnología ${tech.name}`);
             return {
                 ...gameState,
-                aiUnlockedTechs: newUnlockedTechs,
-                aiEra: newEra,
-                aiResources: updatedAiResources,
-                units: updatedUnits,
+                ai: {
+                    ...gameState.ai,
+                    technologies: newUnlockedTechs,
+                    era: newEra,
+                    resources: updatedAiResources,
+                    units: updatedUnits,
+                }
             };
         }
         case "upgradeCityEra": {
             const { cityId } = action.payload;
-            const city = gameState.cities.find((c: any) => c.id === cityId);
+            const city = gameState.ai.cities?.find((c: any) => c.id === cityId);
             if (!city) {
                 if (aiLog) aiLog("upgradeCityEra: ciudad no encontrada");
                 return gameState;
@@ -455,7 +480,7 @@ export function applyAiAction(
                 return gameState;
             }
             const nextEra = eraOrder[currentEraIdx + 1];
-            if (eraOrder.indexOf(gameState.aiEra) < eraOrder.indexOf(nextEra)) {
+            if (eraOrder.indexOf(gameState.ai.era) < eraOrder.indexOf(nextEra)) {
                 if (aiLog) aiLog("upgradeCityEra: la IA no está en la era necesaria para mejorar la ciudad");
                 return gameState;
             }
@@ -466,10 +491,10 @@ export function applyAiAction(
                 return gameState;
             }
             const cost = currentEraInfo.upgrade_cost;
-            const aiResources = gameState.aiResources || {};
+            const aiResources = gameState.ai.resources || {};
             if (
-                aiResources.gold < cost.gold ||
-                aiResources.natural_resources < cost.natural_resources
+                (aiResources.gold ?? 0) < cost.gold ||
+                (aiResources.natural_resources ?? 0) < cost.natural_resources
             ) {
                 if (aiLog) aiLog("upgradeCityEra: no hay suficientes recursos");
                 return gameState;
@@ -479,17 +504,17 @@ export function applyAiAction(
                 gold: aiResources.gold - cost.gold,
                 natural_resources: aiResources.natural_resources - cost.natural_resources,
             };
-            const updatedCities = gameState.cities.map((c: any) =>
+            const updatedCities = gameState.ai.cities.map((c: any) =>
                 c.id === cityId
                     ? {
                         ...c,
                         era: nextEra,
                         production: {
-                            food: (c.production.food || 0) + (nextEraInfo.base_production.food || 0),
-                            gold: (c.production.gold || 0) + (nextEraInfo.base_production.gold || 0),
-                            culture: (c.production.culture || 0) + (nextEraInfo.base_production.culture || 0),
-                            science: (c.production.science || 0) + (nextEraInfo.base_production.science || 0),
-                            natural_resources: (c.production.natural_resources || 0) + (nextEraInfo.base_production.natural_resources || 0),
+                            food: (c.production?.food || 0) + (nextEraInfo.base_production.food || 0),
+                            gold: (c.production?.gold || 0) + (nextEraInfo.base_production.gold || 0),
+                            culture: (c.production?.culture || 0) + (nextEraInfo.base_production.culture || 0),
+                            science: (c.production?.science || 0) + (nextEraInfo.base_production.science || 0),
+                            natural_resources: (c.production?.natural_resources || 0) + (nextEraInfo.base_production.natural_resources || 0),
                         }
                     }
                     : c
@@ -497,8 +522,11 @@ export function applyAiAction(
             if (aiLog) aiLog(`Mejora la era de la ciudad ${city.name} a ${nextEra}`);
             return {
                 ...gameState,
-                cities: updatedCities,
-                aiResources: updatedAiResources,
+                ai: {
+                    ...gameState.ai,
+                    cities: updatedCities,
+                    resources: updatedAiResources,
+                }
             };
         }
         case "endTurn": {

@@ -1,0 +1,99 @@
+.cheat-console-backdrop {
+  position: fixed;
+  inset: 0;
+  background: none;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cheat-console-modal {
+  background: #232526;
+  color: #ffe066;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+  padding: 28px 24px 18px 24px;
+  min-width: 280px;
+  max-width: 95vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.cheat-console-modal span {
+  color: #ffe066;
+  font-weight: 700;
+  font-size: 20px;
+  margin-bottom: 14px;
+  letter-spacing: 1px;
+}
+
+.cheat-console-modal input[type="text"] {
+  background: #111;
+  color: #ffe066;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-family: monospace;
+  font-size: 16px;
+  width: 180px;
+  margin-bottom: 14px;
+  outline: none;
+  text-align: center;
+}
+
+.cheat-console-modal button[type="submit"] {
+  background: #ffe066;
+  color: #232526;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 22px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 6px;
+  transition: background 0.2s;
+}
+
+.cheat-console-modal button[type="submit"]:hover {
+  background: #fff3b0;
+}
+
+.cheat-console-modal button[aria-label="Cerrar"] {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #ffe066;
+  font-size: 24px;
+  font-weight: 900;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.cheat-console-modal .hint {
+  color: #aaa;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+@media (max-width: 500px) {
+  .cheat-console-modal {
+    padding: 12px 4px 8px 4px;
+    min-width: 0;
+    max-width: 99vw;
+  }
+  .cheat-console-modal input[type="text"] {
+    width: 98vw;
+    max-width: 180px;
+  }
+}

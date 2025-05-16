@@ -118,6 +118,9 @@ type GameContextType = {
   setPlayerLeaderName: React.Dispatch<React.SetStateAction<string>>;
   aiLeaderName: string;
   setAiLeaderName: React.Dispatch<React.SetStateAction<string>>;
+  aiLogs: { action: any; reasoning?: string; analysis?: string; timestamp: number }[];
+  addAiLog: (log: { action: any; reasoning?: string; analysis?: string }) => void;
+  clearAiLogs: () => void;
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -208,6 +211,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
   const [gameId, setGameId] = useState<string>("");
   const [playerLeaderName, setPlayerLeaderName] = useState<string>("");
   const [aiLeaderName, setAiLeaderName] = useState<string>("");
+  const [aiLogs, setAiLogs] = useState<
+    { action: any; reasoning?: string; analysis?: string; timestamp: number }[]
+  >([]);
 
   const confirmFoundCity = (
     cityName: string,
@@ -260,6 +266,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
     setUnits(prev => prev.filter((unit) => unit.id !== kolonoId));
   };
 
+  const addAiLog = (log: { action: any; reasoning?: string; analysis?: string }) => {
+    setAiLogs(prev => [
+      ...prev,
+      { ...log, timestamp: Date.now() }
+    ]);
+  };
+
+  const clearAiLogs = () => setAiLogs([]);
+
   useEffect(() => {
     // Solo loguea cuando termina la acción AI y el estado está actualizado
     if (!isAiRunning && currentSide === "player") {
@@ -309,9 +324,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
   const runAiTurn = async () => {
     setIsAiRunning(true);
     let continueAi = true;
+    let aiActionsThisTurn = 0;
+    const MAX_AI_ACTIONS = 3;
+    const DELAY_BETWEEN_ACTIONS = 1000; // milisegundos (1 segundo)
 
-    while (continueAi) {
-      // Siempre usa los valores actuales de los refs
+    while (continueAi && aiActionsThisTurn < MAX_AI_ACTIONS) {
       const gameState = gameManager.buildGameState({
         turn,
         currentSide: 'ai',
@@ -331,8 +348,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
         playerLeaderName,
         aiLeaderName,
       });
-      const action = await fetchNextAiAction(gameState);
+      const { action, reasoning, analysis } = await fetchNextAiAction(gameState);
+      addAiLog({ action, reasoning, analysis });
 
+      if (action.type === "endTurn") {
+        continueAi = false;
+        break;
+      }
+      aiActionsThisTurn++;
       if (action.type === "endTurn") {
         continueAi = false;
       } else if (action.type === "attackUnit") {
@@ -502,7 +525,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
         });
 
         // Espera un render para asegurar que los refs están actualizados
-        await new Promise(res => setTimeout(res, 0));
+        await new Promise(res => setTimeout(res, DELAY_BETWEEN_ACTIONS));
       }
     }
 
@@ -545,31 +568,41 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
       const { action, gameState } = pendingAiAction;
       const newState = applyAiAction(gameState, action, aiLog);
 
-      if (newState.units) setUnits(newState.units);
-      if (newState.cities) setCities(newState.cities);
-      if (newState.visibleObjects) setVisibleObjects(newState.visibleObjects);
+      if (newState.ai?.units || newState.player?.units) {
+        setUnits(prevUnits => [
+          ...(newState.player?.units || prevUnits.filter((u: UnitProps) => u.owner === 'player')).map((u: UnitProps) => ({ ...u, owner: 'player' })),
+          ...(newState.ai?.units || prevUnits.filter((u: UnitProps) => u.owner === 'ai')).map((u: UnitProps) => ({ ...u, owner: 'ai' })),
+        ]);
+      }
 
-      if (newState.aiUnlockedTechs) setAiUnlockedTechs(newState.aiUnlockedTechs);
-      if (newState.aiEra) setAiEra(newState.aiEra);
-      if (newState.aiResources) setAiResources(newState.aiResources);
+      if (newState.ai?.cities || newState.player?.cities) {
+        setCities(prevCities => [
+          ...(newState.player?.cities || prevCities.filter((c: CityProps) => c.owner === 'player')).map((c: CityProps) => ({ ...c, owner: 'player' })),
+          ...(newState.ai?.cities || prevCities.filter((c: CityProps) => c.owner === 'ai')).map((c: CityProps) => ({ ...c, owner: 'ai' })),
+        ]);
+      }
+
+      if (newState.map?.visible_objects) setVisibleObjects(newState.map.visible_objects);
+      if (newState.ai?.technologies) setAiUnlockedTechs(newState.ai.technologies);
+      if (newState.ai?.era) setAiEra(newState.ai.era);
+      if (newState.ai?.resources) setAiResources(newState.ai.resources);
 
       // Sumar recurso si es collectResource
       if (
         action.type === "collectResource" &&
-        newState.visibleObjects &&
-        gameState.visibleObjects
+        newState.map?.visible_objects &&
+        gameState.map?.visible_objects
       ) {
         // Encuentra el objeto recogido
-        const removed = gameState.visibleObjects.find(
+        const removed = gameState.map.visible_objects.find(
           (obj: any) =>
-            !newState.visibleObjects.some(
+            !newState.map.visible_objects.some(
               (o: any) => o.position.x === obj.position.x && o.position.y === obj.position.y
             )
         );
         if (removed) {
           const bonus = VISIBLE_OBJECTS_BY_ID[removed.type]?.bonus || {};
           setAiResources(prev => {
-            // Suma cada recurso del bonus al estado actual
             const updated = { ...prev };
             const resourceKeys = ["food", "gold", "culture", "science", "natural_resources"] as const;
             for (const key of resourceKeys) {
@@ -1045,6 +1078,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
         setPlayerLeaderName,
         aiLeaderName,
         setAiLeaderName,
+        aiLogs,
+        addAiLog,
+        clearAiLogs,
       }}
     >
 

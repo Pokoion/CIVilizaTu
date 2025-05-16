@@ -35,20 +35,17 @@ const civilizations = [
   },
 ];
 
-const scenario = { id: "debug-scenario", name: "Debug Eszenatokia" };
-
-const difficulties = [
-  { id: "easy", name: "Erraza" },
-  { id: "normal", name: "Normala" },
-  { id: "hard", name: "Zaila" }
-];
-
 const defaultLeaderNames: Record<string, string> = {
   euskaldunak: "Sabino arana",
   mongolak: "Gengis Kan",
   mayak: "Halach Uinic",
   bizantziarrak: "Justiniano"
 };
+
+const mapTypes = [
+  { id: 0, name: "Aurredefinitua" },
+  { id: 1, name: "AA-k sortua (EZ DA GOMENDATZEN)" }
+];
 
 const MainMenu: React.FC = () => {
   const navigate = useNavigate();
@@ -59,11 +56,12 @@ const MainMenu: React.FC = () => {
   const [aiName, setAiName] = useState("");
   const [playerCiv, setPlayerCiv] = useState(civilizations[0].id);
   const [aiCiv, setAiCiv] = useState(civilizations[1].id);
-  const [difficulty, setDifficulty] = useState(difficulties[1].id);
   const [error, setError] = useState<string | null>(null);
   const [savedGames, setSavedGames] = useState<any[]>([]);
   const [loadingGames, setLoadingGames] = useState(false);
   const [creatingGame, setCreatingGame] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [mapType, setMapType] = useState(1);
 
   // Info de civilización seleccionada
   const playerCivInfo = civilizations.find(c => c.id === playerCiv)!;
@@ -104,13 +102,13 @@ const MainMenu: React.FC = () => {
     try {
       const result = await createGame({
         name: gameName,
-        scenario_id: scenario.id,
+        scenario_id: mapTypes.find(mt => mt.id === mapType)?.name || "Aurredefinitua",
         playerCiv,
         aiCiv,
         playerName,
         aiName,
-        difficulty,
         map_size: { width: 50, height: 50 },
+        map_type: mapType,
       });
       console.log("JSON recibido al CREAR partida:", result);
       navigate('/game', { state: { partida: result, loaded: true } });
@@ -122,13 +120,22 @@ const MainMenu: React.FC = () => {
   };
 
   const handleDeleteGame = async (gameId: string) => {
-    if (!window.confirm("Ziur zaude partida hau ezabatu nahi duzula?")) return;
+    setPendingDeleteId(gameId);
+  };
+
+  const confirmDeleteGame = async () => {
+    if (!pendingDeleteId) return;
     try {
-      await deleteGame(gameId);
-      setSavedGames(games => games.filter(g => g.game_id !== gameId));
+      await deleteGame(pendingDeleteId);
+      setSavedGames(games => games.filter(g => g.game_id !== pendingDeleteId));
     } catch (err) {
       alert("Errorea partida ezabatzean.");
     }
+    setPendingDeleteId(null);
+  };
+
+  const cancelDeleteGame = () => {
+    setPendingDeleteId(null);
   };
 
   const handleShowLoad = async () => {
@@ -253,20 +260,16 @@ const MainMenu: React.FC = () => {
               </div>
             </div>
             <label>
-              Zailtasuna:
-              <select value={difficulty} onChange={e => setDifficulty(e.target.value)} className="mainmenu-input">
-                {difficulties.map(dif => (
-                  <option key={dif.id} value={dif.id}>{dif.name}</option>
+              Mapa mota:
+              <select
+                value={mapType}
+                onChange={e => setMapType(Number(e.target.value))}
+                className="mainmenu-input"
+              >
+                {mapTypes.map(mt => (
+                  <option key={mt.id} value={mt.id}>{mt.name}</option>
                 ))}
               </select>
-            </label>
-            <label>
-              Eszenatokia:
-              <input type="text" value={scenario.name} disabled className="mainmenu-input" />
-            </label>
-            <label>
-              Mapa tamaina:
-              <input type="text" value="50 x 50" disabled className="mainmenu-input" />
             </label>
             {creatingGame && (
               <div style={{ color: "#ffd700", fontWeight: "bold", marginTop: 12 }}>
@@ -274,7 +277,15 @@ const MainMenu: React.FC = () => {
               </div>
             )}
             {error && (
-              <div style={{ color: "#ffb3b3", fontWeight: "bold", marginBottom: 8 }}>
+              <div
+                style={{
+                  color: "#ffb3b3",
+                  fontWeight: "bold",
+                  marginBottom: 8,
+                  textAlign: "center",
+                  width: "100%",
+                }}
+              >
                 {error}
                 <button
                   type="button"
@@ -345,6 +356,15 @@ const MainMenu: React.FC = () => {
           </div>
         )}
       </div>
+      {pendingDeleteId && (
+        <div className="delete-confirm-dialog">
+          <div className="delete-confirm-content">
+            <p>Ziur zaude partida hau ezabatu nahi duzula?</p>
+            <button className="main-menu-btn delete" onClick={confirmDeleteGame}>Bai, ezabatu</button>
+            <button className="main-menu-btn secondary" onClick={cancelDeleteGame}>Ezabatu gabe utzi</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

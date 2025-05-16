@@ -12,7 +12,6 @@ def list_scenarios():
             "scenario_id": str(s.id),
             "name": s.name,
             "description": s.description,
-            "difficulty": s.difficulty,
             "map_size": s.map_size
         })
     return jsonify(result), 200

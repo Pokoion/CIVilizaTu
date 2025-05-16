@@ -128,13 +128,6 @@ class GameManager {
       console.log('Game initialized with provided state.');
       return;
     }
-    // Solo para debug/sandbox:
-    console.log('Initializing game...');
-    try {
-      console.log('Loading map from MOCK...');
-    } catch (error) {
-      console.error('Error loading map from MOCK:', error);
-    }
   }
 
   reloadUnitsMovement(units: Unit[]): Unit[] {

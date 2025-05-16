@@ -31,14 +31,28 @@ def create_game():
     game_state = data.get('game_state')
     map_width = data.get('map_width')
     map_height = data.get('map_height')
+    map_type = data.get('map_type', 0)
 
     # Generar el mapa y posiciones iniciales usando el servicio LLM
-    print(f"===> Llamando a create_map({map_width}, {map_height})", file=sys.stderr)
-    map_result = create_map(map_width, map_height)
-    print("===> Resultado de create_map:", map_result, file=sys.stderr)
+    print(f"===> Llamando a create_map({map_width}, {map_height}, {map_type})", file=sys.stderr)
+    map_result = create_map(map_width, map_height, map_type)
+    #print("===> Resultado de create_map:", map_result, file=sys.stderr)
+    import time
+
+    max_retries = 5
+    retries = 0
+    while retries < max_retries:
+        map_result = create_map(map_width, map_height, map_type)
+        if "error" in map_result and map_result.get("status_code") == 429:
+            print(f"===> [POST /api/games] 429 recibido al crear mapa, reintentando... ({retries+1}/{max_retries})", file=sys.stderr)
+            time.sleep(1.5)
+            retries += 1
+            continue
+        break
+
     if "error" in map_result:
-        print("===> Error al crear el mapa:", map_result["error"], file=sys.stderr)
-        return jsonify({"error": f"Mapa sortzean errorea: {map_result['error']}"}), 500
+        status = map_result.get("status_code", 500)
+        return jsonify({"error": f"Mapa sortzean errorea: {map_result['error']}"}), status
 
     fog_player = [[False for _ in range(50)] for _ in range(50)]
     fog_ai = [[False for _ in range(50)] for _ in range(50)]
@@ -47,7 +61,7 @@ def create_game():
     ai_starts = map_result.get("ai_start", [])
 
     numeric_map = map_result["mapa"]
-    print("===> numeric_map (original):", numeric_map, file=sys.stderr)
+    #print("===> numeric_map (original):", numeric_map, file=sys.stderr)
 
     TARGET_SIZE = 50
     string_map = []
@@ -67,7 +81,7 @@ def create_game():
             string_row.append(TERRAIN_IDS[val])
         string_map.append(string_row)
 
-    print("===> string_map (ajustado 50x50, limpio):", string_map, file=sys.stderr)
+    #print("===> string_map (ajustado 50x50, limpio):", string_map, file=sys.stderr)
 
     if "map" not in game_state:
         game_state["map"] = {}
@@ -76,7 +90,7 @@ def create_game():
     game_state["map"]["fog_of_war_player"] = fog_player
     game_state["map"]["fog_of_war_ai"] = fog_ai
 
-    print("===> game_state final:", game_state, file=sys.stderr)
+    #print("===> game_state final:", game_state, file=sys.stderr)
 
     user_id = get_jwt_identity()
     try:
@@ -156,25 +170,48 @@ def load_game(game_id):
 @games_bp.route('/getIAAction', methods=['POST'])
 @jwt_required()
 def get_ia_action():
+    import time
+
     data = request.get_json()
     game_state = data.get("game_state")
-
     if not game_state:
         return jsonify({"error": "Jokoaren egoera beharrezkoa da"}), 400
 
-    # Obtener solo la información visible para la IA
     ai_visible_json = get_ai_visible_state(game_state)
 
-    import json
-    print("AI visible JSON:")
-    print(json.dumps(ai_visible_json, indent=2, ensure_ascii=False))
+    max_retries = 3
+    retries = 0
+    while retries < max_retries:
+        ai_response = send_ia_game_state({"game_state_visible": ai_visible_json})
 
-    # Llamar al servicio LLM para obtener las acciones de la IA usando solo la información visible
-    #ai_response = send_ia_game_state(ai_visible_json)
-    #if "error" in ai_response:
-    #    return jsonify({"error": f"AI zerbitzuaren errorea: {ai_response['error']}"}), 500
+        # Si hay error 429, reintenta SIN contar como intento
+        if "error_type" in ai_response and ai_response["error_type"] == "rate_limit":
+            print("===> [getIAAction] 429 recibido, reintentando sin contar como intento...", flush=True)
+            time.sleep(1.5)
+            continue
 
-    return jsonify(ai_visible_json), 200
+        # Comprobar formato correcto
+        if (
+            isinstance(ai_response, dict)
+            and "action" in ai_response
+            and isinstance(ai_response["action"], dict)
+            and "type" in ai_response["action"]
+            and "payload" in ai_response["action"]
+        ):
+            return jsonify(ai_response), 200
+
+        retries += 1
+        time.sleep(1.5 * retries)
+
+    # Si tras los reintentos no se consigue una respuesta válida, enviar endTurn
+    return jsonify({
+        "action": {
+            "type": "endTurn",
+            "payload": {}
+        },
+        "reasoning": "No valid response.",
+        "analysis": "No valid response."
+    }), 200
 
 @games_bp.route('/<string:game_id>', methods=['DELETE'])
 @jwt_required()

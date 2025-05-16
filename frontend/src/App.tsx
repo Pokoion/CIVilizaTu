@@ -4,6 +4,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import MainMenu from './components/MainMenu';
 import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
 import GameUI from './components/game/GameUI';
 import { GameProvider } from './context/GameContext';
 import './styles/index.css';
@@ -20,7 +21,7 @@ const Home: React.FC = () => (
       </main>
     </div>
     <footer>
-      <p>&copy; 2025 CIVilizaTu. Eskubide guztiak erreserbatuta.</p>
+      <p>&copy; 2025w CIVilizaTu. Eskubide guztiak erreserbatuta.</p>
     </footer>
   </div>
 );
@@ -46,9 +47,9 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/" element={<PublicRoute><Home /></PublicRoute>} />
+        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/main-menu" element={<ProtectedRoute><MainMenu /></ProtectedRoute>} />
         <Route
           path="/game"

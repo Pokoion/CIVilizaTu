@@ -13,6 +13,7 @@ import { TECHS } from '../../utils/Constants';
 import { useGame } from '../../context/GameContext';
 import { useNavigate } from "react-router-dom";
 import { saveGame } from '../../services/gameService';
+import AiLogConsole from './AiLogConsole';
 
 const GameUI: React.FC = () => {
     const [selectedUnit, setSelectedUnit] = useState<UnitProps | null>(null);
@@ -29,6 +30,7 @@ const GameUI: React.FC = () => {
     const [cheatOpen, setCheatOpen] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
+    const [aiLogOpen, setAiLogOpen] = useState(false);
     const navigate = useNavigate();
 
     // Usa el contexto global para selectedVisibleObject y recursos
@@ -120,6 +122,10 @@ const GameUI: React.FC = () => {
             if (e.key === "F1") {
                 e.preventDefault();
                 setCheatOpen(open => !open);
+            }
+            if (e.key === "F2") {
+                e.preventDefault();
+                setAiLogOpen(open => !open);
             }
             if (e.key === "Escape") {
                 setCheatOpen(false);
@@ -241,6 +247,20 @@ const GameUI: React.FC = () => {
                         }}>
                             <b>F1</b> - Ireki trikimailu-kontsola
                         </div>
+                        <div style={{
+                            marginTop: 16,
+                            background: "rgba(0,0,0,0.7)",
+                            color: "#fff",
+                            padding: "6px 16px",
+                            borderRadius: 8,
+                            fontSize: "1em",
+                            textAlign: "center",
+                            width: 180,
+                            marginLeft: "auto",
+                            marginRight: "auto"
+                        }}>
+                            <b>F2</b> - Ireki AI akzio kontsola
+                        </div>
                     </div>
                     <div className="ui-center">
                         <Map2
@@ -271,14 +291,16 @@ const GameUI: React.FC = () => {
                     </div>
                 </div>
                 <div className="ui-bottom">
-                    <button onClick={endTurn}>Txanda amaitu</button>
                     {isPlayerTurn && (
-                        <button onClick={() => setShowTechTree(true)}>Teknologia zuhaitza</button>
+                        <>
+                            <button onClick={endTurn}>Txanda amaitu</button>
+                            <button onClick={() => setShowTechTree(true)}>Teknologia zuhaitza</button>
+                            <button onClick={handleSaveAndMenu} disabled={saving} style={{ marginLeft: 8 }}>
+                                {saving ? "Gordetzen..." : "Gorde eta itzuli menura"}
+                            </button>
+                            {saveError && <span style={{ color: "red", marginLeft: 8 }}>{saveError}</span>}
+                        </>
                     )}
-                    <button onClick={handleSaveAndMenu} disabled={saving} style={{ marginLeft: 8 }}>
-                        {saving ? "Gordetzen..." : "Gorde eta itzuli menura"}
-                    </button>
-                    {saveError && <span style={{ color: "red", marginLeft: 8 }}>{saveError}</span>}
                 </div>
             </div>
             {showBattle && selectedUnit && selectedEnemyUnit && (
@@ -363,6 +385,7 @@ const GameUI: React.FC = () => {
                 </div>
             )}
             <CheatConsoleModal open={cheatOpen} onClose={() => setCheatOpen(false)} />
+            <AiLogConsole open={aiLogOpen} onClose={() => setAiLogOpen(false)} />
         </>
     );
 };

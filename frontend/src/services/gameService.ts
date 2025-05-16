@@ -13,8 +13,8 @@ export const createGame = async ({
   aiCiv,
   playerName,
   aiName,
-  difficulty,
   map_size,
+  map_type
 }: {
   name: string;
   scenario_id: string;
@@ -22,14 +22,14 @@ export const createGame = async ({
   aiCiv: string;
   playerName: string;
   aiName: string;
-  difficulty: string;
   map_size: { width: number; height: number };
+  map_type: number;
 }) => {
   const token = localStorage.getItem("jwt_token");
 
   // 1. LOG: Parámetros recibidos
   console.log("===> [createGame] Parámetros recibidos:", {
-    name, scenario_id, playerCiv, aiCiv, playerName, aiName, difficulty, map_size
+    name, playerCiv, aiCiv, playerName, aiName, map_size, map_type
   });
 
   const playerInitialResources = CIVILIZATIONS_BY_ID[playerCiv]?.initial_resources || { food: 0, natural_resources: 0, science: 0, gold: 0, culture: 0 };
@@ -79,14 +79,20 @@ export const createGame = async ({
     game_state,
     map_width: map_size.width,
     map_height: map_size.height,
+    map_type,
   };
 
   // 4. LOG: Body enviado al backend
   console.log("===> [createGame] Body enviado al backend:", JSON.stringify(body, null, 2));
 
-  const response = await axios.post(`${API_URL}/api/games`, body, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  let response;
+  try {
+    response = await axios.post(`${API_URL}/api/games`, body, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err: any) {
+    throw err; // Deja que el frontend gestione el error recibido del backend
+  }
 
   // 5. LOG: Respuesta del backend
   console.log("===> [createGame] Respuesta del backend:", response.data);
@@ -239,26 +245,21 @@ export const deleteGame = async (gameId: string) => {
   });
 };
 
-let aiActionStep = 0;
-const aiActionSequence: AiAction[] = [
-  //{ type: "foundCity", payload: { name: "CityEnemy", unitId: "kolono-start-ai" } },
-  //{ type: "trainUnit", payload: { cityId: "city-1747307085315", unitType: "militar" } },
-  { type: "endTurn", payload: {} }
-];
-
-export const fetchNextAiAction = async (gameState: any): Promise<AiAction> => {
-
+export const fetchNextAiAction = async (gameState: any): Promise<{ action: AiAction; reasoning?: string; analysis?: string }> => {
   const token = localStorage.getItem("jwt_token");
-  console.log("Estado del juego enviado a la IA:", gameState);
-  const response = await axios.post(
-    `${API_URL}/api/games/getIAAction`,
-    { game_state: gameState },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  console.log("Respuesta del backend para IA:", response.data);
-
-  const action = aiActionSequence[aiActionStep] || { type: "endTurn", payload: {} };
-  aiActionStep++;
-  if (action.type === "endTurn") aiActionStep = 0;
-  return new Promise(resolve => setTimeout(() => resolve(action), 2000));
+  try {
+    const response = await axios.post(
+      `${API_URL}/api/games/getIAAction`,
+      { game_state: gameState },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return response.data;
+  } catch (err) {
+    console.error("Error obteniendo acción de la IA:", err);
+    return {
+      action: { type: "endTurn", payload: {} },
+      reasoning: "No valid response.",
+      analysis: "No valid response."
+    };
+  }
 };

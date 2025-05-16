@@ -16,14 +16,18 @@ TERRAIN_IDS = [
     "itsasoa"    # 6
 ]
 
-def create_map(width, height):
+# Coste de movimiento por tipo de terreno (índice coincide con TERRAIN_IDS)
+TERRAIN_COSTS = [1, 2, 2, 1, 3, 3, 1]
+
+def create_map(width, height, map_type=0):
     url = f"{LLM_SERVICE_URL}/eskuratuMapa"
-    payload = {"width": width, "height": height}
+    payload = {"width": width, "height": height, "map_type": map_type}
     try:
         resp = requests.post(url, json=payload, timeout=60)
+        if resp.status_code == 429:
+            return {"error": "Rate limit", "status_code": 429}
         resp.raise_for_status()
         data = resp.json()
-        # Devuelve el JSON con las claves correctas
         return {
             "mapa": data.get("terrain", []),
             "visible_objects": data.get("visible-objects", []),
@@ -35,8 +39,6 @@ def create_map(width, height):
         return {"error": str(e)}
 
 def send_ia_game_state(game_state_visible):
-    print("Enviando game_state_visible a IA:")
-    print(json.dumps(game_state_visible, indent=2, ensure_ascii=False))  # <-- LOG
     url = f"{LLM_SERVICE_URL}/eskuratuEkintza"
     try:
         resp = requests.post(url, json=game_state_visible, timeout=60)
@@ -53,27 +55,29 @@ def get_ai_visible_state(game_state):
     fog = game_state.get("map", {}).get("fog_of_war_ai", [])
     visible_objects = game_state.get("map", {}).get("visible_objects", [])
 
-    visible_terrain = []
-    visible_elements = []
-
-    # Para guardar las posiciones visibles
     visible_positions = set()
-
+    visible_tiles = []
     for i, row in enumerate(terrain):
         fog_row = fog[i] if i < len(fog) else []
-        visible_row = []
         for j, cell in enumerate(row):
             if j < len(fog_row) and fog_row[j]:
-                visible_row.append(cell)
-                visible_positions.add((j, i))  # x = columna = j, y = fila = i
-                for obj in visible_objects:
-                    if obj["position"]["x"] == j and obj["position"]["y"] == i:
-                        visible_elements.append(obj)
-            else:
-                visible_row.append("no_visible")
-        visible_terrain.append(visible_row)
+                terrain_num = TERRAIN_IDS.index(cell) if cell in TERRAIN_IDS else 0
+                cost = TERRAIN_COSTS[terrain_num]
+                visible_tiles.append({
+                    "x": j,
+                    "y": i,
+                    "type": terrain_num,
+                    "cost": cost
+                })
+                visible_positions.add((j, i))
 
-    # Unidades enemigas (del jugador) en posiciones visibles (solo campos necesarios)
+    # Objetos visibles SOLO en posiciones visibles
+    visible_elements = [
+        obj for obj in visible_objects
+        if (obj.get("position", {}).get("x"), obj.get("position", {}).get("y")) in visible_positions
+    ]
+
+    # Unidades enemigas (del jugador) en posiciones visibles
     enemyUnits = []
     for unit in player_data.get("units", []):
         pos = unit.get("position", {})
@@ -87,7 +91,7 @@ def get_ai_visible_state(game_state):
                 "type": unit.get("type"),
             })
 
-    # Ciudades enemigas (del jugador) en posiciones visibles (solo campos necesarios)
+    # Ciudades enemigas (del jugador) en posiciones visibles
     visible_Cities = []
     for city in player_data.get("cities", []):
         pos = city.get("position", {})
@@ -103,7 +107,7 @@ def get_ai_visible_state(game_state):
 
     return {
         "ai": ai_data,
-        "visible_terrain": visible_terrain,
+        "visible_tiles": visible_tiles,
         "visible_objects": visible_elements,
         "visible_enemyUnits": enemyUnits,
         "visible_enemyCities": visible_Cities
