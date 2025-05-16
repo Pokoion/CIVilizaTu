@@ -7,8 +7,11 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - /etc/localtime:/etc/localtime:ro
     env_file:
       - ./frontend/.env
+    environment:
+      - TZ=Europe/Madrid
 
   backend:
     build: ./backend
@@ -16,8 +19,11 @@ services:
       - "5000:5000"
     volumes:
       - ./backend:/app
+      - /etc/localtime:/etc/localtime:ro
     env_file:
       - ./backend/.env
+    environment:
+      - TZ=Europe/Madrid
 
   llm_service:
     build: ./llm_service
@@ -25,8 +31,11 @@ services:
       - "5001:5001"
     volumes:
       - ./llm_service:/app
+      - /etc/localtime:/etc/localtime:ro
     env_file:
       - ./llm_service/.env
+    environment:
+      - TZ=Europe/Madrid
 
   mongo:
     image: mongo:6.0
@@ -35,6 +44,9 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - TZ=Europe/Madrid
 
 volumes:
   mongo_data:

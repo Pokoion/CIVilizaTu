@@ -66,3 +66,11 @@ llm_service.log
 
 # Archivos de configuración de Firebase
 /backend/firebase-service-account.json
+
+# Python virtual environments
+.venv/
+*/.venv/
+venv/
+*/venv/
+env/
+*/env/

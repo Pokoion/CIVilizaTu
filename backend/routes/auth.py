@@ -25,7 +25,7 @@ def register():
 
     try:
         # Verify Firebase ID token
-        decoded_token = firebase_auth.verify_id_token(id_token)
+        decoded_token = firebase_auth.verify_id_token(id_token, clock_skew_seconds=10)
         firebase_email = decoded_token.get('email')
 
         # Ensure the email in the token matches the provided email
@@ -42,6 +42,8 @@ def register():
 
         return jsonify({"message": "Erabiltzailea arrakastaz erregistratu da", "user_id": str(user.id)}), 201
     except firebase_auth.InvalidIdTokenError:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": "ID token baliogabea da"}), 401
     except Exception as e:
         print(e)
@@ -58,7 +60,7 @@ def login():
 
     try:
         # Verify Firebase ID token
-        decoded_token = firebase_auth.verify_id_token(id_token)
+        decoded_token = firebase_auth.verify_id_token(id_token, clock_skew_seconds=10)
         email = decoded_token.get('email')
 
         # Check if user exists in the database

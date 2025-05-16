@@ -355,9 +355,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
         break;
       }
       aiActionsThisTurn++;
-      if (action.type === "endTurn") {
-        continueAi = false;
-      } else if (action.type === "attackUnit") {
+      if (action.type === "attackUnit") {
         const attacker = unitsRef.current.find(u => u.id === action.payload.attackerId);
         const defender = unitsRef.current.find(u => u.id === action.payload.defenderId);
 
@@ -491,7 +489,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
         continue;
       } else if (action.type === "foundCity") {
         const kolono = unitsRef.current.find(u => u.id === action.payload.unitId);
-        if (!kolono) {
+        // Solo permitir si la unidad es de tipo "kolono"
+        console.log("kolono?");
+        console.log("kolono", kolono);
+        if (!kolono || kolono.type !== "kolono") {
           setPendingAiAction(null);
           continue;
         }

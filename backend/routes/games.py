@@ -61,7 +61,6 @@ def create_game():
     ai_starts = map_result.get("ai_start", [])
 
     numeric_map = map_result["mapa"]
-    #print("===> numeric_map (original):", numeric_map, file=sys.stderr)
 
     TARGET_SIZE = 50
     string_map = []
@@ -179,7 +178,7 @@ def get_ia_action():
 
     ai_visible_json = get_ai_visible_state(game_state)
 
-    max_retries = 3
+    max_retries = 7
     retries = 0
     while retries < max_retries:
         ai_response = send_ia_game_state({"game_state_visible": ai_visible_json})
