@@ -22,7 +22,6 @@ export const loginUser = async (email: string, password: string): Promise<{ succ
       return { success: false, message: 'Errorea saioa hastean.' };
     }
   } catch (error: any) {
-    console.log('Login error:', error);
     return { success: false, message: handleFirebaseError(error.code || 'unknown') };
   }
 };
@@ -49,13 +48,11 @@ export const registerUser = async (email: string, password: string): Promise<{ s
     if (auth.currentUser) {
       await auth.currentUser.delete();
     }
-    console.log('Register error:', error);
     return { success: false, message: handleFirebaseError(error.code || 'unknown') };
   }
 };
 
 const handleFirebaseError = (errorCode: string): string => {
-  console.log('Firebase error code:', errorCode); // Log the error code for debugging
   switch (errorCode) {
     case 'auth/invalid-email':
       return 'Email helbidea ez da zuzena.';

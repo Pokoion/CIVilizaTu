@@ -43,7 +43,6 @@ const GameRouteWrapper: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  console.log('App renderizado correctamente');
   return (
     <Router>
       <Routes>

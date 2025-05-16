@@ -25,14 +25,6 @@ export default class Pathfinding2 {
 
     let bestPath: Position[] = [];
 
-    console.log("[Pathfinding2] findPath called", {
-      start,
-      end,
-      movementPoints,
-      height,
-      width
-    });
-
     while (queue.length > 0) {
       queue.sort(
         (a, b) =>
@@ -48,7 +40,6 @@ export default class Pathfinding2 {
         col === end.col &&
         cost <= movementPoints
       ) {
-        console.log("[Pathfinding2] Path found:", [...path, { row, col }]);
         return [...path, { row, col }];
       }
 
@@ -76,17 +67,14 @@ export default class Pathfinding2 {
         ) {
           const terrain = map[newRow][newCol];
           if (!terrain) {
-            console.log(`[Pathfinding2] No terrain at (${newRow},${newCol})`);
             continue;
           }
           const tileType = TILE_TYPES[terrain];
           if (!tileType) {
-            console.log(`[Pathfinding2] Unknown terrain type '${terrain}' at (${newRow},${newCol})`);
             continue;
           }
           const moveCost = tileType.movementCost ?? Infinity;
           if (moveCost === Infinity) {
-            console.log(`[Pathfinding2] Infinite move cost at (${newRow},${newCol})`);
             continue;
           }
           queue.push({
@@ -98,8 +86,6 @@ export default class Pathfinding2 {
         }
       }
     }
-
-    console.log("[Pathfinding2] No path found, bestPath:", bestPath);
     return bestPath;
   }
 

@@ -302,7 +302,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
       playerLeaderName,
       aiLeaderName,
     });
-    console.log("GAMESTATE JSON:", JSON.stringify(gameStateJson, null, 2));
   };
 
   const unitsRef = useRef(units);
@@ -762,7 +761,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
     const loadGameState = async () => {
       if (initialGameState) {
         const gs = initialGameState.game_state;
-        console.log("GameState cargado en GameContext:", gs);
         // Map
         setGameId(initialGameState.game_id || initialGameState._id || null);
         const map = {
@@ -771,7 +769,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
           fog_of_war_player: gs.map?.fog_of_war_player || [],
           fog_of_war_ai: gs.map?.fog_of_war_ai || [],
         };
-        console.log("Map creado en GameContext:", map);
 
         // Units
         const units = [

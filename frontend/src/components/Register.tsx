@@ -21,7 +21,6 @@ const Register: React.FC = () => {
         setErrorMessage(result.message); // Mostrar mensaje de error
       }
     } catch (error: any) {
-      console.log('Register error:', error);
       setErrorMessage('Errore ezezaguna gertatu da.');
     }
   };

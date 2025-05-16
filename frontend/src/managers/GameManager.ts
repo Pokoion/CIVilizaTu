@@ -125,7 +125,6 @@ class GameManager {
       this.mapManager.setMap(initialState.map);
       this.mapManager.setUnits(initialState.units);
       this.mapManager.setCities(initialState.cities);
-      console.log('Game initialized with provided state.');
       return;
     }
   }

@@ -7,8 +7,6 @@ export function applyAiAction(
     action: AiAction,
     aiLog?: (msg: string) => void
 ): any {
-    console.log("gameState en applyAiAction", gameState);
-    console.log("action en applyAiAction", action);
     switch (action.type) {
         case "moveUnit": {
             const pos = action.payload.position;

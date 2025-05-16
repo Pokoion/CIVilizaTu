@@ -110,7 +110,6 @@ const MainMenu: React.FC = () => {
         map_size: { width: 50, height: 50 },
         map_type: mapType,
       });
-      console.log("JSON recibido al CREAR partida:", result);
       navigate('/game', { state: { partida: result, loaded: true } });
     } catch (err: any) {
       console.error("Errorea partida sortzean:", err?.response?.data || err.message);
@@ -332,7 +331,6 @@ const MainMenu: React.FC = () => {
                       onClick={async () => {
                         try {
                           const partidaCompleta = await getGameById(game.game_id);
-                          console.log("JSON recibido al CARGAR partida:", partidaCompleta);
                           navigate('/game', { state: { partida: partidaCompleta, loaded: true } });
                         } catch (err) {
                           console.error("Errorea partida kargatzean:", err);

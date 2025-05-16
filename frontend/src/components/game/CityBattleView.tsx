@@ -39,9 +39,6 @@ const CityBattleView: React.FC<CityBattleViewProps> = ({ attacker, city, onFinis
     const [cityHealth, setCityHealth] = useState(city.health ?? 100);
     const [phase, setPhase] = useState<Phase>('idle');
     const [showProjectile, setShowProjectile] = useState(false);
-
-    // Al principio del componente
-    console.log('CityBattleView MONTADO', { attacker, city });
     // Animación de fases
     useEffect(() => {
         let timeout: NodeJS.Timeout;

@@ -27,17 +27,8 @@ export const createGame = async ({
 }) => {
   const token = localStorage.getItem("jwt_token");
 
-  // 1. LOG: Parámetros recibidos
-  console.log("===> [createGame] Parámetros recibidos:", {
-    name, playerCiv, aiCiv, playerName, aiName, map_size, map_type
-  });
-
   const playerInitialResources = CIVILIZATIONS_BY_ID[playerCiv]?.initial_resources || { food: 0, natural_resources: 0, science: 0, gold: 0, culture: 0 };
   const aiInitialResources = CIVILIZATIONS_BY_ID[aiCiv]?.initial_resources || { food: 0, natural_resources: 0, science: 0, gold: 0, culture: 0 };
-
-  // 2. LOG: Recursos iniciales
-  console.log("===> [createGame] playerInitialResources:", playerInitialResources);
-  console.log("===> [createGame] aiInitialResources:", aiInitialResources);
 
   const game_state = {
     turn: 1,
@@ -70,9 +61,6 @@ export const createGame = async ({
     },
   };
 
-  // 3. LOG: Estado inicial del juego
-  console.log("===> [createGame] game_state inicial:", JSON.stringify(game_state, null, 2));
-
   const body = {
     name,
     scenario_id,
@@ -81,9 +69,6 @@ export const createGame = async ({
     map_height: map_size.height,
     map_type,
   };
-
-  // 4. LOG: Body enviado al backend
-  console.log("===> [createGame] Body enviado al backend:", JSON.stringify(body, null, 2));
 
   let response;
   try {
@@ -94,8 +79,6 @@ export const createGame = async ({
     throw err; // Deja que el frontend gestione el error recibido del backend
   }
 
-  // 5. LOG: Respuesta del backend
-  console.log("===> [createGame] Respuesta del backend:", response.data);
 
   const { game, player_positions, ai_positions } = response.data;
 
@@ -125,22 +108,11 @@ export const createGame = async ({
     return row;
   });
 
-  // LOG: Mapa ajustado
-  console.log("===> [createGame] tiles ajustados a 50x50:", tiles);
-
   game.game_state.map.tiles = tiles;
-
-  // 6. LOG: Posiciones iniciales recibidas
-  console.log("===> [createGame] player_positions:", player_positions);
-  console.log("===> [createGame] ai_positions:", ai_positions);
 
   // Busca los datos base de las unidades
   const kolonoBase = UNITS.find(u => u.id === "kolono");
   const militarBase = UNITS.find(u => u.id === "militar");
-
-  // 7. LOG: Datos base de unidades
-  console.log("===> [createGame] kolonoBase:", kolonoBase);
-  console.log("===> [createGame] militarBase:", militarBase);
 
   // Crea las unidades iniciales con owner para el frontend
   const playerUnits: Unit[] = [];
@@ -165,9 +137,6 @@ export const createGame = async ({
     });
   }
 
-  // 8. LOG: Unidades jugador creadas
-  console.log("===> [createGame] playerUnits creados:", playerUnits);
-
   const aiUnits: Unit[] = [];
   if (ai_positions && ai_positions.length >= 2 && kolonoBase && militarBase) {
     aiUnits.push({
@@ -190,26 +159,11 @@ export const createGame = async ({
     });
   }
 
-  // 9. LOG: Unidades IA creadas
-  console.log("===> [createGame] aiUnits creados:", aiUnits);
-
   // Inserta las unidades en el game_state antes de guardar, LIMPIANDO los campos extra
   game.game_state.player.units = playerUnits.map(cleanUnit);
   game.game_state.ai.units = aiUnits.map(cleanUnit);
 
-  // 10. LOG: Unidades finales en game_state
-  console.log("===> [createGame] game.game_state.player.units FINAL:", game.game_state.player.units);
-  console.log("===> [createGame] game.game_state.ai.units FINAL:", game.game_state.ai.units);
-
-  try {
-    await saveGame(game.game_id || game._id, game.game_state);
-    console.log("===> [createGame] Partida guardada automáticamente tras crearla.");
-  } catch (err) {
-    console.error("===> [createGame] Error al guardar la partida automáticamente:", err);
-  }
-
-  // 11. LOG: Devuelve el objeto game modificado
-  console.log("===> [createGame] Objeto game devuelto:", game);
+  await saveGame(game.game_id || game._id, game.game_state);
 
   return game;
 };
@@ -219,7 +173,6 @@ export const getSavedGames = async () => {
   const response = await axios.get(`${API_URL}/api/games`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  console.log("Saved games response:", response.data);
   return response.data;
 };
 
