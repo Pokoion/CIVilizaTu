@@ -375,7 +375,7 @@ const GameUI: React.FC = () => {
             {gameStatus === "defeat" && (
                 <div className="victory-modal">
                     <div className="defeat-content animate-pop">
-                        <h1>💀 DERROTA</h1>
+                        <h1>💀 PORROTA</h1>
                         <p className="victory-desc">
                             Zure zibilizazioak galdu egin du.<br />
                             <span style={{ fontSize: "2.5em" }}>☠️</span>

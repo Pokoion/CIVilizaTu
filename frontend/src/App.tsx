@@ -21,7 +21,7 @@ const Home: React.FC = () => (
       </main>
     </div>
     <footer>
-      <p>&copy; 2025w CIVilizaTu. Eskubide guztiak erreserbatuta.</p>
+      <p>&copy; 2025 CIVilizaTu. Eskubide guztiak erreserbatuta.</p>
     </footer>
   </div>
 );

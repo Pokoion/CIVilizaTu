@@ -280,7 +280,7 @@ const CheatConsoleModal: React.FC<CheatConsoleModalProps> = ({ open, onClose }) 
                     type="text"
                     value={cheatInput}
                     onChange={e => setCheatInput(e.target.value)}
-                    placeholder="Escribe un cheat code..."
+                    placeholder="Idatzi cheat code bat..."
                 />
                 <button type="submit">OK</button>
                 <span className="hint">(ESC sakatu edo kanpoan itzuli isteko)</span>

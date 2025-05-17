@@ -45,6 +45,7 @@
    ```
 5. Nabigatzailean sartu: [http://localhost:3000/](http://localhost:3000/)
 
+(Lokalean erroreak ez badira ikusi nahi, frontend, backend eta llm_service-an dependentziak instalatu)
 ---
 
 ## Jokoaren Mekanikak
