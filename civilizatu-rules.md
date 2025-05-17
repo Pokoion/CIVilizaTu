@@ -24,10 +24,10 @@ Jokoan lau zibilizazio daude, bakoitzak bere hasierako baliabideekin:
 
 | ID             | Izena         | Janaria | Urrea | Baliabide Naturalak | Zientzia | Kultura |
 |----------------|---------------|---------|-------|---------------------|----------|---------|
-| euskaldunak    | Euskaldunak   | 30      | 25    | 10                  | 0        | 5       |
-| mongolak       | Mongolak      | 28      | 22    | 12                  | 0        | 4       |
-| mayak          | Mayak         | 32      | 18    | 8                   | 0        | 6       |
-| bizantziarrak  | Bizantziarrak | 26      | 28    | 14                  | 0        | 7       |
+| euskaldunak    | Euskaldunak   | 30      | 25    | 10                  | 2        | 5       |
+| mongolak       | Mongolak      | 28      | 22    | 12                  | 5        | 4       |
+| mayak          | Mayak         | 32      | 18    | 8                   | 1        | 6       |
+| bizantziarrak  | Bizantziarrak | 26      | 28    | 14                  | 5        | 7       |
 
 Zibilizazio bakoitzak unitate berezi bat du (adibidez, "gudaria" euskaldunentzat).
 
@@ -60,9 +60,9 @@ Zibilizazio bakoitzak unitate berezi bat du (adibidez, "gudaria" euskaldunentzat
 
 | Aro           | Hurrengoa        | Upgrade kostua (urrea/nat. res.) | Oinarrizko produkzioa (janaria/urrea/kultura/zientzia/nat. res.) | Eraikin muga |
 |---------------|------------------|-----------------------------------|------------------------------------------------------------------|--------------|
-| Antzinaroa    | Erdi Aroa        | 150 / 80                          | 2 / 1 / 0 / 0 / 1                                                | 4            |
-| Erdi Aroa     | Aro Modernoa     | 300 / 160                         | 4 / 2 / 1 / 1 / 2                                                | 5            |
-| Aro Modernoa  | -                | 0 / 0                             | 6 / 4 / 2 / 3 / 3                                                | 6            |
+| Antzinaroa    | Erdi Aroa        | 150 / 80                          | 2 / 1 / 1 / 1 / 1                                                | 4            |
+| Erdi Aroa     | Aro Modernoa     | 300 / 160                         | 4 / 2 / 2 / 2 / 2                                                | 5            |
+| Aro Modernoa  | -                | 0 / 0                             | 6 / 3 / 3 / 3 / 3                                                | 6            |
 
 ---
 
@@ -72,7 +72,7 @@ Zibilizazio bakoitzak unitate berezi bat du (adibidez, "gudaria" euskaldunentzat
 |----------------|-----------------|------------------------------------------|-----------------|----------------------------------|
 | aletegia       | Aletegia        | +2 janari                                | buztingintza    | 7 / 4 / 0                        |
 | kuartela       | Kuartela        | Unitate militarren ekoizpena             | burdina         | 12 / 7 / 2                       |
-| eskola         | Eskola          | +1 kultura (biztanleko)                  | idazketa        | 10 / 5 / 4                       |
+| eskola         | Eskola          | +1 kultura eta +1 zientzia (biztanleko)  | idazketa        | 10 / 5 / 4                       |
 | merkatua       | Merkatua        | +2 urre                                  | merkataritza    | 18 / 8 / 3                       |
 | harresia       | Harresia        | Hiriaren defentsa +50                    | -               | 8 / 12 / 1                       |
 | unibertsitatea | Unibertsitatea  | +2 kultura (biztanleko)                  | ingeniaritza    | 24 / 10 / 8                      |
@@ -254,6 +254,10 @@ F1 sakatuz trikimailu consola ireki daiteke. Kode batzuk:
 - Unitateak ezin dira kokatu ur edo itsasoko tileetan itsasontzirik gabe.
 - Baliabideak ezin dira bildu tile egokian ez badago unitaterik edo teknologia egokirik.
 - Eraikinak eta unitateak eraikitzeko beharrezko baliabideak eta teknologia menpekotasunak bete behar dira.
+- **Unitate batek erasotzen badu (unitate edo hiri bati), berehala galduko ditu mugimendu-puntu guztiak eta ezin izango du beste mugimendurik edo eraso gehiagorik egin txanda horretan.**
+- **Eraso bat egiteko, erasotzaileak defendatzailea (unitatea edo hiria) bere eraso-distantziaren barruan izan behar du. Defendatzaileak ere erasotzailearen barruan badago (biak elkarri eraso egiteko distantzian), borroka “heriotzaraino” izango da: bi aldeek elkarri eraso egingo diote behin, eta bakoitzak bere kalteak jasoko ditu.**
+- **Bestela, erasoa bakarra izango da: erasotzaileak defendatzaileari eraso egingo dio (eraso bakarra), baina defendatzaileak ezingo du erantzun.**
+- **Edozein kasutan, unitate batek txanda bakoitzean bakarrik eraso dezake, eta erasoa egin ondoren ezin du mugitu edo beste eraso bat egin.**
 - Partidak JSON formatuan gordetzen dira eta edozein momentutan kargatu daitezke.
 
 ---

@@ -7,7 +7,7 @@
         "food": 30,
         "gold": 25,
         "natural_resources": 10,
-        "science": 0,
+        "science": 2,
         "culture": 5
       }
     },
@@ -18,7 +18,7 @@
         "food": 28,
         "gold": 22,
         "natural_resources": 12,
-        "science": 0,
+        "science": 5,
         "culture": 4
       }
     },
@@ -29,7 +29,7 @@
         "food": 32,
         "gold": 18,
         "natural_resources": 8,
-        "science": 0,
+        "science": 1,
         "culture": 6
       }
     },
@@ -40,7 +40,7 @@
         "food": 26,
         "gold": 28,
         "natural_resources": 14,
-        "science": 0,
+        "science": 5,
         "culture": 7
       }
     }
@@ -201,8 +201,8 @@
       "base_production": {
         "food": 2,
         "gold": 1,
-        "culture": 0,
-        "science": 0,
+        "culture": 1,
+        "science": 1,
         "natural_resources": 1
       },
       "building_limit": 4
@@ -218,8 +218,8 @@
       "base_production": {
         "food": 4,
         "gold": 2,
-        "culture": 1,
-        "science": 1,
+        "culture": 2,
+        "science": 2,
         "natural_resources": 2
       },
       "building_limit": 5
@@ -234,8 +234,8 @@
       },
       "base_production": {
         "food": 6,
-        "gold": 4,
-        "culture": 2,
+        "gold": 3,
+        "culture": 3,
         "science": 3,
         "natural_resources": 3
       },
@@ -453,7 +453,7 @@
     {
       "id": "eskola",
       "name": "Eskola",
-      "bonus": "+1 culture (biztanleko)",
+      "bonus": "+1 kultura eta +1 zientzia (biztanleko)",
       "requirement": "idazketa",
       "cost": {
         "gold": 10,

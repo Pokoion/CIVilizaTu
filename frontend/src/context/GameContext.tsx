@@ -134,6 +134,7 @@ function calculateResourcesForCities(cities: CityProps[], unlockedTechs: string[
   for (const city of cities) {
     const schoolCount = city.buildings.filter(b => b === 'eskola').length;
     const schoolCultureBonus = schoolCount * city.population;
+    const schoolScienceBonus = schoolCount * city.population;
     const uniCount = city.buildings.filter(b => b === 'unibertsitatea').length;
     const uniCultureBonus = uniCount * city.population * 2;
     const marketCount = city.buildings.filter(b => b === 'merkatua').length;
@@ -143,7 +144,7 @@ function calculateResourcesForCities(cities: CityProps[], unlockedTechs: string[
     food += city.production.food || 0;
     gold += (city.production.gold || 0) + marketGoldBonus + ekonomiaGoldBonus;
     culture += (city.production.culture || 0) + schoolCultureBonus + uniCultureBonus;
-    science += city.production.science || 0;
+    science += (city.production.science || 0) + schoolScienceBonus;
     natural_resources += city.production.natural_resources || 0;
   }
   return { food, gold, culture, science, natural_resources };
@@ -232,6 +233,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
     if (owner === 'player' && playerCities.length > 0) {
       buildings = playerCities[playerCities.length - 1].buildings || [];
       let totalCultureBonus = 0;
+      let totalScienceBonus = 0;
       let totalFoodBonus = 0;
       let totalGoldBonus = 0;
       buildings.forEach(buildingId => {
@@ -239,12 +241,17 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
         if (!building) return;
         if (building.id === "aletegia") totalFoodBonus += 2;
         if (building.id === "merkatua") totalGoldBonus += 2;
-        if (building.id === "eskola") totalCultureBonus += (playerCities[playerCities.length - 1]?.population || 1) * 1;
+        if (building.id === "eskola") {
+          const pop = playerCities[playerCities.length - 1]?.population || 1;
+          totalCultureBonus += pop * 1;
+          totalScienceBonus += pop * 1; // Añadido: +1 ciencia por habitante por cada escuela
+        }
         if (building.id === "unibertsitatea") totalCultureBonus += (playerCities[playerCities.length - 1]?.population || 1) * 2;
       });
       production.food += totalFoodBonus;
       production.gold += totalGoldBonus;
       production.culture += totalCultureBonus;
+      production.science = (production.science || 0) + totalScienceBonus;
     }
 
     const newCity: CityProps = {

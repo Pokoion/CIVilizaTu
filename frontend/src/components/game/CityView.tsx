@@ -362,6 +362,11 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
                   + (schoolCount * city.population)
                   + (uniCount * city.population * 2);
               }
+              if (res === "science") {
+                const schoolCount = city.buildings.filter(b => b === 'eskola').length;
+                value = (city.production.science || 0)
+                  + (schoolCount * city.population);
+              }
               if (res === "gold") {
                 const marketCount = city.buildings.filter(b => b === 'merkatua').length;
                 const hasEkonomia = unlockedTechs.includes("ekonomia");
