@@ -126,6 +126,7 @@ Arkitektura honek garapen modularra, eskalagarritasuna eta mantenagarritasuna be
 - [civilizatu-euskaraz.md](civilizatu-euskaraz.md): Proiektua egiteko hasieran emandako dokumentazioa.
 - [civilizatu-endpoints.md](civilizatu-endpoints.md): Backend eta IA zerbitzuaren API endpoint-en azalpena.
 - [civilizatu-rules.md](civilizatu-rules.md): Jokoaren logika eta erregela guztiak biltzen ditu.
+- [civilizatu-prompts.md](civilizatu-prompts.md): Jokoan erabilitako irudiak, mapak, eta akzioak lortzeko prompt-ak.
 
 ---
 
