@@ -14,7 +14,7 @@
 - **Backend**: Flask (Python)
 - **IA Zerbitzua**: Flask bidezko GroQ API integrazioa
 - **Docker**: Osagai guztiak edukiontzietan exekutatzeko
-- **MongoDB**: Datuen biltegiratzea (erabiltzaileak, partidak, eszenatokiak)
+- **MongoDB**: Datuen biltegiratzea (erabiltzaileak, partidak)
 
 ## Ohar Garrantzitsua
 
@@ -68,7 +68,7 @@
 
 ## Cheat Code-ak (Trikimailuak)
 
-Jokoan trikimailu sistema bat dago, probak eta garapena errazteko. Ctrl+Tab sakatuz ireki daiteke cheat consola.
+Jokoan trikimailu sistema bat dago, probak eta garapena errazteko. F1 sakatuz ireki daiteke cheat consola.
 
 | Kodea                | Efektua                                                                                                   | Argumentua (aukerakoa)         | Norentzat                |
 |----------------------|-----------------------------------------------------------------------------------------------------------|-------------------------------|--------------------------|
