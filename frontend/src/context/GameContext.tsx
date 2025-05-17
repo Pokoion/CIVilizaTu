@@ -502,6 +502,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
           continue;
         }
 
+        const prevAiCitiesCount = citiesRef.current.filter(c => c.owner === "ai").length;
+
         confirmFoundCity(
           action.payload.name,
           kolono.position,
@@ -509,6 +511,20 @@ export const GameProvider: React.FC<{ children: React.ReactNode, initialGameStat
           kolono.id,
           kolono.owner === "ai" ? aiEra : playerEra
         );
+
+        // Esperar a que la ciudad se añada al contexto antes de continuar
+        await new Promise<void>(resolve => {
+          const check = () => {
+            const currentCount = citiesRef.current.filter(c => c.owner === "ai").length;
+            if (currentCount > prevAiCitiesCount) {
+              resolve();
+            } else {
+              setTimeout(check, 10);
+            }
+          };
+          check();
+        });
+
         setPendingAiAction(null);
         continue;
       } else {

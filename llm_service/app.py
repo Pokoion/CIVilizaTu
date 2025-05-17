@@ -970,9 +970,21 @@ def eskuratu_ekintza():
     LOS EDIFICIOS QUE TIENES, LAS TECNOLOGÍAS QUE TIENES, LAS TECNOLOGÍAS QUE PUEDES INVESTIGAR, LOS EDIFICIOS QUE PUEDES HACER,
     LAS UNIDADES QUE PUEDES HACER, LOS RECURSOS QUE PUEDES RECOLECTAR Y LO QUE PUEDES HACER CON CADA ÚNICA ACCIÓN.
 
-    IMPORTANTE: AL PRINCIPIO ES IMPORTANTE QUE CREES UNA CIUDAD, YA QUE NO TENDRAS RECURSOS SUFICIENTES PARA HACER NADA.
-    NO SOLO USES moveUnit, TAMBIEN PUEDES HACER FOUND CITY, Y DEMAS ACCIONES LISTADAS ANTES. ANALIZA CADA UNA ATENTAMENTE
-    PARA SABER QUE HACER EN TODO MOMENTO.
+    AHORA, BASÁNDOTE EN LAS REGLAS DE CIVILIZATU, DEBES PROCEDER DE LA SIGUIENTE MANERA:
+
+    - **Primer objetivo:** Es fundamental que con el "kolono" fundes una ciudad lo antes posible (`foundCity`), ya que sin ciudad no podrás producir recursos ni realizar otras acciones importantes, recuerda, SOLO EL KOLONO PUEDE FUNDAR CIUDADES.
+    - **Tras fundar la ciudad:** Desarrolla y mejora tu ciudad. Construye edificios (como granero, cuartel, escuela...) y haz crecer la población para maximizar la producción de recursos.
+    - **Investiga tecnologías:** Acumula ciencia e investiga nuevas tecnologías (`researchTech`) para desbloquear unidades, edificios y ventajas estratégicas.
+    - **Mueve y explora con tus unidades:** Usa `moveUnit` para explorar el mapa, descubrir recursos y localizar al enemigo.
+    - **Recolecta recursos:** Utiliza trabajadores para recolectar recursos (`collectResource`), pero recuerda que necesitas tener la tecnología de agricultura investigada.
+    - **Entrena más unidades:** A medida que tu ciudad crece y construyes cuarteles, entrena nuevas unidades (`trainUnit`) para defensa y ataque.
+    - **Ataca al enemigo:** Cuando sea oportuno, ataca unidades o ciudades enemigas (`attackUnit`, `attackCity`), pero analiza siempre tu fuerza y defensa antes de atacar.
+    - **Avanza de era:** Cuando hayas investigado 5 tecnologías de una era, podrás avanzar a la siguiente era (`upgradeCityEra`), lo que te dará más ventajas y opciones.
+    - **Finaliza el turno:** Cuando no puedas o no debas hacer más acciones, termina el turno con `endTurn`.
+
+    Antes de elegir cada acción, analiza bien la situación: qué recursos tienes, qué unidades y edificios posees, qué tecnologías has investigado, la posición del enemigo y tus objetivos estratégicos. No te limites a mover unidades; valora fundar nuevas ciudades, investigar tecnologías, construir edificios o recolectar recursos. Tu objetivo es desarrollar tu civilización de la forma más rápida y sólida posible, eligiendo siempre la acción más estratégica en cada momento.
+
+    Recuerda: al principio, lo más importante es fundar una ciudad cuanto antes, y después, en cada turno, analiza la situación y elige la acción más estratégica posible.
     """
 
     try:

@@ -8,8 +8,25 @@ from datetime import datetime
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
 # Initialize Firebase Admin SDK
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase-service-account.json")
+    cred_dict = {
+        "type": os.environ.get("FIREBASE_TYPE"),
+        "project_id": os.environ.get("FIREBASE_PROJECT_ID"),
+        "private_key_id": os.environ.get("FIREBASE_PRIVATE_KEY_ID"),
+        "private_key": os.environ.get("FIREBASE_PRIVATE_KEY").replace('\\n', '\n'),
+        "client_email": os.environ.get("FIREBASE_CLIENT_EMAIL"),
+        "client_id": os.environ.get("FIREBASE_CLIENT_ID"),
+        "auth_uri": os.environ.get("FIREBASE_AUTH_URI"),
+        "token_uri": os.environ.get("FIREBASE_TOKEN_URI"),
+        "auth_provider_x509_cert_url": os.environ.get("FIREBASE_AUTH_PROVIDER_X509_CERT_URL"),
+        "client_x509_cert_url": os.environ.get("FIREBASE_CLIENT_X509_CERT_URL"),
+        "universe_domain": os.environ.get("FIREBASE_UNIVERSE_DOMAIN"),
+    }
+    cred = credentials.Certificate(cred_dict)
     initialize_app(cred)
 
 # POST /api/auth/register
@@ -75,36 +92,3 @@ def login():
         return jsonify({"error": "ID token baliogabea da"}), 401
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-# GET /api/auth/profile
-@auth_bp.route('/profile', methods=['GET'])
-@jwt_required()
-def profile():
-    user_id = get_jwt_identity()
-    user = Erabiltzaile.objects(id=user_id).first()
-
-    if not user:
-        return jsonify({"error": "Erabiltzailea ez da aurkitu"}), 404
-
-    return jsonify({
-        "user_id": str(user.id),
-        "username": user.username,
-        "email": user.email,
-        "created_at": user.created_at.isoformat()
-    })
-
-# PUT /api/auth/profile
-@auth_bp.route('/profile', methods=['PUT'])
-@jwt_required()
-def update_profile():
-    user_id = get_jwt_identity()
-    data = request.get_json()
-    username = data.get('username')
-    email = data.get('email')
-
-    user = Erabiltzaile.objects(id=user_id).first()
-    if not user:
-        return jsonify({"error": "Erabiltzailea ez da aurkitu"}), 404
-
-    user.update(username=username, email=email)
-    return jsonify({"message": "Profila arrakastaz eguneratu da"})

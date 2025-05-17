@@ -1,19 +1,20 @@
 # Endpoint Dokumentazioa - CIVilizaTu
 
-## 1. Erabiltzaileen Autentifikazioa eta Kudeaketa
+## 1. Erabiltzaile Autentifikazioa eta Profila
 
-### 1.1. Erabiltzaile Erregistroa
-**Endpoint:** `POST /api/auth/register`  
-**Deskribapena:** Erabiltzaile berri bat erregistratzen du sisteman.  
-**Eskaeraren gorputza (JSON):**
+### 1.1. Erabiltzaile Erregistroa  
+**POST /api/auth/register**  
+Erabiltzaile berri bat sortzen du.
+
+**Body:**
 ```json
 {
   "username": "string",
   "email": "string",
-  "password": "string"
+  "id_token": "string"
 }
 ```
-**Erantzuna (JSON):**
+**Erantzuna:**
 ```json
 {
   "message": "Erabiltzailea arrakastaz erregistratu da",
@@ -21,17 +22,17 @@
 }
 ```
 
-### 1.2. Saioa Hastea
-**Endpoint:** `POST /api/auth/login`  
-**Deskribapena:** Erabiltzailea autentifikatzen du eta JWT token bat itzultzen du.  
-**Eskaeraren gorputza (JSON):**
+### 1.2. Saioa Hastea (Login)  
+**POST /api/auth/login**  
+Erabiltzailea autentifikatu eta JWT token bat itzultzen du.
+
+**Body:**
 ```json
 {
-  "email": "string",
-  "password": "string"
+  "id_token": "string"
 }
 ```
-**Erantzuna (JSON):**
+**Erantzuna:**
 ```json
 {
   "token": "string",
@@ -39,78 +40,46 @@
 }
 ```
 
-### 1.3. Erabiltzailearen Profila
-**Endpoint:** `GET /api/auth/profile`  
-**Deskribapena:** Autentifikatutako erabiltzailearen profilaren informazioa itzultzen du.  
-**Header-ak:**
-```
-Authorization: Bearer <token>
-```
-**Erantzuna (JSON):**
-```json
-{
-  "user_id": "string",
-  "username": "string",
-  "email": "string",
-  "created_at": "string"
-}
-```
-
-### 1.4. Profila Eguneratzea
-**Endpoint:** `PUT /api/auth/profile`  
-**Deskribapena:** Autentifikatutako erabiltzailearen profilaren informazioa eguneratzen du.  
-**Header-ak:**
-```
-Authorization: Bearer <token>
-```
-**Eskaeraren gorputza (JSON):**
-```json
-{
-  "username": "string",
-  "email": "string"
-}
-```
-**Erantzuna (JSON):**
-```json
-{
-  "message": "Profila arrakastaz eguneratu da"
-}
-```
-
 ---
 
 ## 2. Partiden Kudeaketa
 
-### 2.1. Partida Berri Bat Sortzea
-**Endpoint:** `POST /api/games`  
-**Deskribapena:** Erabiltzaile autentifikatuarentzako partida berri bat sortzen du.  
-**Header-ak:**
-```
-Authorization: Bearer <token>
-```
-**Eskaeraren gorputza (JSON):**
+### 2.1. Partida Berria Sortu  
+**POST /api/games**  
+Partida berri bat sortzen du eta mapa GroQ LLM bidez sortzen du.
+
+**Header:**  
+`Authorization: Bearer <token>`
+
+**Body:**
 ```json
 {
   "name": "string",
-  "scenario_id": "string"
+  "scenario_id": "string",
+  "game_state": { /* Hasierako egoera */ },
+  "map_width": 50,
+  "map_height": 50,
+  "map_type": 0
 }
 ```
-**Erantzuna (JSON):**
+**Erantzuna:**
 ```json
 {
-  "game_id": "string",
+  "game": { /* Partidaren datuak */ },
+  "player_positions": [ ... ],
+  "ai_positions": [ ... ],
   "message": "Partida arrakastaz sortu da"
 }
 ```
 
-### 2.2. Gordetako Partidak Zerrendatzea
-**Endpoint:** `GET /api/games`  
-**Deskribapena:** Erabiltzaile autentifikatuaren gordetako partiden zerrenda itzultzen du.  
-**Header-ak:**
-```
-Authorization: Bearer <token>
-```
-**Erantzuna (JSON):**
+### 2.2. Partidak Zerrendatu  
+**GET /api/games**  
+Erabiltzailearen partiden zerrenda itzultzen du.
+
+**Header:**  
+`Authorization: Bearer <token>`
+
+**Erantzuna:**
 ```json
 [
   {
@@ -123,168 +92,132 @@ Authorization: Bearer <token>
 ]
 ```
 
-### 2.3. Partida Gordetzea
-**Endpoint:** `POST /api/games/{gameId}/save`  
-**Deskribapena:** Partida baten uneko egoera gordetzen du.  
-**Header-ak:**
+### 2.3. Partida Kargatu  
+**GET /api/games/{gameId}**  
+Partida baten egoera osoa itzultzen du.
+
+**Header:**  
+`Authorization: Bearer <token>`
+
+**Erantzuna:**
+```json
+{
+  "game_id": "string",
+  "name": "string",
+  "scenario_id": "string",
+  "game_state": { /* Jokoaren egoera osoa */ }
+}
 ```
-Authorization: Bearer <token>
-```
-**Eskaeraren gorputza (JSON):**
+
+### 2.4. Partida Gordetzea  
+**POST /api/games/{gameId}/save**  
+Partida baten uneko egoera gordetzen du.
+
+**Header:**  
+`Authorization: Bearer <token>`
+
+**Body:**
 ```json
 {
   "game_state": { /* Jokoaren uneko egoera */ }
 }
 ```
-**Erantzuna (JSON):**
+**Erantzuna:**
 ```json
 {
   "message": "Partida arrakastaz gorde da"
 }
 ```
 
-### 2.4. Partida Kargatzea
-**Endpoint:** `GET /api/games/{gameId}`  
-**Deskribapena:** Gordetako partida baten egoera kargatzen du.  
-**Header-ak:**
-```
-Authorization: Bearer <token>
-```
-**Erantzuna (JSON):**
+### 2.5. Partida Ezabatzea  
+**DELETE /api/games/{gameId}**  
+Partida bat ezabatzen du.
+
+**Header:**  
+`Authorization: Bearer <token>`
+
+**Erantzuna:**
 ```json
 {
-  "game_id": "string",
-  "name": "string",
-  "scenario_id": "string",
-  "game_state": { /* Jokoaren egoera */ }
+  "message": "Partida ezabatu da"
 }
 ```
 
 ---
 
-## 3. Eszenatokiak
+## 3. IA Ekintzak (Backend ↔ LLM Zerbitzua)
 
-### 3.1. Eszenatoki Erabilgarriak Zerrendatzea
-**Endpoint:** `GET /api/scenarios`  
-**Deskribapena:** Partida berriak hasteko erabilgarri dauden eszenatokien zerrenda itzultzen du.  
-**Erantzuna (JSON):**
-```json
-[
-  {
-    "scenario_id": "string",
-    "name": "string",
-    "description": "string",
-    "difficulty": "string",
-    "map_size": {
-      "width": "number",
-      "height": "number"
-    }
-  }
-]
-```
+### 3.1. IA-ren Ekintza Bat Eskuratu  
+**POST /api/games/getIAAction**  
+Jokoaren egoera bidali eta IA-k egin behar duen ekintza bat itzultzen du.
 
----
+**Header:**  
+`Authorization: Bearer <token>`
 
-## 4. Jokatzea
-
-### 4.1. Ekintza Bat Burutzea
-**Endpoint:** `POST /api/games/{gameId}/action`  
-**Deskribapena:** Jokalariek beren txandan burututako ekintza bat bidaltzen du.  
-**Header-ak:**
-```
-Authorization: Bearer <token>
-```
-**Eskaeraren gorputza (JSON):**
+**Body:**
 ```json
 {
-  "action_type": "string",
-  "details": { /* Ekintzaren xehetasunak */ }
+  "game_state": { /* Jokoaren egoera osoa */ }
 }
 ```
-**Erantzuna (JSON):**
+**Erantzuna:**
 ```json
 {
-  "message": "Ekintza arrakastaz prozesatu da",
-  "game_state": { /* Jokoaren egoera eguneratua */ }
-}
-```
-
-### 4.2. Txanda Amaitzea
-**Endpoint:** `POST /api/games/{gameId}/endTurn`  
-**Deskribapena:** Jokalarien txanda amaitzen du eta IA-ren txanda prozesatzen du.  
-**Header-ak:**
-```
-Authorization: Bearer <token>
-```
-**Erantzuna (JSON):**
-```json
-{
-  "message": "Txanda amaitu da",
-  "game_state": { /* Jokoaren egoera eguneratua */ },
-  "ai_actions": [ /* IA-k burututako ekintzak */ ]
+  "action": {
+    "type": "string",
+    "payload": { ... }
+  },
+  "reasoning": "string",
+  "analysis": "string"
 }
 ```
 
 ---
 
-## 5. Trikimailuak
+## 4. LLM Zerbitzua (IA)
 
-### 5.1. Trikimailu Bat Exekutatzea
-**Endpoint:** `POST /api/games/{gameId}/cheat`  
-**Deskribapena:** Uneko partidan trikimailu bat exekutatzen du.  
-**Header-ak:**
-```
-Authorization: Bearer <token>
-```
-**Eskaeraren gorputza (JSON):**
+### 4.1. Mapa bat eskuratu  
+**POST /eskuratuMapa**  
+GroQ LLMari mapa bat sortzeko eskaera egiten dio edo mapa lehenetsia itzultzen du.
+
+**Body:**
 ```json
 {
-  "cheat_code": "string",
-  "target": { /* Trikimailuaren helburua */ }
+  "width": 50,
+  "height": 50,
+  "map_type": 0
 }
 ```
-**Erantzuna (JSON):**
+**Erantzuna:**
 ```json
 {
-  "message": "Trikimailua arrakastaz exekutatu da",
-  "game_state": { /* Jokoaren egoera eguneratua */ }
+  "terrain": [[...]],               // 50x50 matrizea, balioak: 0-6
+  "visible-objects": [{...}],       // Mapako objektu ikusgaiak (arbola, harria, urrea, etab.)
+  "player_start": [{...}],          // Jokalariaren hasierako posizioak
+  "ai_start": [{...}]               // IA-ren hasierako posizioak
+}
+```
+
+### 4.2. IA-ren ekintza bat eskuratu  
+**POST /eskuratuEkintza**  
+GroQ LLMari jokoaren egoera ikusgarria bidaltzen zaio eta IA-k egin behar duen ekintza bat itzultzen du.
+
+**Body:**
+```json
+{
+  "game_state_visible": { /* Jokoaren egoera ikusgarria */ }
+}
+```
+**Erantzuna:**
+```json
+{
+  "action": {
+    "type": "string",      // Ekintza mota (adib. moveUnit, attackUnit, foundCity, etab.)
+    "payload": { ... }     // Ekintzaren xehetasunak
+  },
+  "reasoning": "string",   // Estrategiaren azalpena
+  "analysis": "string"     // Egoeraren analisia
 }
 ```
 
 ---
-
-## 6. LLM Zerbitzuaren Egoera
-
-### 6.1. Zerbitzuaren Egoera Kontsultatzea
-**Endpoint:** `GET /api/llm/status`  
-**Deskribapena:** LLM zerbitzuaren uneko egoera itzultzen du.  
-**Erantzuna (JSON):**
-```json
-{
-  "current_model": "string",
-  "available_models": ["string"],
-  "model_switch_count": "number",
-  "last_error_time": "number"
-}
-```
-
-### 6.2. LLM-ra Kontsulta Bat Bidaltzea
-**Endpoint:** `POST /api/llm/query`  
-**Deskribapena:** LLM zerbitzuari kontsulta bat bidaltzen dio.  
-**Eskaeraren gorputza (JSON):**
-```json
-{
-  "query": "string",
-  "force_error": "boolean"
-}
-```
-**Erantzuna (JSON):**
-```json
-{
-  "response": "string",
-  "model": "string",
-  "model_switched": "boolean",
-  "previous_model": "string",
-  "switch_count": "number"
-}
-```
