@@ -26,6 +26,8 @@
 
 > ⚠️ **ADIMEN ARTIFIZIALAREN ETA MAPEN MUGAK**  
 > Joko honetako IA (GroQ hizkuntza-eredua) eta mapen sorrera ez dira perfektuak. IAren mugimenduak, ekintzak edo mapak ez dira beti optimoak edo errealistak izango. Batzuetan IA-k ez du estrategia onena aukeratuko edo mapa ez da guztiz orekatua izango. Hau proiektuaren izaera esperimental eta hezigarriaren ondorio da.
+> AA erabiliz mapa sortzean normala da minutu bat igarotzea sortu arte.
+> AA-ren txanda denean, akzioen artean 5-60segundu igarotzea normala da, jokoaren egoera eta erregelen arabera ondo aukeratu behar du eta ondorengo ekintza.
 ---
 
 ## Instalazio eta Exekuzio Gida
