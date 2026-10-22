@@ -1,0 +1,71 @@
+name: civilizatu
+
+services:
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - civilizatu
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      - TZ=Europe/Madrid
+    ports:
+      - "127.0.0.1:5000:5000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks:
+      - civilizatu
+
+  llm_service:
+    build: ./llm_service
+    restart: unless-stopped
+    env_file:
+      - ./llm_service/.env
+    environment:
+      - TZ=Europe/Madrid
+    ports:
+      - "127.0.0.1:5001:5001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5001/health', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    networks:
+      - civilizatu
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        REACT_APP_API_URL: https://jonolea.eus/civilizatu
+        PUBLIC_URL: /civilizatu
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:80"
+    networks:
+      - civilizatu
+
+volumes:
+  mongo_data:
+
+networks:
+  civilizatu:
+    driver: bridge

@@ -1,6 +1,7 @@
 import React from 'react';
 import { UnitProps } from '../../types';
 import '../../styles/Unit.css';
+import { asset } from '../../utils/asset';
 
 const Unit: React.FC<UnitProps> = ({ id, type, selected, onClick, owner, direction }) => {
   return (
@@ -17,7 +18,7 @@ const Unit: React.FC<UnitProps> = ({ id, type, selected, onClick, owner, directi
         if (onClick) onClick();
       }}
     >
-      <img src={`/images/units/${type}/${type}-${direction || 'default'}.png`} alt={type} className="unit-person" />
+      <img src={asset(`/images/units/${type}/${type}-${direction || 'default'}.png`)} alt={type} className="unit-person" />
     </div>
   );
 };

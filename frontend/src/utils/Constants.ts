@@ -1,5 +1,6 @@
 import GameInfo from './GameInfo.json';
 import { TerrainType } from '../types';
+import { asset } from './asset';
 
 export const TILE_SIZE = 140;
 
@@ -11,7 +12,7 @@ export const TILE_TYPES: Record<string, { movementCost: number; requiresBoat: bo
     acc[terrain.id] = {
       movementCost: terrain.movement_cost,
       requiresBoat: terrain.requires_boat,
-      image: `/images/tiles/${terrain.id}.png`, // Ruta predeterminada si no está en GameInfo
+      image: asset(`/images/tiles/${terrain.id}.png`), // Ruta predeterminada si no está en GameInfo
       color: terrain.color, // Usar el color directamente desde GameInfo
       boat: terrain.requires_boat // Añadido para indicar si requiere barco
     };
@@ -71,7 +72,7 @@ export const RESOURCES = GameInfo.resources.map(resource => ({
   id: resource.id,
   name: resource.name,
   description: resource.description,
-  image: `/images/resources/${resource.id}.png` // Ruta predeterminada si no está en GameInfo
+  image: asset(`/images/resources/${resource.id}.png`) // Ruta predeterminada si no está en GameInfo
 }));
 
 export const ACTIONS = GameInfo.actions.map(action => ({

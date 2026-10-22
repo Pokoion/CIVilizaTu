@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import "../../styles/TechTreeView.css";
 import { TECHS } from "../../utils/Constants";
 import { useGame } from "../../context/GameContext";
+import { asset } from '../../utils/asset';
 
 const TechTreeView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [selectedTech, setSelectedTech] = useState<(typeof TECHS)[0] | null>(
@@ -82,7 +83,7 @@ const TechTreeView: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               onClick={() => setSelectedTech(tech)}
             >
               <img
-                src={`/images/techs/${tech.id}.png`}
+                src={asset(`/images/techs/${tech.id}.png`)}
                 alt={tech.name}
                 className="tech-node-img"
               />
@@ -226,7 +227,7 @@ const TechDetailView: React.FC<{
           X
         </button>
         <img
-          src={`/images/techs/${tech.id}.png`}
+          src={asset(`/images/techs/${tech.id}.png`)}
           alt={tech.name}
           className="tech-detail-img"
         />

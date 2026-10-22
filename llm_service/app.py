@@ -1,9 +1,17 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import json
 import os
-import groq
-from dotenv import load_dotenv
+import re
 import time
+from dotenv import load_dotenv
+
+try:
+    from google import genai
+    from google.genai import types as genai_types
+except ImportError:  # pragma: no cover - se avisa al arrancar
+    genai = None
+    genai_types = None
 
 # Cargar variables de entorno
 load_dotenv()
@@ -11,21 +19,27 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-# Configuración de Groq
-GROQ_API_KEYS = os.getenv('GROQ_API_KEYS')
-GROQ_BASE_URL = os.getenv('GROQ_BASE_URL')
-DEFAULT_MODEL = os.getenv('GROQ_DEFAULT_MODEL')
-if not GROQ_API_KEYS:
-    raise ValueError("No se ha configurado GROQ_API_KEYS. Asegúrate de que esté en el archivo .env")
-
-# Configuración de modelos
-GROQ_API_KEYS = os.getenv('GROQ_API_KEYS')
-if not GROQ_API_KEYS:
-    raise ValueError("No se ha configurado GROQ_API_KEYS. Asegúrate de que esté en el archivo .env")
-API_KEYS_LIST = [k.strip() for k in GROQ_API_KEYS.split(",") if k.strip()]
+# Configuración de Google AI Studio (Gemini)
+GOOGLE_API_KEYS = os.getenv('GOOGLE_API_KEYS') or os.getenv('GOOGLE_API_KEY') or ''
+API_KEYS_LIST = [k.strip() for k in GOOGLE_API_KEYS.split(",") if k.strip()]
 current_api_key_index = 0
-TEMPERATURE = os.getenv('GROQ_TEMPERATURE')
-MAX_TOKENS = os.getenv('GROQ_MAX_TOKENS')
+DEFAULT_MODEL = os.getenv('GOOGLE_MODEL', 'gemini-3.8-flash')
+
+# La temperatura es opcional: en los modelos Gemini 3 los parámetros de
+# muestreo están desaconsejados, así que solo se envía si se define.
+_temperature = os.getenv('GOOGLE_TEMPERATURE', '').strip()
+TEMPERATURE = float(_temperature) if _temperature else None
+MAX_TOKENS = int(os.getenv('GOOGLE_MAX_TOKENS', '32768'))
+
+if not API_KEYS_LIST:
+    print(
+        "[llm_service] AVISO: GOOGLE_API_KEY no está configurada. "
+        "El mapa por defecto seguirá funcionando, pero la generación de mapas "
+        "y las acciones de la IA devolverán error hasta que se configure.",
+        flush=True,
+    )
+if genai is None:
+    print("[llm_service] AVISO: falta la dependencia 'google-genai' (pip install -r requirements.txt)", flush=True)
 
 default_map = {
     "terrain": [
@@ -345,17 +359,63 @@ def get_next_api_key():
     current_api_key_index = (current_api_key_index + 1) % len(API_KEYS_LIST)
     return API_KEYS_LIST[current_api_key_index]
 
-def create_groq_client(api_key):
+def create_gemini_client(api_key):
+    if genai is None:
+        raise RuntimeError("Falta la dependencia 'google-genai'. Instala requirements.txt")
+    return genai.Client(api_key=api_key)
+
+def generate_content(prompt, system_instruction):
+    """Llama a Google AI Studio y devuelve el texto de la respuesta."""
+    if gemini_client is None:
+        raise RuntimeError("GOOGLE_API_KEY no configurada en llm_service/.env")
+
+    config_kwargs = {
+        "system_instruction": system_instruction,
+        "max_output_tokens": MAX_TOKENS,
+        "response_mime_type": "application/json",
+    }
+    if TEMPERATURE is not None and TEMPERATURE >= 0:
+        config_kwargs["temperature"] = TEMPERATURE
+
+    response = gemini_client.models.generate_content(
+        model=DEFAULT_MODEL,
+        contents=prompt,
+        config=genai_types.GenerateContentConfig(**config_kwargs),
+    )
+    text = getattr(response, "text", None)
+    if not text:
+        raise RuntimeError("El modelo no devolvió contenido")
+    return text
+
+def parse_json_response(text):
+    """Acepta JSON puro o envuelto en un bloque markdown ```json ... ```."""
+    text = (text or "").strip()
+    fenced = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', text)
+    if fenced:
+        text = fenced.group(1).strip()
     try:
-        return groq.Groq(api_key=api_key)
-    except TypeError:
-        return groq.Groq(api_key=api_key, base_url=GROQ_BASE_URL, timeout=60)
-    
-groq_client = create_groq_client(API_KEYS_LIST[current_api_key_index])
+        return json.loads(text)
+    except json.JSONDecodeError:
+        start = text.find("{")
+        end = text.rfind("}")
+        if start != -1 and end > start:
+            return json.loads(text[start:end + 1])
+        raise
+
+gemini_client = create_gemini_client(API_KEYS_LIST[current_api_key_index]) if API_KEYS_LIST else None
+
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({
+        "status": "ok",
+        "model": DEFAULT_MODEL,
+        "api_key_configured": gemini_client is not None,
+    }), 200
 
 @app.route('/eskuratuMapa', methods=['POST'])
 def eskuratu_mapa():
-    global groq_client, current_api_key_index
+    global gemini_client, current_api_key_index
 
     data = request.json
     if not data:
@@ -516,62 +576,39 @@ SI ESTÁN EN UN TILE QUE SEA 3 O 6, CAMBIALOS A UNOS DISTINTOS, NUNCA 3 O 6 PARA
     """
  
     try:
-        completion = groq_client.chat.completions.create(
-            model=DEFAULT_MODEL,
-            messages=[
-                {"role": "system", "content": "Eres un generador de mapas para juegos de estrategia por turnos."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=float(TEMPERATURE),
-            max_tokens=int(MAX_TOKENS)
+        response_text = generate_content(
+            prompt,
+            "Eres un generador de mapas para juegos de estrategia por turnos.",
         )
 
-        response_text = completion.choices[0].message.content
-        import json
-        import re
-
         try:
-            json_match = re.search(r'```json\s*([\s\S]*?)\s*```', response_text)
-            if json_match:
-                json_text = json_match.group(1)
-                map_data = json.loads(json_text)
+            map_data = parse_json_response(response_text)
 
-                # Imprimir dimensiones del mapa generado
-                if "terrain" in map_data and isinstance(map_data["terrain"], list):
-                    filas = len(map_data["terrain"])
-                    columnas = len(map_data["terrain"][0]) if filas > 0 and isinstance(map_data["terrain"][0], list) else 0
-                    print(f"[eskuratuMapa] Mapa generado: {filas}x{columnas}", flush=True)
+            # Imprimir dimensiones del mapa generado
+            if "terrain" in map_data and isinstance(map_data["terrain"], list):
+                filas = len(map_data["terrain"])
+                columnas = len(map_data["terrain"][0]) if filas > 0 and isinstance(map_data["terrain"][0], list) else 0
+                print(f"[eskuratuMapa] Mapa generado: {filas}x{columnas}", flush=True)
 
-                # Devuelve SIEMPRE lo que haya generado el modelo, aunque no sea 50x50
-                if "terrain" in map_data and "visible-objects" in map_data and "player_start" in map_data and "ai_start" in map_data:
-                    print(f"[eskuratuMapa] ✅ Mapa generado por LLM", flush=True)
-                    return jsonify({
-                        "terrain": map_data["terrain"],
-                        "visible-objects": map_data["visible-objects"],
-                        "player_start": map_data["player_start"],
-                        "ai_start": map_data["ai_start"]
-                    })
-                else:
-                    print("[eskuratuMapa] ❌ El JSON del modelo no contiene los datos esperados", flush=True)
-                    # Si falta algún campo, manda el default
-                    return jsonify({
-                        "terrain": default_map["terrain"],
-                        "visible-objects": default_visible_objects["visible-objects"],
-                        "player_start": default_player_start["player_start"],
-                        "ai_start": default_ai_start["ai_start"]
-                    })
-            else:
-                print("[eskuratuMapa] ❌ No se encontró un bloque JSON válido en la respuesta del modelo", flush=True)
-                # Si no hay JSON válido, manda el default
+            # Devuelve SIEMPRE lo que haya generado el modelo, aunque no sea 50x50
+            if "terrain" in map_data and "visible-objects" in map_data and "player_start" in map_data and "ai_start" in map_data:
+                print("[eskuratuMapa] ✅ Mapa generado por LLM", flush=True)
                 return jsonify({
-                    "terrain": default_map["terrain"],
-                    "visible-objects": default_visible_objects["visible-objects"],
-                    "player_start": default_player_start["player_start"],
-                    "ai_start": default_ai_start["ai_start"]
+                    "terrain": map_data["terrain"],
+                    "visible-objects": map_data["visible-objects"],
+                    "player_start": map_data["player_start"],
+                    "ai_start": map_data["ai_start"]
                 })
+
+            print("[eskuratuMapa] ❌ El JSON del modelo no contiene los datos esperados", flush=True)
+            return jsonify({
+                "terrain": default_map["terrain"],
+                "visible-objects": default_visible_objects["visible-objects"],
+                "player_start": default_player_start["player_start"],
+                "ai_start": default_ai_start["ai_start"]
+            })
         except Exception as ex:
-            print("[eskuratuMapa] ❌ La respuesta del modelo no es un JSON válido", flush=True)
-            # Si hay cualquier error parseando, manda el default
+            print(f"[eskuratuMapa] ❌ La respuesta del modelo no es un JSON válido: {ex}", flush=True)
             return jsonify({
                 "terrain": default_map["terrain"],
                 "visible-objects": default_visible_objects["visible-objects"],
@@ -584,18 +621,15 @@ SI ESTÁN EN UN TILE QUE SEA 3 O 6, CAMBIALOS A UNOS DISTINTOS, NUNCA 3 O 6 PARA
         print(f"[eskuratuMapa] ⚠️ Error al generar mapa: {error_str}", flush=True)
 
         # Manejar el error 429 (Rate limit exceeded)
-        if "429" in error_str or "rate limit" in error_str.lower():
-            previous_key = API_KEYS_LIST[current_api_key_index]
-            new_key = get_next_api_key()
-            groq_client = create_groq_client(new_key)
-            print(f"[eskuratuMapa] 🔑 Cambiando API KEY: {previous_key[:10]}... -> {new_key[:10]}...")
+        if "429" in error_str or "rate limit" in error_str.lower() or "resource_exhausted" in error_str.lower():
+            if len(API_KEYS_LIST) > 1:
+                new_key = get_next_api_key()
+                gemini_client = create_gemini_client(new_key)
+                print("[eskuratuMapa] 🔑 Rotando la API KEY de Google AI Studio", flush=True)
 
-            # Aquí deberías devolver el error 429 explícitamente:
             return jsonify({
                 "error": "Rate limit",
-                "api_key_switched": True,
-                "previous_api_key": previous_key[:10],
-                "current_api_key": new_key[:10],
+                "api_key_switched": len(API_KEYS_LIST) > 1,
                 "error_type": "rate_limit"
             }), 429
 
@@ -610,7 +644,7 @@ SI ESTÁN EN UN TILE QUE SEA 3 O 6, CAMBIALOS A UNOS DISTINTOS, NUNCA 3 O 6 PARA
     
 @app.route('/eskuratuEkintza', methods=['POST'])
 def eskuratu_ekintza():
-    global groq_client, current_api_key_index
+    global gemini_client, current_api_key_index
 
     data = request.json
     if not data:
@@ -988,70 +1022,46 @@ def eskuratu_ekintza():
     """
 
     try:
-        # Usar el cliente directo de Groq para enviar el prompt
-        completion = groq_client.chat.completions.create(
-            model=DEFAULT_MODEL,
-            messages=[
-                {"role": "system", "content": "Eres un generador de acciones para un agente IA en un juego de estrategia por turnos."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=float(TEMPERATURE),
-            max_tokens=int(MAX_TOKENS)
+        # Llamar a Google AI Studio (Gemini)
+        response_text = generate_content(
+            prompt,
+            "Eres un generador de acciones para un agente IA en un juego de estrategia por turnos.",
         )
 
-        # Extraer la respuesta del modelo
-        response_text = completion.choices[0].message.content
-        import json
-        import re
         try:
-            # 1. Buscar bloque ```json ... ```
-            json_match = re.search(r'```json\s*([\s\S]*?)\s*```', response_text)
-            if json_match:
-                json_text = json_match.group(1)
-            else:
-                # 2. Buscar el primer objeto JSON en el texto
-                json_match = re.search(r'(\{[\s\S]+\})', response_text)
-                if json_match:
-                    json_text = json_match.group(1)
-                else:
-                    print(f"[eskuratuEkintza] 🚧 Error: No se encontró un bloque JSON válido en la respuesta del modelo", flush=True)
-                    return jsonify({"error": "No se encontró un bloque JSON válido en la respuesta del modelo"}), 500
+            action_data = parse_json_response(response_text)
 
-            action_data = json.loads(json_text)
-
-            # 3. Validar que los datos contengan "action"
+            # Validar que los datos contengan "action"
             if "action" in action_data:
                 print(f"[eskuratuEkintza] 🏁 Acción generada: {action_data}", flush=True)
                 return jsonify(action_data)
-            else:
-                print(f"[eskuratuEkintza] 🚧 Error: La respuesta del modelo no contiene el objeto esperado 'action'", flush=True)
-                return jsonify({"error": "La respuesta del modelo no contiene el objeto esperado 'action'"}), 500
+
+            print("[eskuratuEkintza] 🚧 Error: La respuesta del modelo no contiene el objeto esperado 'action'", flush=True)
+            return jsonify({"error": "La respuesta del modelo no contiene el objeto esperado 'action'"}), 500
         except json.JSONDecodeError:
             print(f"[eskuratuEkintza] 🚧 Error de JSON: {response_text}", flush=True)
             return jsonify({"error": "La respuesta del modelo no es un JSON válido"}), 500
-        
+
     except Exception as e:
         error_str = str(e)
         print(f"Error al generar acciones: {error_str}")
-        
+
         # Manejar el error 429 (Rate limit exceeded)
-        if "429" in error_str or "rate limit" in error_str.lower():
-            previous_key = API_KEYS_LIST[current_api_key_index]
-            new_key = get_next_api_key()
-            groq_client = create_groq_client(new_key)
-            print(f"[eskuratuEkintza] 🔑 Cambiando API KEY: {previous_key[:10]}... -> {new_key[:10]}...")
+        if "429" in error_str or "rate limit" in error_str.lower() or "resource_exhausted" in error_str.lower():
+            if len(API_KEYS_LIST) > 1:
+                new_key = get_next_api_key()
+                gemini_client = create_gemini_client(new_key)
+                print("[eskuratuEkintza] 🔑 Rotando la API KEY de Google AI Studio", flush=True)
 
             return jsonify({
                 "action": [],
-                "api_key_switched": True,
-                "previous_api_key": previous_key[:10],
-                "current_api_key": new_key[:10],
+                "api_key_switched": len(API_KEYS_LIST) > 1,
                 "error_type": "rate_limit"
             }), 429
-        
+
         # Para otros errores, devolver un mensaje de error
         print(f"[eskuratuEkintza] 🚧 Error inesperado: {error_str}.", flush=True)
         return jsonify({"error": error_str}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=False, host='0.0.0.0', port=5001)

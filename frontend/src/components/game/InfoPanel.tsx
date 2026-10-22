@@ -4,6 +4,7 @@ import { TILE_TYPES, VISIBLE_OBJECTS_BY_ID } from '../../utils/Constants';
 import { useGame } from '../../context/GameContext';
 import CityBattleView from './CityBattleView';
 import '../../styles/InfoPanel.css';
+import { asset } from '../../utils/asset';
 
 export interface InfoPanelProps {
   selectedUnit?: UnitProps | null;
@@ -86,7 +87,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({
       <div className="info-panel-root visible-object-info-panel">
         <h3>{objInfo.name}</h3>
         <img
-          src={`/images/visibleObjects/${objInfo.name}.png`}
+          src={asset(`/images/visibleObjects/${objInfo.name}.png`)}
           alt={objInfo.name}
         />
         <div className="info-panel-section">

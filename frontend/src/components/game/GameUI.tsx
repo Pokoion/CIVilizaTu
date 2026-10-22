@@ -14,6 +14,7 @@ import { useGame } from '../../context/GameContext';
 import { useNavigate } from "react-router-dom";
 import { saveGame } from '../../services/gameService';
 import AiLogConsole from './AiLogConsole';
+import { asset } from '../../utils/asset';
 
 const GameUI: React.FC = () => {
     const [selectedUnit, setSelectedUnit] = useState<UnitProps | null>(null);
@@ -182,27 +183,27 @@ const GameUI: React.FC = () => {
                     </div>
                     <div className="ui-top-center">
                         <div className="resource">
-                            <img src="/images/resources/urrea.png" alt="Urrea" className="resource-icon" />
+                            <img src={asset("/images/resources/urrea.png")} alt="Urrea" className="resource-icon" />
                             <span className="resource-name">Urrea:</span>
                             <span className="resource-value">{sideResources.gold}</span>
                         </div>
                         <div className="resource">
-                            <img src="/images/resources/janaria.png" alt="Janaria" className="resource-icon" />
+                            <img src={asset("/images/resources/janaria.png")} alt="Janaria" className="resource-icon" />
                             <span className="resource-name">Janaria:</span>
                             <span className="resource-value">{sideResources.food}</span>
                         </div>
                         <div className="resource">
-                            <img src="/images/resources/kultura.png" alt="Kultura" className="resource-icon" />
+                            <img src={asset("/images/resources/kultura.png")} alt="Kultura" className="resource-icon" />
                             <span className="resource-name">Kultura:</span>
                             <span className="resource-value">{sideResources.culture}</span>
                         </div>
                         <div className="resource">
-                            <img src="/images/resources/baliabide_naturalak.png" alt="Baliabide Naturalak" className="resource-icon" />
+                            <img src={asset("/images/resources/baliabide_naturalak.png")} alt="Baliabide Naturalak" className="resource-icon" />
                             <span className="resource-name">Baliabide Naturalak:</span>
                             <span className="resource-value">{sideResources.natural_resources}</span>
                         </div>
                         <div className="resource">
-                            <img src="/images/resources/zientzia.png" alt="Zientzia" className="resource-icon" />
+                            <img src={asset("/images/resources/zientzia.png")} alt="Zientzia" className="resource-icon" />
                             <span className="resource-name">Zientzia:</span>
                             <span className="resource-value">{sideResources.science}</span>
                         </div>
@@ -220,7 +221,7 @@ const GameUI: React.FC = () => {
                             </div>
                             <div style={{ marginBottom: 8, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
                                 <img
-                                    src={`/images/civilizations/${sideCivilization}.png`}
+                                    src={asset(`/images/civilizations/${sideCivilization}.png`)}
                                     alt={sideCivilization}
                                     style={{ width: 128, height: 148, borderRadius: "50%", border: "2px solid #ccc" }}
                                 />

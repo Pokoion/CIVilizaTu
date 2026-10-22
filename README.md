@@ -1,6 +1,6 @@
 # CIVilizaTu - Txandakako Estrategia Jokoaren Web Aplikazioa
 
-**CIVilizaTu** Civilization joko klasikoan inspiratutako txandakako estrategia-joko baten web aplikazioa da. Proiektu hau SGTA irakasgairako T3 taldearen lan praktiko gisa garatu dugu, helburu hezigarriekin eta inolako asmo komertzialik gabe. Jokalariak GroQ hizkuntza-ereduetan oinarritutako adimen artifizialaren aurka lehiatzen dira, euren zibilizazioa garatuz eta mapa esploratuz.
+**CIVilizaTu** Civilization joko klasikoan inspiratutako txandakako estrategia-joko baten web aplikazioa da. Proiektu hau SGTA irakasgairako T3 taldearen lan praktiko gisa garatu dugu, helburu hezigarriekin eta inolako asmo komertzialik gabe. Jokalariak Google AI Studio (Gemini) hizkuntza-ereduetan oinarritutako adimen artifizialaren aurka lehiatzen dira, euren zibilizazioa garatuz eta mapa esploratuz.
 
 ## Taldekideak
 
@@ -12,7 +12,7 @@
 
 - **Frontend**: React (TypeScript, Node.js)
 - **Backend**: Flask (Python)
-- **IA Zerbitzua**: Flask bidezko GroQ API integrazioa
+- **IA Zerbitzua**: Flask bidezko Google AI Studio (Gemini) API integrazioa
 - **Docker**: Osagai guztiak edukiontzietan exekutatzeko
 - **MongoDB**: Datuen biltegiratzea (erabiltzaileak, partidak)
 
@@ -25,7 +25,7 @@
 - **IAren prompt-ak eta jokabidea ahalik eta gehien optimizatu eta zehaztu dira, jokaldiak eta erabakiak zentzuzkoak eta koherenteak izan daitezen. Hala ere, mugak eta probabilitatezko portaerak daude.**
 
 > ⚠️ **ADIMEN ARTIFIZIALAREN ETA MAPEN MUGAK**  
-> Joko honetako IA (GroQ hizkuntza-eredua) eta mapen sorrera ez dira perfektuak. IAren mugimenduak, ekintzak edo mapak ez dira beti optimoak edo errealistak izango. Batzuetan IA-k ez du estrategia onena aukeratuko edo mapa ez da guztiz orekatua izango. Hau proiektuaren izaera esperimental eta hezigarriaren ondorio da.
+> Joko honetako IA (Gemini hizkuntza-eredua) eta mapen sorrera ez dira perfektuak. IAren mugimenduak, ekintzak edo mapak ez dira beti optimoak edo errealistak izango. Batzuetan IA-k ez du estrategia onena aukeratuko edo mapa ez da guztiz orekatua izango. Hau proiektuaren izaera esperimental eta hezigarriaren ondorio da.
 > AA erabiliz mapa sortzean normala da minutu bat igarotzea sortu arte.
 > AA-ren txanda denean, akzioen artean 5-60segundu igarotzea normala da, jokoaren egoera eta erregelen arabera ondo aukeratu behar du eta ondorengo ekintza.
 ---
@@ -97,21 +97,21 @@ CIVilizaTu lau osagai nagusik osatzen dute, bakoitza bere Docker edukiontzi prop
 1. **Frontend**: React (TypeScript, Node.js) erabiliz garatutako web aplikazioa. Erabiltzaile-interfazea eskaintzen du eta jokalariaren ekintzak kudeatzen ditu.
 2. **Backend**: Flask (Python) erabiliz garatutako REST APIa. Jokoaren logika, erabiltzaileen kudeaketa, partiden biltegiratzea eta IA zerbitzuarekin komunikazioa kudeatzen ditu.
 3. **MongoDB**: Datu-base ez-errelazionala, erabiltzaileen, partiden eta eszenatokien informazioa gordetzeko.
-4. **IA Zerbitzua**: Flask bidezko zerbitzua, GroQ hizkuntza-ereduekin komunikatzeko eta IA aurkariaren erabakiak lortzeko.
+4. **IA Zerbitzua**: Flask bidezko zerbitzua, Google AI Studio (Gemini) hizkuntza-ereduekin komunikatzeko eta IA aurkariaren erabakiak lortzeko.
 
 ### Osagaien arteko komunikazioa
 
 - **Frontend ↔ Backend**: HTTP REST API bidez, JSON formatuan. Jokoko ekintza guztiak, erabiltzaile kudeaketa eta partida egoeraren eguneraketak kanalizatzen dira.
 - **Backend ↔ MongoDB**: MongoDB driver bidez, erabiltzaileen eta partiden datuak gordetzeko eta eskuratzeko.
-- **Backend ↔ IA Zerbitzua**: HTTP bidez, GroQ APIra deiak egiteko eta IA-ren erabakiak jasotzeko.
-- **IA Zerbitzua ↔ GroQ**: Kanpoko API deien bidez, IA aurkariaren ekintzak lortzeko.
+- **Backend ↔ IA Zerbitzua**: HTTP bidez, Google AI Studio APIra deiak egiteko eta IA-ren erabakiak jasotzeko.
+- **IA Zerbitzua ↔ Google AI Studio**: Kanpoko API deien bidez, IA aurkariaren ekintzak lortzeko.
 
 ### Fluxu orokorra
 
 1. Erabiltzaileak frontend-etik ekintzak egiten ditu (adib. mugimenduak, eraikuntzak).
 2. Ekintzak backend-era bidaltzen dira, non jokoaren logika eta balidazioa egiten diren.
 3. Backend-ak datuak MongoDB-n gordetzen ditu eta, beharrezkoa bada, IA zerbitzura deiak egiten ditu IA-ren txandarako.
-4. IA zerbitzuak GroQ APIra jotzen du eta jasotako erabakiak backend-era itzultzen ditu.
+4. IA zerbitzuak Google AI Studio APIra jotzen du eta jasotako erabakiak backend-era itzultzen ditu.
 5. Backend-ak jokoaren egoera eguneratzen du eta emaitzak frontend-era bidaltzen ditu, jokalariari bistaratuz.
 
 ### Hedapena eta exekuzioa
@@ -126,6 +126,7 @@ Arkitektura honek garapen modularra, eskalagarritasuna eta mantenagarritasuna be
 
 ## Dokumentazio Gehigarria
 
+- [DEPLOY.md](DEPLOY.md): VPSan argitaratzeko gida (Nginx, Docker, Firebase, Google AI Studio).
 - [civilizatu-euskaraz.md](civilizatu-euskaraz.md): Proiektua egiteko hasieran emandako dokumentazioa.
 - [civilizatu-endpoints.md](civilizatu-endpoints.md): Backend eta IA zerbitzuaren API endpoint-en azalpena.
 - [civilizatu-rules.md](civilizatu-rules.md): Jokoaren logika eta erregela guztiak biltzen ditu.

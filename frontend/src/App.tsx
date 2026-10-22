@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import GameUI from './components/game/GameUI';
 import { GameProvider } from './context/GameContext';
+import { asset } from './utils/asset';
 import './styles/index.css';
 
 const Home: React.FC = () => (
@@ -17,7 +18,7 @@ const Home: React.FC = () => (
         <p>Ongi etorri zure zibilizazioa sortzeko abenturara!</p>
       </header>
       <main>
-        <button onClick={() => window.location.href = '/login'}>Saioa Hasi</button>
+        <button onClick={() => window.location.href = asset('/login')}>Saioa Hasi</button>
       </main>
     </div>
     <footer>
@@ -44,7 +45,7 @@ const GameRouteWrapper: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <Router>
+    <Router basename={process.env.PUBLIC_URL || '/'}>
       <Routes>
         <Route path="/" element={<PublicRoute><Home /></PublicRoute>} />
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />

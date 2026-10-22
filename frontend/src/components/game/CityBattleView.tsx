@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { UnitProps, CityProps } from '../../types';
 import '../../styles/CityBattleView.css';
+import { asset } from '../../utils/asset';
 
 interface CityBattleViewProps {
     attacker: UnitProps;
@@ -12,19 +13,19 @@ interface CityBattleViewProps {
 type Phase = 'idle' | 'projectile' | 'cityHit' | 'end';
 
 const getCityImg = (era: string) => {
-    if (era === 'Antzinaroa') return '/images/city/city_antzinaroa.png';
-    if (era === 'Erdi Aroa') return '/images/city/city_erdi_aroa.png';
-    if (era === 'Aro Modernoa') return '/images/city/city_aro_modernoa.png';
-    return '/images/city/city_antzinaroa.png';
+    if (era === 'Antzinaroa') return asset('/images/city/city_antzinaroa.png');
+    if (era === 'Erdi Aroa') return asset('/images/city/city_erdi_aroa.png');
+    if (era === 'Aro Modernoa') return asset('/images/city/city_aro_modernoa.png');
+    return asset('/images/city/city_antzinaroa.png');
 };
 
 const isRanged = (unit: UnitProps) => (unit.range ?? 1) > 1;
 
 const getProjectileImage = (unit: UnitProps) => {
-    if (unit.type === 'tanke') return '/images/projectiles/bala.png';
-    if (unit.type === 'itsasontzia') return '/images/projectiles/canonball.png';
-    if (isRanged(unit)) return '/images/projectiles/flecha.png';
-    return '/images/projectiles/harria.png';
+    if (unit.type === 'tanke') return asset('/images/projectiles/bala.png');
+    if (unit.type === 'itsasontzia') return asset('/images/projectiles/canonball.png');
+    if (isRanged(unit)) return asset('/images/projectiles/flecha.png');
+    return asset('/images/projectiles/harria.png');
 };
 
 const getProjectileSize = (unit: UnitProps) => {
@@ -94,7 +95,7 @@ const CityBattleView: React.FC<CityBattleViewProps> = ({ attacker, city, onFinis
                     {/* Atacante */}
                     <div className="city-battle-attacker">
                         <img
-                            src={`/images/units/${attacker.type}/${attacker.type}-default.png`}
+                            src={asset(`/images/units/${attacker.type}/${attacker.type}-default.png`)}
                             alt={attacker.type}
                             className={
                                 "city-battle-attacker-img" +

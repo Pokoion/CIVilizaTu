@@ -3,6 +3,7 @@ import '../../styles/BarracksView.css';
 import { UNITS } from '../../utils/Constants';
 import { TrainingUnit } from '../../types';
 import { useGame } from '../../context/GameContext';
+import { asset } from '../../utils/asset';
 
 interface BarracksViewProps {
   onClose: () => void;
@@ -181,7 +182,7 @@ const BarracksView: React.FC<BarracksViewProps> = ({
 
             return (
               <div key={unit.id} className="barracks-unit-card">
-                <img src={`/images/units/${unit.type}/${unit.type}-default.png`} alt={unit.type} className="barracks-unit-img" />
+                <img src={asset(`/images/units/${unit.type}/${unit.type}-default.png`)} alt={unit.type} className="barracks-unit-img" />
                 <div className="barracks-unit-stats" style={{ fontSize: '0.97em', color: '#444', margin: '8px 0 4px 0' }}>
                   <div>⚔️ <strong>{unit.type}</strong></div>
                   <div>❤️ <strong>{health}</strong></div>
@@ -196,7 +197,7 @@ const BarracksView: React.FC<BarracksViewProps> = ({
                         {unit.cost.food !== undefined && (
                           <>
                             <img
-                              src={`/images/resources/${RESOURCE_IMAGE_MAP.food}`}
+                              src={asset(`/images/resources/${RESOURCE_IMAGE_MAP.food}`)}
                               alt="Janaria"
                               style={{ width: 20, height: 20, verticalAlign: 'middle', marginRight: 2 }}
                             />{" "}
@@ -206,7 +207,7 @@ const BarracksView: React.FC<BarracksViewProps> = ({
                         {unit.cost.gold !== undefined && (
                           <>
                             <img
-                              src={`/images/resources/${RESOURCE_IMAGE_MAP.gold}`}
+                              src={asset(`/images/resources/${RESOURCE_IMAGE_MAP.gold}`)}
                               alt="Urrea"
                               style={{ width: 20, height: 20, verticalAlign: 'middle', marginRight: 2 }}
                             />{" "}
@@ -247,7 +248,7 @@ const BarracksView: React.FC<BarracksViewProps> = ({
             return (
               <li key={item.id} className="barracks-queue-item">
                 <div className="barracks-queue-info">
-                  <img src={`/images/units/${unit.type}/${unit.type}-default.png`} alt={unit.id} className="barracks-queue-img" />
+                  <img src={asset(`/images/units/${unit.type}/${unit.type}-default.png`)} alt={unit.id} className="barracks-queue-img" />
                   <span><strong>{unit.id}</strong></span>
                   <span>
                     {item.turnsLeft > 0 ? (

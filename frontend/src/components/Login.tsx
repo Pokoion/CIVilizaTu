@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { loginUser } from '../services/authService';
+import { asset } from '../utils/asset';
 import '../styles/Auth.css';
 
 const Login: React.FC = () => {
@@ -50,7 +51,7 @@ const Login: React.FC = () => {
       </form>
       {errorMessage && <p className="error-message">{errorMessage}</p>}
       <p className="not-registered">
-        Ez zaude erregistratuta? <a href="/register">Erregistratu</a>
+        Ez zaude erregistratuta? <a href={asset('/register')}>Erregistratu</a>
       </p>
     </div>
   );

@@ -35,8 +35,6 @@ def create_game():
 
     # Generar el mapa y posiciones iniciales usando el servicio LLM
     print(f"===> Llamando a create_map({map_width}, {map_height}, {map_type})", file=sys.stderr)
-    map_result = create_map(map_width, map_height, map_type)
-    #print("===> Resultado de create_map:", map_result, file=sys.stderr)
     import time
 
     max_retries = 5
@@ -45,7 +43,7 @@ def create_game():
         map_result = create_map(map_width, map_height, map_type)
         if "error" in map_result and map_result.get("status_code") == 429:
             print(f"===> [POST /api/games] 429 recibido al crear mapa, reintentando... ({retries+1}/{max_retries})", file=sys.stderr)
-            time.sleep(1.5)
+            time.sleep(1.5 * (retries + 1))
             retries += 1
             continue
         break
@@ -178,15 +176,17 @@ def get_ia_action():
 
     ai_visible_json = get_ai_visible_state(game_state)
 
-    max_retries = 7
+    max_retries = 10
     retries = 0
     while retries < max_retries:
         ai_response = send_ia_game_state({"game_state_visible": ai_visible_json})
 
-        # Si hay error 429, reintenta SIN contar como intento
+        # Si hay error 429, espera y reintenta (con límite para no colgar la petición)
         if "error_type" in ai_response and ai_response["error_type"] == "rate_limit":
-            print("===> [getIAAction] 429 recibido, reintentando sin contar como intento...", flush=True)
-            time.sleep(1.5)
+            retries += 1
+            wait = min(2 ** retries, 30)
+            print(f"===> [getIAAction] 429 recibido, reintentando en {wait}s... ({retries}/{max_retries})", flush=True)
+            time.sleep(wait)
             continue
 
         # Comprobar formato correcto

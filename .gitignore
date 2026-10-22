@@ -58,7 +58,7 @@ llm_service.log
 .ipynb_checkpoints/
 
 # Docker
-.dockerignore
+!.dockerignore
 
 # Archivos generados por IA
 /frontend/public/assets/ai-generated/*

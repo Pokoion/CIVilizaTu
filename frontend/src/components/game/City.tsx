@@ -1,6 +1,7 @@
 import React from 'react';
 import { CityProps } from '../../types';
 import '../../styles/City.css';
+import { asset } from '../../utils/asset';
 
 const eraToImage: Record<string, string> = {
   "Antzinaroa": "city_antzinaroa.png",
@@ -24,7 +25,7 @@ const City: React.FC<CityProps> = ({ id, name, position, onClick, era, owner }) 
       }}
     >
       <img
-        src={`/images/city/${imageFile}`}
+        src={asset(`/images/city/${imageFile}`)}
         alt={name}
         className="city-person"
       />

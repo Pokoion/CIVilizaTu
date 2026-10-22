@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/authService'; // Importamos el servicio
+import { asset } from '../utils/asset';
 import '../styles/Auth.css'; // Reutilizamos los estilos de LoginOptions
 
 const Register: React.FC = () => {
@@ -54,7 +55,7 @@ const Register: React.FC = () => {
       </form>
       {errorMessage && <p className="error-message">{errorMessage}</p>}
       <p className="not-registered">
-        Jadanik kontua baduzu? <a href="/login">Saioa hasi</a>
+        Jadanik kontua baduzu? <a href={asset('/login')}>Saioa hasi</a>
       </p>
     </div>
   );

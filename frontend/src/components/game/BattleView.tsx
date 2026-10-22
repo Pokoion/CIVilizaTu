@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Unit } from '../../types';
 import '../../styles/BattleView.css';
+import { asset } from '../../utils/asset';
 
 interface BattleViewProps {
   attacker: Unit;
@@ -17,9 +18,9 @@ type Phase = 'idle' | 'attack' | 'defenderHit' | 'counter' | 'attackerHit' | 'en
 const isRanged = (unit: any) => (unit.range ?? 1) > 1;
 
 const getProjectileImage = (unit: Unit) => {
-  if (unit.type === 'tanke') return '/images/projectiles/bala.png';
-  if (unit.type === 'itsasontzia') return '/images/projectiles/canonball.png';
-  return '/images/projectiles/flecha.png';
+  if (unit.type === 'tanke') return asset('/images/projectiles/bala.png');
+  if (unit.type === 'itsasontzia') return asset('/images/projectiles/canonball.png');
+  return asset('/images/projectiles/flecha.png');
 };
 
 const getProjectileSize = (unit: Unit) => {
@@ -180,7 +181,7 @@ const BattleView: React.FC<BattleViewProps> = ({
               }
             >
               <img
-                src={`/images/units/${attacker.type}/${attacker.type}-default.png`}
+                src={asset(`/images/units/${attacker.type}/${attacker.type}-default.png`)}
                 alt={attacker.type}
                 className="battle-unit-img"
                 style={{
@@ -262,7 +263,7 @@ const BattleView: React.FC<BattleViewProps> = ({
               }
             >
               <img
-                src={`/images/units/${defender.type}/${defender.type}-eskubi.png`}
+                src={asset(`/images/units/${defender.type}/${defender.type}-eskubi.png`)}
                 alt={defender.type}
                 className="battle-unit-img"
                 style={{

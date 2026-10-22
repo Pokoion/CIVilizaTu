@@ -2,34 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/MainMenu.css';
 import { deleteGame, createGame, getSavedGames, getGameById } from '../services/gameService';
+import { asset } from '../utils/asset';
 
 // Civilizaciones y escenarios desde GameInfo.json y carpeta de imágenes
 const civilizations = [
   {
     id: "euskaldunak",
     name: "Euskaldunak",
-    img: "/images/civilizations/euskaldunak.png",
+    img: asset("/images/civilizations/euskaldunak.png"),
     desc: "Defentsa sendoa eta gudari bereziak.",
     bonus: "Gudaria unitatea esklusiboa."
   },
   {
     id: "mongolak",
     name: "Mongolak",
-    img: "/images/civilizations/mongolak.png",
+    img: asset("/images/civilizations/mongolak.png"),
     desc: "Mugikortasun handiko zaldunak. Lurraldeak azkar konkistatzeko aproposa.",
     bonus: "Arkari zalduna unitatea esklusiboa"
   },
   {
     id: "mayak",
     name: "Mayak",
-    img: "/images/civilizations/mayak.png",
+    img: asset("/images/civilizations/mayak.png"),
     desc: "Distantziako unitateetan indartsuak.",
     bonus: "Atlatl erabiltzailea unitatea esklusiboa."
   },
   {
     id: "bizantziarrak",
     name: "Bizantziarrak",
-    img: "/images/civilizations/bizantziarrak.png",
+    img: asset("/images/civilizations/bizantziarrak.png"),
     desc: "Suzko unitateetan espezialistak.",
     bonus: "Piromanoa unitatea esklusiboa."
   },

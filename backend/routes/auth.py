@@ -12,26 +12,46 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+FIREBASE_REQUIRED_VARS = [
+    "FIREBASE_PROJECT_ID",
+    "FIREBASE_PRIVATE_KEY",
+    "FIREBASE_CLIENT_EMAIL",
+]
+FIREBASE_ERROR = None
+
 if not firebase_admin._apps:
-    cred_dict = {
-        "type": os.environ.get("FIREBASE_TYPE"),
-        "project_id": os.environ.get("FIREBASE_PROJECT_ID"),
-        "private_key_id": os.environ.get("FIREBASE_PRIVATE_KEY_ID"),
-        "private_key": os.environ.get("FIREBASE_PRIVATE_KEY").replace('\\n', '\n'),
-        "client_email": os.environ.get("FIREBASE_CLIENT_EMAIL"),
-        "client_id": os.environ.get("FIREBASE_CLIENT_ID"),
-        "auth_uri": os.environ.get("FIREBASE_AUTH_URI"),
-        "token_uri": os.environ.get("FIREBASE_TOKEN_URI"),
-        "auth_provider_x509_cert_url": os.environ.get("FIREBASE_AUTH_PROVIDER_X509_CERT_URL"),
-        "client_x509_cert_url": os.environ.get("FIREBASE_CLIENT_X509_CERT_URL"),
-        "universe_domain": os.environ.get("FIREBASE_UNIVERSE_DOMAIN"),
-    }
-    cred = credentials.Certificate(cred_dict)
-    initialize_app(cred)
+    missing = [name for name in FIREBASE_REQUIRED_VARS if not os.environ.get(name)]
+    if missing:
+        FIREBASE_ERROR = "Firebase Admin no configurado; faltan: " + ", ".join(missing)
+        print(f"[auth] AVISO: {FIREBASE_ERROR}", flush=True)
+    else:
+        try:
+            cred_dict = {
+                "type": os.environ.get("FIREBASE_TYPE", "service_account"),
+                "project_id": os.environ.get("FIREBASE_PROJECT_ID"),
+                "private_key_id": os.environ.get("FIREBASE_PRIVATE_KEY_ID"),
+                "private_key": os.environ.get("FIREBASE_PRIVATE_KEY").replace('\\n', '\n'),
+                "client_email": os.environ.get("FIREBASE_CLIENT_EMAIL"),
+                "client_id": os.environ.get("FIREBASE_CLIENT_ID"),
+                "auth_uri": os.environ.get("FIREBASE_AUTH_URI"),
+                "token_uri": os.environ.get("FIREBASE_TOKEN_URI"),
+                "auth_provider_x509_cert_url": os.environ.get("FIREBASE_AUTH_PROVIDER_X509_CERT_URL"),
+                "client_x509_cert_url": os.environ.get("FIREBASE_CLIENT_X509_CERT_URL"),
+                "universe_domain": os.environ.get("FIREBASE_UNIVERSE_DOMAIN", "googleapis.com"),
+            }
+            cred = credentials.Certificate(cred_dict)
+            initialize_app(cred)
+            print("[auth] Firebase Admin inicializado correctamente", flush=True)
+        except Exception as e:
+            FIREBASE_ERROR = f"No se pudo inicializar Firebase Admin: {e}"
+            print(f"[auth] ERROR: {FIREBASE_ERROR}", flush=True)
 
 # POST /api/auth/register
 @auth_bp.route('/register', methods=['POST'])
 def register():
+    if FIREBASE_ERROR:
+        return jsonify({"error": "Firebase ez dago konfiguratuta; falta dira backendeko kredentzialak"}), 503
+
     data = request.get_json()
     username = data.get('username')
     email = data.get('email')
@@ -69,6 +89,9 @@ def register():
 # POST /api/auth/login
 @auth_bp.route('/login', methods=['POST'])
 def login():
+    if FIREBASE_ERROR:
+        return jsonify({"error": "Firebase ez dago konfiguratuta; falta dira backendeko kredentzialak"}), 503
+
     data = request.get_json()
     id_token = data.get('id_token')
 

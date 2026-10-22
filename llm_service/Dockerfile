@@ -10,4 +10,5 @@ COPY . .
 
 EXPOSE 5001
 
-CMD ["python", "app.py"]
+# gunicorn con hilos: las llamadas a Gemini son bloqueantes y pueden tardar
+CMD ["gunicorn", "-w", "2", "-k", "gthread", "--threads", "4", "-b", "0.0.0.0:5001", "--timeout", "300", "app:app"]

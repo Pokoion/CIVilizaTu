@@ -2,6 +2,7 @@ import React from 'react';
 import { VisibleObjectProps } from '../../types';
 import { VISIBLE_OBJECTS_BY_ID } from '../../utils/Constants';
 import '../../styles/VisibleObject.css';
+import { asset } from '../../utils/asset';
 
 interface Props extends VisibleObjectProps {
   onClick?: () => void;
@@ -22,7 +23,7 @@ const VisibleObject: React.FC<Props> = ({ type, onClick }) => {
       style={{ cursor: 'inherit' }}
     >
       <img
-        src={`/images/visibleObjects/${objInfo.name}.png`}
+        src={asset(`/images/visibleObjects/${objInfo.name}.png`)}
         alt={objInfo.name}
         className="visible-object-img"
       />

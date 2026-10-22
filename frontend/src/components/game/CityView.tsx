@@ -3,6 +3,7 @@ import '../../styles/CityView.css';
 import BarracksView from './BarracksView';
 import { BUILDINGS, CITY_ERAS_BY_ID } from '../../utils/Constants';
 import { useGame } from '../../context/GameContext';
+import { asset } from '../../utils/asset';
 
 // Eras y tipos
 const ERAS = ['Antzinaroa', 'Erdi Aroa', 'Aro Modernoa'] as const;
@@ -314,11 +315,11 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
                     justifyContent: 'center'
                   }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <img src={`/images/resources/${RESOURCE_IMAGE_MAP.gold}`} alt="Gold" style={{ width: 22, height: 22, verticalAlign: 'middle' }} />
+                      <img src={asset(`/images/resources/${RESOURCE_IMAGE_MAP.gold}`)} alt="Gold" style={{ width: 22, height: 22, verticalAlign: 'middle' }} />
                       <span style={{ fontWeight: 500 }}>{upgradeCost.gold}</span>
                     </span>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <img src={`/images/resources/${RESOURCE_IMAGE_MAP.natural_resources}`} alt="Natural resources" style={{ width: 22, height: 22, verticalAlign: 'middle' }} />
+                      <img src={asset(`/images/resources/${RESOURCE_IMAGE_MAP.natural_resources}`)} alt="Natural resources" style={{ width: 22, height: 22, verticalAlign: 'middle' }} />
                       <span style={{ fontWeight: 500 }}>{upgradeCost.natural_resources}</span>
                     </span>
                   </div>
@@ -374,7 +375,7 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
               }
               return (
                 <div className="resource-item" key={res}>
-                  <img src={`/images/resources/${RESOURCE_IMAGE_MAP[res]}`} alt={res} />
+                  <img src={asset(`/images/resources/${RESOURCE_IMAGE_MAP[res]}`)} alt={res} />
                   <span>{value}</span>
                 </div>
               );
@@ -391,7 +392,7 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
                 if (!building) return null;
                 return (
                   <li key={buildingId + '-' + idx} className="building-item">
-                    <img src={`/images/buildings/${building.name}.png`} alt={building.name} className="building-image" />
+                    <img src={asset(`/images/buildings/${building.name}.png`)} alt={building.name} className="building-image" />
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div>
                         <strong>{building.name}</strong>
@@ -409,7 +410,7 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
                             amount > 0 && (
                               <span key={resource} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                 <img
-                                  src={`/images/resources/${RESOURCE_IMAGE_MAP[resource] || resource + ".png"}`}
+                                  src={asset(`/images/resources/${RESOURCE_IMAGE_MAP[resource] || resource + ".png"}`)}
                                   alt={resource}
                                   style={{ width: 20, height: 20 }}
                                 />
@@ -441,7 +442,7 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
               <div className="build-list">
                 {visibleBuildings.map((building) => (
                   <div key={building.id} className="build-item">
-                    <img src={`/images/buildings/${building.name}.png`} alt={building.name} className="build-image" />
+                    <img src={asset(`/images/buildings/${building.name}.png`)} alt={building.name} className="build-image" />
                     <strong>{building.name}</strong>
                     <p>{building.description}</p>
                     <div className="building-cost"
@@ -457,7 +458,7 @@ const CityView: React.FC<{ cityId: string; onClose: () => void }> = ({ cityId, o
                         amount > 0 && (
                           <span key={resource} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                             <img
-                              src={`/images/resources/${RESOURCE_IMAGE_MAP[resource] || resource + ".png"}`}
+                              src={asset(`/images/resources/${RESOURCE_IMAGE_MAP[resource] || resource + ".png"}`)}
                               alt={resource}
                               style={{ width: 20, height: 20 }}
                             />
