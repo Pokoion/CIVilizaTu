@@ -377,14 +377,28 @@ def generate_content(prompt, system_instruction):
     if TEMPERATURE is not None and TEMPERATURE >= 0:
         config_kwargs["temperature"] = TEMPERATURE
 
-    response = gemini_client.models.generate_content(
-        model=DEFAULT_MODEL,
-        contents=prompt,
-        config=genai_types.GenerateContentConfig(**config_kwargs),
-    )
+    response = None
+    last_error = None
+    for attempt in range(3):
+        try:
+            response = gemini_client.models.generate_content(
+                model=DEFAULT_MODEL,
+                contents=prompt,
+                config=genai_types.GenerateContentConfig(**config_kwargs),
+            )
+            break
+        except Exception as e:
+            last_error = e
+            message = str(e).lower()
+            # 503/UNAVAILABLE suele ser saturación puntual del modelo
+            if attempt < 2 and ("503" in message or "unavailable" in message or "overloaded" in message):
+                time.sleep(2 * (attempt + 1))
+                continue
+            raise
+
     text = getattr(response, "text", None)
     if not text:
-        raise RuntimeError("El modelo no devolvió contenido")
+        raise last_error or RuntimeError("El modelo no devolvió contenido")
     return text
 
 def parse_json_response(text):
@@ -633,14 +647,15 @@ SI ESTÁN EN UN TILE QUE SEA 3 O 6, CAMBIALOS A UNOS DISTINTOS, NUNCA 3 O 6 PARA
                 "error_type": "rate_limit"
             }), 429
 
-        # Para cualquier otro error, manda el default y código 500
+        # Para cualquier otro error, devolver el mapa por defecto con 200 para
+        # que la partida se pueda crear igualmente (modelo saturado, timeout...).
         return jsonify({
             "terrain": default_map["terrain"],
             "visible-objects": default_visible_objects["visible-objects"],
             "player_start": default_player_start["player_start"],
             "ai_start": default_ai_start["ai_start"],
-            "error": error_str
-        }), 500
+            "warning": error_str
+        }), 200
     
 @app.route('/eskuratuEkintza', methods=['POST'])
 def eskuratu_ekintza():

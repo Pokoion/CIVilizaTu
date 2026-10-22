@@ -23,7 +23,7 @@ def create_map(width, height, map_type=0):
     url = f"{LLM_SERVICE_URL}/eskuratuMapa"
     payload = {"width": width, "height": height, "map_type": map_type}
     try:
-        resp = requests.post(url, json=payload, timeout=180)
+        resp = requests.post(url, json=payload, timeout=280)
         if resp.status_code == 429:
             return {"error": "Rate limit", "status_code": 429}
         resp.raise_for_status()
@@ -41,7 +41,7 @@ def create_map(width, height, map_type=0):
 def send_ia_game_state(game_state_visible):
     url = f"{LLM_SERVICE_URL}/eskuratuEkintza"
     try:
-        resp = requests.post(url, json=game_state_visible, timeout=180)
+        resp = requests.post(url, json=game_state_visible, timeout=280)
         resp.raise_for_status()
         return resp.json()
     except Exception as e:

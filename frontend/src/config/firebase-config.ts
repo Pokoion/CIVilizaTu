@@ -1,13 +1,12 @@
 import { initializeApp } from "firebase/app";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCr2pxN5G1xnohKzwRtI1qtUNCvuDAB1ko",
-    authDomain: "t3praktika.firebaseapp.com",
-    projectId: "t3praktika",
-    storageBucket: "t3praktika.firebasestorage.app",
-    messagingSenderId: "807000460053",
-    appId: "1:807000460053:web:a0f7c9e66e1e771882771c",
-    measurementId: "G-VS06MC55X4"
+    apiKey: "AIzaSyCONubcKPX3dbyU6zZpAVnt2Sjhm1sHD3M",
+    authDomain: "civilizatu-c583c.firebaseapp.com",
+    projectId: "civilizatu-c583c",
+    storageBucket: "civilizatu-c583c.firebasestorage.app",
+    messagingSenderId: "211886445400",
+    appId: "1:211886445400:web:2c7a5277b62dc6ee9f4b2d"
 };
 
 const app = initializeApp(firebaseConfig);

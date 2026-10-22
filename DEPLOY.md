@@ -101,7 +101,7 @@ como argumentos de build.
 
 ## 4. Firebase
 
-El frontend ya apunta al proyecto `t3praktika` en
+El frontend ya apunta al proyecto `civilizatu-c583c` en
 `frontend/src/config/firebase-config.ts`. Para que el backend valide los
 tokens:
 
