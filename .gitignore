@@ -44,6 +44,7 @@ llm_service.log
 
 # Archivos sensibles (descomentar si no quieres versionar .env)
 .env
+/secrets/
 
 # Archivos temporales
 .tmp/

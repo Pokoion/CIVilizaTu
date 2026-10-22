@@ -23,6 +23,9 @@ services:
       - TZ=Europe/Madrid
     ports:
       - "127.0.0.1:5000:5000"
+    volumes:
+      # JSON de cuenta de servicio de Firebase (opcional)
+      - ./secrets:/app/secrets:ro
     depends_on:
       mongo:
         condition: service_healthy

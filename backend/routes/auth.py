@@ -17,34 +17,47 @@ FIREBASE_REQUIRED_VARS = [
     "FIREBASE_PRIVATE_KEY",
     "FIREBASE_CLIENT_EMAIL",
 ]
+# Ruta recomendada: JSON de cuenta de servicio montado en el contenedor.
+FIREBASE_CREDENTIALS_FILE = os.environ.get(
+    "FIREBASE_CREDENTIALS_FILE", "/app/secrets/firebase-service-account.json"
+)
 FIREBASE_ERROR = None
 
 if not firebase_admin._apps:
-    missing = [name for name in FIREBASE_REQUIRED_VARS if not os.environ.get(name)]
-    if missing:
-        FIREBASE_ERROR = "Firebase Admin no configurado; faltan: " + ", ".join(missing)
-        print(f"[auth] AVISO: {FIREBASE_ERROR}", flush=True)
-    else:
+    if os.path.isfile(FIREBASE_CREDENTIALS_FILE):
         try:
-            cred_dict = {
-                "type": os.environ.get("FIREBASE_TYPE", "service_account"),
-                "project_id": os.environ.get("FIREBASE_PROJECT_ID"),
-                "private_key_id": os.environ.get("FIREBASE_PRIVATE_KEY_ID"),
-                "private_key": os.environ.get("FIREBASE_PRIVATE_KEY").replace('\\n', '\n'),
-                "client_email": os.environ.get("FIREBASE_CLIENT_EMAIL"),
-                "client_id": os.environ.get("FIREBASE_CLIENT_ID"),
-                "auth_uri": os.environ.get("FIREBASE_AUTH_URI"),
-                "token_uri": os.environ.get("FIREBASE_TOKEN_URI"),
-                "auth_provider_x509_cert_url": os.environ.get("FIREBASE_AUTH_PROVIDER_X509_CERT_URL"),
-                "client_x509_cert_url": os.environ.get("FIREBASE_CLIENT_X509_CERT_URL"),
-                "universe_domain": os.environ.get("FIREBASE_UNIVERSE_DOMAIN", "googleapis.com"),
-            }
-            cred = credentials.Certificate(cred_dict)
+            cred = credentials.Certificate(FIREBASE_CREDENTIALS_FILE)
             initialize_app(cred)
-            print("[auth] Firebase Admin inicializado correctamente", flush=True)
+            print(f"[auth] Firebase Admin inicializado desde {FIREBASE_CREDENTIALS_FILE}", flush=True)
         except Exception as e:
-            FIREBASE_ERROR = f"No se pudo inicializar Firebase Admin: {e}"
+            FIREBASE_ERROR = f"No se pudo inicializar Firebase Admin desde el JSON: {e}"
             print(f"[auth] ERROR: {FIREBASE_ERROR}", flush=True)
+    else:
+        missing = [name for name in FIREBASE_REQUIRED_VARS if not os.environ.get(name)]
+        if missing:
+            FIREBASE_ERROR = "Firebase Admin no configurado; faltan: " + ", ".join(missing)
+            print(f"[auth] AVISO: {FIREBASE_ERROR}", flush=True)
+        else:
+            try:
+                cred_dict = {
+                    "type": os.environ.get("FIREBASE_TYPE", "service_account"),
+                    "project_id": os.environ.get("FIREBASE_PROJECT_ID"),
+                    "private_key_id": os.environ.get("FIREBASE_PRIVATE_KEY_ID"),
+                    "private_key": os.environ.get("FIREBASE_PRIVATE_KEY").replace('\\n', '\n'),
+                    "client_email": os.environ.get("FIREBASE_CLIENT_EMAIL"),
+                    "client_id": os.environ.get("FIREBASE_CLIENT_ID"),
+                    "auth_uri": os.environ.get("FIREBASE_AUTH_URI"),
+                    "token_uri": os.environ.get("FIREBASE_TOKEN_URI"),
+                    "auth_provider_x509_cert_url": os.environ.get("FIREBASE_AUTH_PROVIDER_X509_CERT_URL"),
+                    "client_x509_cert_url": os.environ.get("FIREBASE_CLIENT_X509_CERT_URL"),
+                    "universe_domain": os.environ.get("FIREBASE_UNIVERSE_DOMAIN", "googleapis.com"),
+                }
+                cred = credentials.Certificate(cred_dict)
+                initialize_app(cred)
+                print("[auth] Firebase Admin inicializado correctamente desde variables de entorno", flush=True)
+            except Exception as e:
+                FIREBASE_ERROR = f"No se pudo inicializar Firebase Admin: {e}"
+                print(f"[auth] ERROR: {FIREBASE_ERROR}", flush=True)
 
 # POST /api/auth/register
 @auth_bp.route('/register', methods=['POST'])

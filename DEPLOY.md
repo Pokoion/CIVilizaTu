@@ -107,11 +107,25 @@ tokens:
 
 1. Consola de Firebase → Configuración del proyecto → **Cuentas de servicio**
    → *Generar nueva clave privada*. Descarga el JSON.
-2. Copia los campos del JSON a `backend/.env` (`FIREBASE_*`). La clave privada
-   debe ir con `\n` literales, tal como aparece en el JSON.
+2. Cópialo al VPS (recomendado, sin tocar `.env`):
+
+   ```sh
+   scp firebase-service-account.json vps:/opt/civilizatu/secrets/firebase-service-account.json
+   ```
+
+   El contenedor lo lee de `/app/secrets/firebase-service-account.json`.
 3. Authentication → Settings → **Authorized domains**: añade `jonolea.eus`.
-4. Si el proyecto de Firebase cambia, actualiza también
-   `frontend/src/config/firebase-config.ts`.
+4. Reinicia el backend:
+
+   ```sh
+   cd /opt/civilizatu
+   docker compose -f docker-compose.prod.yml up -d backend
+   ```
+
+   En los logs debe aparecer `Firebase Admin inicializado desde ...`.
+
+También se admiten las variables `FIREBASE_*` en `backend/.env` como
+alternativa al JSON (ver `backend/.env.example`).
 
 `google-services.json` (el de Android) **no se usa** en esta aplicación web.
 
