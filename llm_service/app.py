@@ -24,6 +24,12 @@ GOOGLE_API_KEYS = os.getenv('GOOGLE_API_KEYS') or os.getenv('GOOGLE_API_KEY') or
 API_KEYS_LIST = [k.strip() for k in GOOGLE_API_KEYS.split(",") if k.strip()]
 current_api_key_index = 0
 DEFAULT_MODEL = os.getenv('GOOGLE_MODEL', 'gemini-3.8-flash')
+_fallback_models = os.getenv('GOOGLE_FALLBACK_MODELS', 'gemini-3.6-flash,gemini-3.5-flash')
+FALLBACK_MODELS = [m.strip() for m in _fallback_models.split(',') if m.strip()]
+MODELS = []
+for _model in [DEFAULT_MODEL] + FALLBACK_MODELS:
+    if _model not in MODELS:
+        MODELS.append(_model)
 
 # La temperatura es opcional: en los modelos Gemini 3 los parámetros de
 # muestreo están desaconsejados, así que solo se envía si se define.
@@ -379,27 +385,31 @@ def generate_content(prompt, system_instruction):
 
     response = None
     last_error = None
-    for attempt in range(3):
-        try:
-            response = gemini_client.models.generate_content(
-                model=DEFAULT_MODEL,
-                contents=prompt,
-                config=genai_types.GenerateContentConfig(**config_kwargs),
-            )
-            break
-        except Exception as e:
-            last_error = e
-            message = str(e).lower()
-            # 503/UNAVAILABLE suele ser saturación puntual del modelo
-            if attempt < 2 and ("503" in message or "unavailable" in message or "overloaded" in message):
-                time.sleep(2 * (attempt + 1))
-                continue
-            raise
-
-    text = getattr(response, "text", None)
-    if not text:
-        raise last_error or RuntimeError("El modelo no devolvió contenido")
-    return text
+    for model in MODELS:
+        for attempt in range(2):
+            try:
+                response = gemini_client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                    config=genai_types.GenerateContentConfig(**config_kwargs),
+                )
+                text = getattr(response, "text", None)
+                if not text:
+                    last_error = RuntimeError("El modelo no devolvió contenido")
+                    continue
+                if model != DEFAULT_MODEL:
+                    print(f"[llm_service] Usando modelo de respaldo: {model}", flush=True)
+                return text
+            except Exception as e:
+                last_error = e
+                message = str(e).lower()
+                # Errores de credenciales: no tiene sentido probar otro modelo
+                if "401" in message or "403" in message or "api key" in message or "permission" in message:
+                    raise
+                print(f"[llm_service] Fallo con {model} (intento {attempt + 1}): {str(e)[:160]}", flush=True)
+                if attempt == 0:
+                    time.sleep(2)
+    raise last_error or RuntimeError("No se pudo generar contenido con ningún modelo")
 
 def parse_json_response(text):
     """Acepta JSON puro o envuelto en un bloque markdown ```json ... ```."""
@@ -424,6 +434,7 @@ def health():
     return jsonify({
         "status": "ok",
         "model": DEFAULT_MODEL,
+        "fallback_models": FALLBACK_MODELS,
         "api_key_configured": gemini_client is not None,
     }), 200
 
