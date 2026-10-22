@@ -53,14 +53,19 @@ Los `.env` **no se versionan**. Hay que crearlos en el VPS.
 
 ```env
 GOOGLE_API_KEY=AIza...tu_clave_de_AI_Studio
-GOOGLE_MODEL=gemini-3.8-flash
+GOOGLE_MODEL=gemini-3.6-flash
+GOOGLE_FALLBACK_MODELS=gemini-3.5-flash,gemini-3.8-flash
+GOOGLE_THINKING_LEVEL=low
+GOOGLE_TIMEOUT_MS=90000
 GOOGLE_TEMPERATURE=
 GOOGLE_MAX_TOKENS=32768
 ```
 
 - La clave se obtiene en <https://aistudio.google.com/apikey>.
-- El modelo se puede cambiar sin tocar código (`gemini-3.8-flash`,
-  `gemini-3.6-flash`, `gemini-3.5-flash-lite`...).
+- El modelo se puede cambiar sin tocar código. `gemini-3.8-flash` da algo más
+  de calidad pero ahora mismo tiene picos de saturación; por eso el principal
+  es `gemini-3.6-flash` y hay modelos de respaldo automáticos.
+- `GOOGLE_THINKING_LEVEL=low` reduce el tiempo de respuesta de la IA.
 - Se pueden indicar varias claves en `GOOGLE_API_KEYS=clave1,clave2` para
   rotarlas si se alcanza el límite de peticiones.
 

@@ -23,13 +23,18 @@ CORS(app, supports_credentials=True)
 GOOGLE_API_KEYS = os.getenv('GOOGLE_API_KEYS') or os.getenv('GOOGLE_API_KEY') or ''
 API_KEYS_LIST = [k.strip() for k in GOOGLE_API_KEYS.split(",") if k.strip()]
 current_api_key_index = 0
-DEFAULT_MODEL = os.getenv('GOOGLE_MODEL', 'gemini-3.8-flash')
-_fallback_models = os.getenv('GOOGLE_FALLBACK_MODELS', 'gemini-3.6-flash,gemini-3.5-flash')
+DEFAULT_MODEL = os.getenv('GOOGLE_MODEL', 'gemini-3.6-flash')
+_fallback_models = os.getenv('GOOGLE_FALLBACK_MODELS', 'gemini-3.5-flash,gemini-3.8-flash')
 FALLBACK_MODELS = [m.strip() for m in _fallback_models.split(',') if m.strip()]
 MODELS = []
 for _model in [DEFAULT_MODEL] + FALLBACK_MODELS:
     if _model not in MODELS:
         MODELS.append(_model)
+
+# Nivel de razonamiento de Gemini 3: "low" reduce mucho la latencia.
+THINKING_LEVEL = os.getenv('GOOGLE_THINKING_LEVEL', 'low').strip()
+# Timeout por petición a Gemini (milisegundos)
+GOOGLE_TIMEOUT_MS = int(os.getenv('GOOGLE_TIMEOUT_MS', '90000'))
 
 # La temperatura es opcional: en los modelos Gemini 3 los parámetros de
 # muestreo están desaconsejados, así que solo se envía si se define.
@@ -368,7 +373,8 @@ def get_next_api_key():
 def create_gemini_client(api_key):
     if genai is None:
         raise RuntimeError("Falta la dependencia 'google-genai'. Instala requirements.txt")
-    return genai.Client(api_key=api_key)
+    http_options = genai_types.HttpOptions(timeout=GOOGLE_TIMEOUT_MS)
+    return genai.Client(api_key=api_key, http_options=http_options)
 
 def generate_content(prompt, system_instruction):
     """Llama a Google AI Studio y devuelve el texto de la respuesta."""
@@ -382,6 +388,8 @@ def generate_content(prompt, system_instruction):
     }
     if TEMPERATURE is not None and TEMPERATURE >= 0:
         config_kwargs["temperature"] = TEMPERATURE
+    if THINKING_LEVEL:
+        config_kwargs["thinking_config"] = genai_types.ThinkingConfig(thinking_level=THINKING_LEVEL)
 
     response = None
     last_error = None
